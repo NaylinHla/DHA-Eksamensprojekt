@@ -62,9 +62,6 @@ jobs:
               "baseline": {
                 "enabled": true
               },
-              "since": {
-                "enabled": false
-              },
               "project-info": {
                 "version": "${{ github.sha }}"
               }
@@ -77,9 +74,8 @@ jobs:
         run: cat stryker-config.json
         working-directory: server/Startup.Tests
       
-      
       - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker --git-diff-target=HEAD
+        run: dotnet stryker
         working-directory: server/Startup.Tests
         continue-on-error: true
 
