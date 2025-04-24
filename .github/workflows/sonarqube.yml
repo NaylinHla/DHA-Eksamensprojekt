@@ -60,10 +60,6 @@ jobs:
               "baseline": {
                 "enabled": true
               },
-              "since": {
-                "enabled": true,
-                "target": "main"
-              },
               "project-info": {
                 "version": "${{ github.sha }}"
               }
