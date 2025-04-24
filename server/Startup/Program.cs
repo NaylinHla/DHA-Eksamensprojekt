@@ -29,7 +29,7 @@ public class Program
 
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        var appOptions = services.AddAppOptions(configuration);
+        services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
         services.RegisterApplicationServices();
 
@@ -38,7 +38,10 @@ public class Program
 
         services.RegisterWebsocketApiServices();
         services.RegisterRestApiServices();
-        if (!string.IsNullOrEmpty(appOptions.MQTT_BROKER_HOST))
+        
+        var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>(); // Direct binding 
+        
+        if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {
             services.RegisterMqttInfrastructure();
         }
