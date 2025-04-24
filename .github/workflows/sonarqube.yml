@@ -10,10 +10,6 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     
-    defaults:
-      run:
-        working-directory: server
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,7 +27,7 @@ jobs:
           dotnet tool install -g dotnet-stryker
 
       - name: Run Unit Tests with Coverage
-        run: dotnet test Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
+        run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
 
       - name: Generate Code Coverage Report
         run: |
@@ -64,6 +60,9 @@ jobs:
               "baseline": {
                 "enabled": true
               },
+              "since": {
+                "enabled": false
+              },
               "project-info": {
                 "version": "${{ github.sha }}"
               }
@@ -72,6 +71,12 @@ jobs:
           EOF
         working-directory: server/Startup.Tests
 
+      - name:
+          Debug: Print Stryker Config
+        run: cat stryker-config.json
+        working-directory: server/Startup.Tests
+      
+      
       - name: Run Mutation Tests (Stryker)
         run: dotnet stryker
         working-directory: server/Startup.Tests
