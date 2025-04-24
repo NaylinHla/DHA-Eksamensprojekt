@@ -44,7 +44,7 @@ jobs:
               "thresholds": {
                 "break": 80
               },
-              "coverage-analysis": "perTest",
+              "coverage-analysis": "perTest"
             }
           }
           EOF
