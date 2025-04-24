@@ -70,7 +70,7 @@ jobs:
             }
           }
           EOF
-        working-directory: Startup.Tests
+        working-directory: server/Startup.Tests
 
       - name: Run Mutation Tests (Stryker)
         run: dotnet stryker
