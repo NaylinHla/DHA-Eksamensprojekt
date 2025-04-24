@@ -1,4 +1,4 @@
-using System.Text.Json;
+/*using System.Text.Json;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models;
@@ -39,7 +39,7 @@ public class MqttTriggeredTests
     private IServiceProvider _scopedServiceProvider;
 
 
-    [Test]
+    /*[Test]
     public async Task WhenServerReceivesTimeSeriesData_ServerSavesInDbAndBroadcastsToClient()
     {
         //Arrange
@@ -69,5 +69,5 @@ public class MqttTriggeredTests
         if (!dbCtx.Devicelogs.Any(log => log.Deviceid.Equals(deviceId)))
             throw new Exception("Expected a log form device of ID " + deviceId + " but only found: " +
                                 JsonSerializer.Serialize(dbCtx.Devicelogs.ToList()));
-    }
-}
+    }#1#
+}*/

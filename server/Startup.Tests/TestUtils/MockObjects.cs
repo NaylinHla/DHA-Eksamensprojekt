@@ -12,9 +12,17 @@ public static class MockObjects
             Role = role ?? Constants.UserRole,
             Email = "test" + Guid.NewGuid() + "@test.com",
             UserId = Guid.NewGuid(),
-            Salt = "word", //password is "pass" and the hash is the combined pass + word hashed together 
-            Hash =
-                "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86"
+            Salt = "word", // password is "pass" and the hash is the combined pass + word hashed together
+            Hash = "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
+            FirstName = "Test",
+            LastName = "User",
+            Birthday = DateTime.UtcNow.AddYears(-30),
+            Country = "TestCountry",
+            Weather = new Weather(), // Assuming a default constructor exists
+            UserSettings = new UserSettings(), // Assuming a default constructor exists
+            UserPlants = new List<UserPlant>(), // Empty list
+            Alerts = new List<Alert>(), // Empty list
+            SensorHistories = new List<SensorHistory>() // Empty list
         };
     }
 }

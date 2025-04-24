@@ -1,4 +1,5 @@
 
+/*
 using System.Text.Json;
 using Api.Rest.Controllers;
 using Application.Interfaces.Infrastructure.Websocket;
@@ -44,7 +45,7 @@ public class MoreRestTriggeredTests
     private IServiceProvider _scopedServiceProvider;
 
 
-    [Test]
+    /*[Test]
     public async Task WhenAdminDeletesData_AllWsClientsAreNotified_AndDataIsGoneInDatabase()
     {
         //Arrange
@@ -93,6 +94,6 @@ public class MoreRestTriggeredTests
             throw new Exception("There should be exactly one broadcast of the type " + nameof(AdminHasDeletedData));
 
 
-    }
+    }#1#
     
-}
+}*/

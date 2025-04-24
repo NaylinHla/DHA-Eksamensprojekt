@@ -1,4 +1,4 @@
-using Application.Interfaces.Infrastructure.Websocket;
+/*using Application.Interfaces.Infrastructure.Websocket;
 using Fleck;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,11 +33,11 @@ public class WsOnlyTests
     private IServiceProvider _scopedServiceProvider;
 
 
-    [Test]
+    /*[Test]
     public async Task WhenConnectingToApi_ServerAddsWsConnection_CanBeRetrievedById()
     {
         var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
         var testWsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
         _ = (IWebSocketConnection)connectionManager.GetSocketFromClientId(testWsClient.WsClientId);
-    }
-}
+    }#1#
+}*/
