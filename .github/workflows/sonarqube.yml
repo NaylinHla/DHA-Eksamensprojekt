@@ -1,4 +1,4 @@
-name: SonarQube Analysis
+name: Mutation Testing & SonarQube Analysis
 
 on:
   workflow_dispatch:
@@ -31,17 +31,28 @@ jobs:
           dotnet tool install -g dotnet-stryker
 
       - name: Run Unit Tests with Coverage
-        run: dotnet test Startup.Tests --collect:"XPlat Code Coverage" --results-directory ../../TestResults
+        run: dotnet test Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
 
       - name: Generate Code Coverage Report
         run: |
           reportgenerator \
-            -reports:../../TestResults/**/coverage.cobertura.xml \
+            -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:coverage-report \
             -reporttypes:SonarQube
+          
+      - name: Cache Stryker Baseline
+        uses: actions/cache@v3
+        with:
+          path: server/Startup.Tests/StrykerOutput/baseline
+          key: ${{ runner.os }}-stryker-baseline-${{ hashFiles('**/*.cs') }}
+          restore-keys: |
+            ${{ runner.os }}-stryker-baseline-
 
       - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker --break-at 80
+        run: dotnet stryker \
+              --break-at 80 \
+              --coverage-analysis coverageonly \
+              --with-baseline
         working-directory: server/Startup.Tests
         continue-on-error: true
 
