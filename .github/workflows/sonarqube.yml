@@ -1,0 +1,49 @@
+name: SonarQube Analysis
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for accurate results of code analysis
+
+      - name: Install required tools
+        run: |
+          dotnet tool install -g dotnet-sonarscanner
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Start Static Code Analysis
+        run: |
+          dotnet sonarscanner begin \
+            /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" \
+            /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" \
+            /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
+            /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
+            /d:sonar.coverage.sources=server/** \
+            /d:sonar.qualitygate.wait=true \
+            /d:sonar.qualitygate.timeout=300 \
+            /d:sonar.coverage.exclusions="client/**,**/Program.cs" \
+
+      - name: Build
+        run: dotnet build
+
+      - name: Run unit tests
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Generate report
+        run: |
+          reportgenerator \
+          -reports:TestResults/**/coverage.cobertura.xml \
+          -targetdir:coverage-report \
+          -reporttypes:SonarQube
+
+      - name: Complete Static Code Analysis
+        run: |
+          dotnet sonarscanner end \
+            /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
