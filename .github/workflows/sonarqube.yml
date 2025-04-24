@@ -17,6 +17,7 @@ jobs:
         run: |
           dotnet tool install -g dotnet-sonarscanner
           dotnet tool install -g dotnet-reportgenerator-globaltool
+          dotnet tool install --global dotnet-stryker
 
       - name: Start Static Code Analysis
         run: |
@@ -44,6 +45,24 @@ jobs:
           -reports:TestResults/**/coverage.cobertura.xml \
           -targetdir:coverage-report \
           -reporttypes:SonarQube
+          
+      - name: Run Mutation Tests
+        run: |
+          dotnet stryker --threshold-low 80
+
+      - name: Collect Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report
+          
+      - name: Collect Stryker Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-report
+          path: StrykerOutput
 
       - name: Complete Static Code Analysis
         run: |
