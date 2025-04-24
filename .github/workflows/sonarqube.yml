@@ -20,9 +20,6 @@ jobs:
           dotnet tool install -g dotnet-stryker
           dotnet add package coverlet.collector
 
-      - name: Add tools to PATH
-        run: echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
