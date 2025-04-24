@@ -3,3 +3,4 @@ secrets.dockerrun
 dockerrun.sh
 .idea
 fs25_14_2.sln.DotSettings.user
+template_onion_with_mqtt/server/Startup/appsettings.Development.json
