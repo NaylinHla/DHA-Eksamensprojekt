@@ -33,7 +33,7 @@ jobs:
         run: |
           reportgenerator \
             -reports:TestResults/**/coverage.cobertura.xml \
-            -targetdir:coverage-report \
+            -targetdir:server/coverage-report \
             -reporttypes:SonarQube
 
       - name: Generate Stryker Config
