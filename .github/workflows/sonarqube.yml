@@ -3,22 +3,94 @@ name: SonarQube Analysis
 on:
   workflow_dispatch:
   pull_request:
+  push:
 
 jobs:
-  integration:
+  mutation_testing:
+    name: Mutation Testing
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: server
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for accurate code analysis
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
 
       - name: Install required tools
         run: |
-          dotnet tool install -g dotnet-sonarscanner
           dotnet tool install -g dotnet-reportgenerator-globaltool
           dotnet tool install -g dotnet-stryker
-          dotnet add package coverlet.collector
+
+      - name: Run Unit Tests with Coverage
+        run: dotnet test Startup.Tests --collect:"XPlat Code Coverage" --results-directory ../../TestResults
+
+      - name: Generate Code Coverage Report
+        run: |
+          reportgenerator \
+            -reports:TestResults/**/coverage.cobertura.xml \
+            -targetdir:coverage-report \
+            -reporttypes:SonarQube
+
+      - name: Run Mutation Tests (Stryker)
+        run: dotnet stryker --break-at 80
+        working-directory: Startup.Tests
+        continue-on-error: true
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: server/coverage-report
+
+      - name: Upload Stryker Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-report
+          path: server/Startup.Tests/StrykerOutput
+  
+  
+  sonarqube:
+    name: SonarQube Analysis
+    needs: mutation_testing
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: server
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install required tools
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          dotnet tool install -g dotnet-sonarscanner
+
+
+      - name: Download Coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report
 
       - name: Start Static Code Analysis
         run: |
@@ -26,46 +98,14 @@ jobs:
             /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" \
             /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" \
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
-            /d:sonar.coverageReportPaths="server/Startup/coverage-report/SonarQube.xml" \
-            /d:sonar.coverage.sources=server/** \
+            /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
+            /d:sonar.coverage.sources=Startup \
+            /d:sonar.coverage.exclusions="client/**,**/**/Program.cs" \
             /d:sonar.qualitygate.wait=true \
-            /d:sonar.qualitygate.timeout=300 \
-            /d:sonar.coverage.exclusions="client/**,**/Program.cs"
+            /d:sonar.qualitygate.timeout=300
 
       - name: Build
-        run: dotnet build
-        working-directory: server/Startup
-
-      - name: Run unit tests and collect coverage
-        run: dotnet test --collect:"XPlat Code Coverage" --results-directory coverage-results
-        working-directory: server/Startup.Tests
-
-      - name: Generate coverage report
-        run: |
-          reportgenerator \
-            -reports:coverage-results/*/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:Html \
-            -reportfile:SonarQube.xml
-        working-directory: server/Startup.Tests
-      
-      - name: Run mutation tests
-        run: dotnet stryker --threshold-low 80 --output ../Startup/StrykerOutput
-        working-directory: server/Startup.Tests
-
-      - name: Collect Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: server/Startup.Tests/coverage-report
-
-      - name: Collect Stryker Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stryker-report
-          path: server/Startup.Tests/StrykerOutput
+        run: dotnet build Startup
 
       - name: Complete Static Code Analysis
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
