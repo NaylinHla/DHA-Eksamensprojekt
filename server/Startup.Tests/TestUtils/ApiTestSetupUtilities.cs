@@ -57,7 +57,7 @@ public static class ApiTestSetupUtilities
             services.AddScoped<TestMqttClient>(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
-                return new TestMqttClient(options.MQTT_BROKER_HOST, options.MQTT_USERNAME, options.MQTT_PASSWORD);
+                return new TestMqttClient(options.MQTT_BROKER_HOST, options.MQTT_USERNAME);
             });
         }
 

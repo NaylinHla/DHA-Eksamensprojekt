@@ -19,7 +19,7 @@ public static class MqttExtensions
 
             var options = new HiveMQClientOptionsBuilder()
                 .WithWebSocketServer(
-                    $"wss://{optionsMonitor.CurrentValue.MQTT_BROKER_HOST}:8884/mqtt") // Using WSS (secure WebSocket)
+                    $"wss://{optionsMonitor.CurrentValue.MQTT_BROKER_HOST}:443") // Using WSS (secure WebSocket)
                 .WithClientId($"myClientId_{Guid.NewGuid()}")
                 .WithCleanStart(true)
                 .WithKeepAlive(30)
@@ -28,7 +28,6 @@ public static class MqttExtensions
                 .WithReceiveMaximum(100)
                 .WithSessionExpiryInterval(3600)
                 .WithUserName(optionsMonitor.CurrentValue.MQTT_USERNAME)
-                .WithPassword(optionsMonitor.CurrentValue.MQTT_PASSWORD)
                 .WithRequestProblemInformation(true)
                 .WithRequestResponseInformation(true)
                 .WithAllowInvalidBrokerCertificates(true)

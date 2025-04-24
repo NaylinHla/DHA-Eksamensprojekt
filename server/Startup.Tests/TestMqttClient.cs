@@ -7,11 +7,11 @@ namespace Startup.Tests;
 
 public class TestMqttClient
 {
-    public TestMqttClient(string host, string username, string password)
+    public TestMqttClient(string host, string username)
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithWebSocketServer(
-                $"wss://{host}:8884/mqtt") // Using WSS (secure WebSocket)
+                $"wss://{host}:443") // Using WSS (secure WebSocket)
             .WithClientId($"myClientId_{Guid.NewGuid()}")
             .WithCleanStart(true)
             .WithKeepAlive(30)
@@ -20,7 +20,6 @@ public class TestMqttClient
             .WithReceiveMaximum(100)
             .WithSessionExpiryInterval(3600)
             .WithUserName(username)
-            .WithPassword(password)
             .WithRequestProblemInformation(true)
             .WithRequestResponseInformation(true)
             .WithAllowInvalidBrokerCertificates(true)
