@@ -48,6 +48,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stryker-baseline-
 
+      - name: Generate Stryker Config
+        run: |
+          cat <<EOF > stryker-config.json
+          {
+            "stryker-config": {
+              "thresholds": {
+                "high": 80,
+                "low": 60,
+                "break": 80
+              },
+              "coverage-analysis": "coverageOnly",
+              "baseline": {
+                "enabled": true
+              },
+              "project-info": {
+                "version": "${{ github.sha }}"
+              }
+            }
+          }
+          EOF
+        working-directory: server/Startup.Tests
+
       - name: Run Mutation Tests (Stryker)
         run: dotnet stryker
         working-directory: server/Startup.Tests
