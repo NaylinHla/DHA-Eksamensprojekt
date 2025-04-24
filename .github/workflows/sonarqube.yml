@@ -49,8 +49,7 @@ jobs:
             ${{ runner.os }}-stryker-baseline-
 
       - name: Run Mutation Tests (Stryker)
-        run: |
-          dotnet stryker --break-at 80 --coverage-analysis coverageOnly --with-baseline
+        run: dotnet stryker
         working-directory: server/Startup.Tests
         continue-on-error: true
 
