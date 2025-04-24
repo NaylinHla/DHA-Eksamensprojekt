@@ -56,7 +56,7 @@ jobs:
               "thresholds": {
                 "break": 80
               },
-              "coverage-analysis": "coverageOnly",
+              "coverage-analysis": "perTest",
               "baseline": {
                 "enabled": true
               },
