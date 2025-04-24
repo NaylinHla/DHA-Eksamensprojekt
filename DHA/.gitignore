@@ -4,6 +4,7 @@
 ## Get latest from `dotnet new gitignore`
 
 appsettings.json
+template_onion_with_mqtt/server/Startup/appsettings.Development.json
 
 # dotenv files
 .env
