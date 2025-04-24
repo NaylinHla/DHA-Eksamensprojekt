@@ -45,6 +45,7 @@ jobs:
           -reports:TestResults/**/coverage.cobertura.xml \
           -targetdir:coverage-report \
           -reporttypes:SonarQube
+        working-directory: server/Startup
 
       - name: Run Mutation Tests
         run: |
