@@ -6,6 +6,8 @@
       "break": 80
     },
     "coverageAnalysis": "coverageOnly",
-    "baseline": true
+    "baseline": {
+      "enabled": true
+    }
   }
 }
