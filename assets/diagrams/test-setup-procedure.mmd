@@ -1,8 +1,0 @@
-flowchart TD
-    InstantiateTestClass[Test Class Instantiates] --> SetupMethod["The '[Setup]'-Attributed Method is called"]
-    SetupMethod --> CreateFactory[Create WebApplicationFactory based on Program.cs]
-    CreateFactory --> ConfigureServices["Use ConfigureServices() to modify services (e.g with Extension method)"]
-    ConfigureServices --> CreateClient[Create HttpClient to start API]
-    CreateClient --> CreateScope[Create ServiceScope to resolve services from DI with any lifetime]
-    CreateScope --> Test[Test Start]
-    
