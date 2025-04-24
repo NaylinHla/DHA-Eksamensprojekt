@@ -71,8 +71,7 @@ jobs:
           EOF
         working-directory: server/Startup.Tests
 
-      - name:
-          Debug: Print Stryker Config
+      - name: Print Stryker Config
         run: cat stryker-config.json
         working-directory: server/Startup.Tests
       
