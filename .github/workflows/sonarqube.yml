@@ -63,7 +63,8 @@ jobs:
                 "enabled": true
               },
               "project-info": {
-                "version": "${{ github.sha }}"
+                "version": "${{ github.sha }}",
+                "baseline": "baseline"
               }
             }
           }
