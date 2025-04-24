@@ -48,6 +48,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stryker-baseline-
 
+      - name: Clean old Stryker config
+        run: rm -f stryker-config.json
+        working-directory: server/Startup.Tests
+
       - name: Generate Stryker Config
         run: |
           cat <<EOF > stryker-config.json
