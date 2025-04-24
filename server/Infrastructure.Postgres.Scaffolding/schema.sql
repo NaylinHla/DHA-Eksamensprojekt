@@ -7,9 +7,11 @@ CREATE TABLE IF NOT EXISTS botanica."User" (
                                                FirstName VARCHAR(100),
     LastName VARCHAR(100),
     Email VARCHAR(255) UNIQUE NOT NULL,
-    Password VARCHAR(255) NOT NULL,
     Birthday DATE,
-    Country VARCHAR(100)
+    Country VARCHAR(100),
+    Role VARCHAR(50),
+    Salt VARCHAR(255) NOT NULL,
+    Hash VARCHAR(255) NOT NULL
     );
 
 CREATE TABLE IF NOT EXISTS botanica.Weather (

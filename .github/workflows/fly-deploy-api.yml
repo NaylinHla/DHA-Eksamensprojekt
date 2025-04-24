@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd template_onion_with_mqtt && flyctl deploy
+      - run:  flyctl deploy
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           APPOPTIONS__DbConnectionString: ${{secrets.DBCONNECTIONSTRING}}

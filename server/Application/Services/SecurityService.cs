@@ -26,7 +26,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = player.Id,
+                Id = player.UserId.ToString(),
                 Role = player.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000)
                     .ToUnixTimeSeconds()
@@ -44,7 +44,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         var hash = HashPassword(dto.Password + salt);
         var insertedPlayer = repository.AddUser(new User
         {
-            Id = Guid.NewGuid().ToString(),
+            UserId = Guid.NewGuid(),
             Email = dto.Email,
             Role = Constants.UserRole,
             Salt = salt,
@@ -54,7 +54,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = insertedPlayer.Id,
+                Id = insertedPlayer.UserId.ToString(),
                 Role = insertedPlayer.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
                 Email = insertedPlayer.Email
