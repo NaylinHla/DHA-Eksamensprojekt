@@ -45,11 +45,11 @@ jobs:
             -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:coverage-report \
             -reporttypes:SonarQube
-        working-directory: server/Startup
+        working-directory: server/Startup.Tests
 
       - name: Run mutation tests
         run: dotnet stryker --threshold-low 80 --output StrykerOutput
-        working-directory: server/Startup
+        working-directory: server/Startup.Tests
 
       - name: Collect Coverage Report
         if: always()
