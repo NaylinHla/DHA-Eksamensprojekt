@@ -44,7 +44,7 @@ jobs:
           reportgenerator \
             -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:coverage-report \
-            -reporttypes:SonarQube
+            -reporttypes:Html \
         working-directory: server/Startup.Tests
 
       - name: Run mutation tests
