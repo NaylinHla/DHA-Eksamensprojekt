@@ -5,7 +5,7 @@
       "low": 60,
       "break": 80
     },
-    "coverageAnalysis": "coverageOnly",
+    "coverage-analysis": "coverageOnly",
     "baseline": {
       "enabled": true
     }
