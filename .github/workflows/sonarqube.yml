@@ -60,17 +60,21 @@ jobs:
               "baseline": {
                 "enabled": true
               },
+              "since": {
+                "enabled": true,
+                "target": "main"
+              },
               "project-info": {
                 "version": "${{ github.sha }}"
               }
             }
           }
           EOF
-        working-directory: server/Startup.Tests
+        working-directory: Startup.Tests
 
       - name: Run Mutation Tests (Stryker)
         run: dotnet stryker
-        working-directory: server/Startup.Tests
+        working-directory: Startup.Tests
         continue-on-error: true
 
       - name: Upload Coverage Report
