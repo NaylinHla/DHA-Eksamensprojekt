@@ -18,6 +18,7 @@ jobs:
           dotnet tool install -g dotnet-sonarscanner
           dotnet tool install -g dotnet-reportgenerator-globaltool
           dotnet tool install -g dotnet-stryker
+          dotnet add package coverlet.collector
 
       - name: Add tools to PATH
         run: echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
@@ -45,9 +46,9 @@ jobs:
       - name: Generate coverage report
         run: |
           reportgenerator \
-            -reports:../../coverage-results/**/coverage.cobertura.xml \
-            -targetdir:../Startup.Tests/coverage-report \
-            -reporttypes:HtmlInline;Cobertura \
+            -reports:coverage-results/*/coverage.cobertura.xml \
+            -targetdir:coverage-report \
+            -reporttypes:Html \
             -reportfile:SonarQube.xml
         working-directory: server/Startup.Tests
       
