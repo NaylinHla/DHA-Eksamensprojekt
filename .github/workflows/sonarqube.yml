@@ -19,13 +19,16 @@ jobs:
           dotnet tool install -g dotnet-reportgenerator-globaltool
           dotnet tool install -g dotnet-stryker
 
+      - name: Add tools to PATH
+        run: echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
             /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" \
             /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" \
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
-            /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
+            /d:sonar.coverageReportPaths="server/Startup/coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=server/** \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300 \
@@ -35,20 +38,21 @@ jobs:
         run: dotnet build
         working-directory: server/Startup
 
-      - name: Run unit tests
-        run: dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
+      - name: Run unit tests and collect coverage
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory ../../coverage-results
         working-directory: server/Startup.Tests
 
       - name: Generate coverage report
         run: |
           reportgenerator \
-            -reports:TestResults/**/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:Html \
+            -reports=../../coverage-results/**/coverage.cobertura.xml \
+            -targetdir=../Startup/coverage-report \
+            -reporttypes:HtmlInline;Cobertura \
+            -reportfile:SonarQube.xml
         working-directory: server/Startup.Tests
 
       - name: Run mutation tests
-        run: dotnet stryker --threshold-low 80 --output StrykerOutput
+        run: dotnet stryker --threshold-low 80 --output ../Startup/StrykerOutput
         working-directory: server/Startup.Tests
 
       - name: Collect Coverage Report
