@@ -44,8 +44,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stryker-baseline-
 
-      - name: Clean old Stryker config
-        run: rm -f stryker-config.json
+      - name: Clean Stryker temp and config
+        run: |
+          rm -f stryker-config.json
+          rm -rf .stryker-tmp
         working-directory: server/Startup.Tests
 
       - name: Generate Stryker Config
@@ -77,7 +79,7 @@ jobs:
       
       
       - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker
+        run: dotnet stryker --git-diff-target=HEAD
         working-directory: server/Startup.Tests
         continue-on-error: true
 
