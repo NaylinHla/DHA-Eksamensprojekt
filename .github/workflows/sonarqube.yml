@@ -35,20 +35,6 @@ jobs:
             -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:coverage-report \
             -reporttypes:SonarQube
-          
-      - name: Cache Stryker Baseline
-        uses: actions/cache@v3
-        with:
-          path: server/Startup.Tests/StrykerOutput/baseline
-          key: ${{ runner.os }}-stryker-baseline-${{ hashFiles('**/*.cs') }}
-          restore-keys: |
-            ${{ runner.os }}-stryker-baseline-
-
-      - name: Clean Stryker temp and config
-        run: |
-          rm -f stryker-config.json
-          rm -rf .stryker-tmp
-        working-directory: server/Startup.Tests
 
       - name: Generate Stryker Config
         run: |
@@ -59,22 +45,11 @@ jobs:
                 "break": 80
               },
               "coverage-analysis": "perTest",
-              "baseline": {
-                "enabled": true
-              },
-              "project-info": {
-                "version": "${{ github.sha }}",
-                "baseline": "baseline"
-              }
             }
           }
           EOF
         working-directory: server/Startup.Tests
 
-      - name: Print Stryker Config
-        run: cat stryker-config.json
-        working-directory: server/Startup.Tests
-      
       - name: Run Mutation Tests (Stryker)
         run: dotnet stryker
         working-directory: server/Startup.Tests
