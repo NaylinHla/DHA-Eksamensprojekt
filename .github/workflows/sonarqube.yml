@@ -11,13 +11,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for accurate results of code analysis
+          fetch-depth: 0 # Fetch all history for accurate code analysis
 
       - name: Install required tools
         run: |
           dotnet tool install -g dotnet-sonarscanner
           dotnet tool install -g dotnet-reportgenerator-globaltool
-          dotnet tool install --global dotnet-stryker
+          dotnet tool install -g dotnet-stryker
 
       - name: Start Static Code Analysis
         run: |
@@ -29,7 +29,7 @@ jobs:
             /d:sonar.coverage.sources=server/** \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300 \
-            /d:sonar.coverage.exclusions="client/**,**/Program.cs" \
+            /d:sonar.coverage.exclusions="client/**,**/Program.cs"
 
       - name: Build
         run: dotnet build
@@ -39,33 +39,31 @@ jobs:
         run: dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
         working-directory: server/Startup
 
-      - name: Generate report
+      - name: Generate coverage report
         run: |
           reportgenerator \
-          -reports:TestResults/**/coverage.cobertura.xml \
-          -targetdir:coverage-report \
-          -reporttypes:SonarQube
+            -reports:TestResults/**/coverage.cobertura.xml \
+            -targetdir:coverage-report \
+            -reporttypes:SonarQube
         working-directory: server/Startup
 
-      - name: Run Mutation Tests
-        run: |
-          dotnet stryker --threshold-low 80 --output StrykerOutput
+      - name: Run mutation tests
+        run: dotnet stryker --threshold-low 80 --output StrykerOutput
+        working-directory: server/Startup
 
       - name: Collect Coverage Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage-report
+          path: server/Startup/coverage-report
 
       - name: Collect Stryker Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: stryker-report
-          path: StrykerOutput
+          path: server/Startup/StrykerOutput
 
       - name: Complete Static Code Analysis
-        run: |
-          dotnet sonarscanner end \
-            /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
