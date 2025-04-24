@@ -46,7 +46,7 @@ jobs:
         run: |
           reportgenerator \
             -reports:../../coverage-results/**/coverage.cobertura.xml \
-            -targetdir:../Startup/coverage-report \
+            -targetdir:../Startup.Tests/coverage-report \
             -reporttypes:HtmlInline;Cobertura \
             -reportfile:SonarQube.xml
         working-directory: server/Startup.Tests
