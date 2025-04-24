@@ -45,12 +45,12 @@ jobs:
       - name: Generate coverage report
         run: |
           reportgenerator \
-            -reports=../../coverage-results/**/coverage.cobertura.xml \
-            -targetdir=../Startup/coverage-report \
+            -reports "../../coverage-results/**/coverage.cobertura.xml" \
+            -targetdir "../Startup/coverage-report" \
             -reporttypes:HtmlInline;Cobertura \
             -reportfile:SonarQube.xml
         working-directory: server/Startup.Tests
-
+      
       - name: Run mutation tests
         run: dotnet stryker --threshold-low 80 --output ../Startup/StrykerOutput
         working-directory: server/Startup.Tests
