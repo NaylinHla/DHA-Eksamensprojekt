@@ -1,8 +1,8 @@
-DROP SCHEMA IF EXISTS botanica CASCADE;
-CREATE SCHEMA IF NOT EXISTS botanica;
-SET search_path TO botanica;
+DROP SCHEMA IF EXISTS meetyourplants CASCADE;
+CREATE SCHEMA IF NOT EXISTS meetyourplants;
+SET search_path TO meetyourplants;
 
-CREATE TABLE IF NOT EXISTS botanica."User" (
+CREATE TABLE IF NOT EXISTS meetyourplants."User" (
                                                UserId UUID PRIMARY KEY,
                                                FirstName VARCHAR(100),
     LastName VARCHAR(100),
@@ -14,14 +14,14 @@ CREATE TABLE IF NOT EXISTS botanica."User" (
     Hash VARCHAR(255) NOT NULL
     );
 
-CREATE TABLE IF NOT EXISTS botanica.Weather (
-                                                UserId UUID PRIMARY KEY REFERENCES botanica."User"(UserId) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS meetyourplants.Weather (
+                                                UserId UUID PRIMARY KEY REFERENCES meetyourplants."User"(UserId) ON DELETE CASCADE,
     City VARCHAR(100),
     Country VARCHAR(100)
     );
 
-CREATE TABLE IF NOT EXISTS botanica.UserSettings (
-                                                     UserId UUID PRIMARY KEY REFERENCES botanica."User"(UserId) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS meetyourplants.UserSettings (
+                                                     UserId UUID PRIMARY KEY REFERENCES meetyourplants."User"(UserId) ON DELETE CASCADE,
     Celsius BOOLEAN,
     DarkTheme BOOLEAN,
     ConfirmDialog BOOLEAN,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS botanica.UserSettings (
     WaitTime VARCHAR(50)
     );
 
-CREATE TABLE IF NOT EXISTS botanica.Plant (
+CREATE TABLE IF NOT EXISTS meetyourplants.Plant (
                                               PlantID UUID PRIMARY KEY,
                                               Planted DATE,
                                               PlantName VARCHAR(100),
@@ -40,23 +40,23 @@ CREATE TABLE IF NOT EXISTS botanica.Plant (
     IsDead BOOLEAN
     );
 
-CREATE TABLE IF NOT EXISTS botanica.UserPlant (
-                                                  UserID UUID REFERENCES botanica."User"(UserId) ON DELETE CASCADE,
-    PlantID UUID REFERENCES botanica.Plant(PlantID) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS meetyourplants.UserPlant (
+                                                  UserID UUID REFERENCES meetyourplants."User"(UserId) ON DELETE CASCADE,
+    PlantID UUID REFERENCES meetyourplants.Plant(PlantID) ON DELETE CASCADE,
     PRIMARY KEY (UserID, PlantID)
     );
 
-CREATE TABLE IF NOT EXISTS botanica.Alert (
+CREATE TABLE IF NOT EXISTS meetyourplants.Alert (
                                               AlertID UUID PRIMARY KEY,
-                                              AlertUserId UUID REFERENCES botanica."User"(UserId) ON DELETE CASCADE,
+                                              AlertUserId UUID REFERENCES meetyourplants."User"(UserId) ON DELETE CASCADE,
     AlertName VARCHAR(100),
     AlertDesc TEXT,
     AlertTime TIMESTAMP,
-    AlertPlant UUID REFERENCES botanica.Plant(PlantID) ON DELETE SET NULL
+    AlertPlant UUID REFERENCES meetyourplants.Plant(PlantID) ON DELETE SET NULL
     );
 
-CREATE TABLE IF NOT EXISTS botanica.SensorHistory (
-                                                HistoryId UUID REFERENCES botanica."User"(UserId) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS meetyourplants.SensorHistory (
+                                                HistoryId UUID REFERENCES meetyourplants."User"(UserId) ON DELETE CASCADE,
     DeviceId VARCHAR(100),
     Temperature INT,
     Humidity INT,
