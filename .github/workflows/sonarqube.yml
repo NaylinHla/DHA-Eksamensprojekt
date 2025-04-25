@@ -3,7 +3,6 @@ name: Coverage Testing & SonarQube Analysis
 on:
   workflow_dispatch:
   pull_request:
-  push:
 
 jobs:
   coverage_testing:
