@@ -22,7 +22,7 @@ jobs:
           echo "flyway.password=${{ secrets.DATABASE_PASSWORD }}" >> ./flyway/conf/flyway.conf
           echo "flyway.locations=filesystem:/flyway/sql" >> ./flyway/conf/flyway.conf
           echo "flyway.baselineOnMigrate=true" >> ./flyway/conf/flyway.conf
-          echo "flyway.schemas="meetyourplants" >> ./flyway/conf/flyway.conf
+          echo "flyway.schemas=meetyourplants" >> ./flyway/conf/flyway.conf
 
       - name: Run Flyway migrations
         run: |
