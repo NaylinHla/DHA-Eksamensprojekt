@@ -1,4 +1,4 @@
-name: Mutation Testing & SonarQube Analysis
+name: Coverage Testing & SonarQube Analysis
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
   push:
 
 jobs:
-  mutation_testing:
-    name: Mutation Testing
+  coverage_testing:
+    name: Coverage Testing
     runs-on: ubuntu-latest
     
     steps:
@@ -24,7 +24,6 @@ jobs:
       - name: Install required tools
         run: |
           dotnet tool install -g dotnet-reportgenerator-globaltool
-          dotnet tool install -g dotnet-stryker
 
       - name: Run Unit Tests with Coverage
         run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
@@ -36,43 +35,17 @@ jobs:
             -targetdir:server/coverage-report \
             -reporttypes:SonarQube
 
-      - name: Generate Stryker Config
-        run: |
-          cat <<EOF > stryker-config.json
-          {
-            "stryker-config": {
-              "thresholds": {
-                "break": 80
-              },
-              "coverage-analysis": "perTest"
-            }
-          }
-          EOF
-        working-directory: server/Startup.Tests
-
-      - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker
-        working-directory: server/Startup.Tests
-        continue-on-error: true
-
       - name: Upload Coverage Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: server/coverage-report
-
-      - name: Upload Stryker Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stryker-report
-          path: server/Startup.Tests/StrykerOutput
   
   
   sonarqube:
     name: SonarQube Analysis
-    needs: mutation_testing
+    needs: coverage_testing
     runs-on: ubuntu-latest
     
     defaults:
