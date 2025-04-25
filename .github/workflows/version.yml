@@ -1,0 +1,35 @@
+name: Version
+on:
+  push:
+    branches:
+      - main
+jobs:
+  delivery:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Application Version
+        id: semver-app
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          bump_each_commit: true
+          major_pattern: "Major:"
+          minor_pattern: "Minor:"
+          bump_each_commit_patch_pattern: "Patch:"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release notes
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.semver-app.outputs.version }}
+          generateReleaseNotes: true
+          
+          body: |
+            This release includes the following container image:
+            http://ghcr.io/${{ github.repository }}:${{ steps.semver-app.outputs.version }}
