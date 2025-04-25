@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Application Version
         id: semver-app
         uses: paulhatch/semantic-version@v5.4.0
@@ -20,17 +23,19 @@ jobs:
           major_pattern: "Major:"
           minor_pattern: "Minor:"
           bump_each_commit_patch_pattern: "Patch:"
+          version_format: "${major}.${minor}.${patch}"
+          tag_prefix: "v"
+          enable_prerelease_mode: false
 
       - name: Create release notes
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.semver-app.outputs.version }}
+          tag: v${{ steps.semver-app.outputs.version }}
+          name: v${{ steps.semver-app.outputs.version }}
           generateReleaseNotes: true
-          
           body: |
-            This release includes the following container image:
-            http://ghcr.io/${{ github.repository }}:${{ steps.semver-app.outputs.version }}
-            
-            
-      - name: Show Version
-        run: echo "Version is ${{ steps.semver-app.outputs.version }}"
+            🚀 This release includes the following container image:
+            https://ghcr.io/${{ github.repository }}:v${{ steps.semver-app.outputs.version }}
+          makeLatest: legacy
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
