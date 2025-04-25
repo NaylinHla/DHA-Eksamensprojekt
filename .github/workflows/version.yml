@@ -20,9 +20,6 @@ jobs:
         uses: paulhatch/semantic-version@v5.4.0
         with:
           bump_each_commit: true
-          major_pattern: "Major:.*"
-          minor_pattern: "Minor:.*"
-          bump_each_commit_patch_pattern: "Patch:.*"
           version_format: "${major}.${minor}.${patch}"
           tag_prefix: "v"
           enable_prerelease_mode: false
