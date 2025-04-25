@@ -30,3 +30,7 @@ jobs:
           body: |
             This release includes the following container image:
             http://ghcr.io/${{ github.repository }}:${{ steps.semver-app.outputs.version }}
+            
+            
+      - name: Show Version
+        run: echo "Version is ${{ steps.semver-app.outputs.version }}"
