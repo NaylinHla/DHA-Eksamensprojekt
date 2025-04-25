@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-        
+
 permissions:
   contents: write
 
@@ -11,11 +11,10 @@ jobs:
   delivery:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Application Version
+      - name: Generate Application Version
         id: semver-app
         uses: paulhatch/semantic-version@v5.4.0
         with:
@@ -23,8 +22,9 @@ jobs:
           version_format: "${major}.${minor}.${patch}"
           tag_prefix: "v"
           enable_prerelease_mode: false
+          search_commit_body: true
 
-      - name: Create release notes
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ steps.semver-app.outputs.version }}
