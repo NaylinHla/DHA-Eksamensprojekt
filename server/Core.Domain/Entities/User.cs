@@ -7,11 +7,11 @@ public class User
 {
     public string Hash { get; set; } = null!;
     public string Salt { get; set; } = null!;
-    public Guid UserId { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public DateTime? Birthday { get; set; }
+    public Guid UserId { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
+    public string Email { get; set; } = null!;
+    public DateTime? Birthday { get; set; } = null!;
     public string Country { get; set; }
     public string Role { get; set; } = null!;
     public Weather Weather { get; set; }
