@@ -18,8 +18,8 @@ jobs:
         run: |
           mkdir -p ./flyway/conf
           echo "flyway.url=jdbc:postgresql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }}" >> ./flyway/conf/flyway.conf
-          echo "flyway.user=${{ secrets.DB_USER }}" >> ./flyway/conf/flyway.conf
-          echo "flyway.password=${{ secrets.DB_PASSWORD }}" >> ./flyway/conf/flyway.conf
+          echo "flyway.user=${{ secrets.DATABASE_USER }}" >> ./flyway/conf/flyway.conf
+          echo "flyway.password=${{ secrets.DATABASE_PASSWORD }}" >> ./flyway/conf/flyway.conf
           echo "flyway.locations=filesystem:/flyway/db/migrations" >> ./flyway/conf/flyway.conf
 
       - name: Run Flyway migrations
