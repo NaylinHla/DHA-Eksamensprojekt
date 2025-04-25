@@ -11,7 +11,7 @@ public class TestMqttClient
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithWebSocketServer(
-                $"wss://{host}:443") // Using WSS (secure WebSocket) (test)
+                $"wss://{host}:443") // Using WSS (secure WebSocket)
             .WithClientId($"myClientId_{Guid.NewGuid()}")
             .WithCleanStart(true)
             .WithKeepAlive(30)
