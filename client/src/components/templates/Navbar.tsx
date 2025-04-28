@@ -5,7 +5,7 @@ import logo from "../../assets/Favicon/favicon.svg";
 
 export default function NavBar() {
     return (
-        <header className="navbar bg-green-600 text-white sticky top-0 z-50 px-4 shadow-md">
+        <header className="navbar bg-primary text-white sticky top-0 z-50 px-4 shadow-md">
             <div className="navbar-start">
                 <Link
                     to="/"

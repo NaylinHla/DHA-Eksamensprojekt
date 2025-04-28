@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.1",
+    "@tailwindcss/vite": "^4.1.4",
     "daisyui": "^5.0.12",
     "jotai": "^2.12.2",
     "jotai-devtools": "^0.11.0",
@@ -19,7 +19,7 @@
     "react-hot-toast": "^2.5.2",
     "react-router": "^7.4.1",
     "recharts": "^2.15.1",
-    "tailwindcss": "^4.1.1",
+    "tailwindcss": "^4.1.4",
     "ws-request-hook": "^1.0.14"
   },
   "devDependencies": {
@@ -34,6 +34,6 @@
     "eslint-plugin-react-refresh": "^0.4.7",
     "swagger-typescript-api": "13.0.13",
     "typescript": "^5.2.2",
-    "vite": "^5.3.4"
+    "vite": "^6.3.3"
   }
 }
