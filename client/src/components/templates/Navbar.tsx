@@ -9,7 +9,7 @@ export default function NavBar() {
             <div className="navbar-start">
                 <Link
                     to="/"
-                    className="normal-case text-2xl lg:text-3xl font-bold flex items-center gap-2"
+                    className="normal-case lg:text-3xl sm:text-2xl font-bold flex items-center gap-2"
                 >
                     {/* Logo */}
                     <img
@@ -19,7 +19,7 @@ export default function NavBar() {
                     />
 
                     {/* Application name */}
-                    <span className="hidden sm:inline">Greenhouse&nbsp;Application</span>
+                    <span className="inline whitespace-nowrap">Greenhouse&nbsp;Application</span>
                 </Link>
             </div>
 
