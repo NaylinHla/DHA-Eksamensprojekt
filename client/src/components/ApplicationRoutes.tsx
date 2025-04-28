@@ -28,19 +28,12 @@ export default function ApplicationRoutes() {
     }, [])
     
     return (<>
-        {/*the browser router is defined in main tsx so that i can use useNavigate anywhere*/}
-        <WebsocketConnectionIndicator />
-
-        <NavBar />
-
-        <Routes>
-    
-            <Route element={<AdminDashboard/>} path={DashboardRoute}/>
-            <Route element={<Settings/>} path={SettingsRoute}/>
-            <Route element={<SignIn/>} path={SignInRoute}/>
-
-        </Routes>
+        <NavBar/>
+            <Routes>
+                <Route element={<AdminDashboard/>} path={DashboardRoute}/>
+                <Route element={<Settings/>} path={SettingsRoute}/>
+                <Route element={<SignIn/>} path={SignInRoute}/>
+            </Routes>
         <Dock/>
-
     </>)
 }
