@@ -1,5 +1,13 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
-@plugin "daisyui" {
-    themes: light --default, dark --prefersdark, cupcake;
+@plugin "daisyui/theme" {
+    name:"light";
+    default: true;
+
+    --font-display: "Satoshi", "sans-serif";
+    --color-primary: oklch(0.635 0.169 151.4);
+    --color-background: oklch(0.92 0.015 102.471);
+    --color-btncolor: oklch(0.313 0 89.876);
+    --color-boxcolor: oklch(1 0 89.876);
 }
