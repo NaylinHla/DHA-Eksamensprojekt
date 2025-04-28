@@ -4,8 +4,8 @@ namespace Core.Domain.Entities;
 
 public class UserPlant
 {
-    public Guid UserID { get; set; } = null!;
-    public Guid PlantID { get; set; } = null!;
+    public required Guid UserID { get; set; }
+    public required Guid PlantID { get; set; }
 
     public User User { get; set; }
     public Plant Plant { get; set; }

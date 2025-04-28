@@ -11,6 +11,7 @@ import {useAtom} from "jotai";
 import {JwtAtom} from "../atoms.ts";
 import toast from "react-hot-toast";
 import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
+import NavBar from "./templates/Navbar.tsx";
 
 export default function ApplicationRoutes() {
     
@@ -27,16 +28,12 @@ export default function ApplicationRoutes() {
     }, [])
     
     return (<>
-        {/*the browser router is defined in main tsx so that i can use useNavigate anywhere*/}
-        <WebsocketConnectionIndicator />
-        <Routes>
-    
-            <Route element={<AdminDashboard/>} path={DashboardRoute}/>
-            <Route element={<Settings/>} path={SettingsRoute}/>
-            <Route element={<SignIn/>} path={SignInRoute}/>
-
-        </Routes>
+        <NavBar/>
+            <Routes>
+                <Route element={<AdminDashboard/>} path={DashboardRoute}/>
+                <Route element={<Settings/>} path={SettingsRoute}/>
+                <Route element={<SignIn/>} path={SignInRoute}/>
+            </Routes>
         <Dock/>
-
     </>)
 }
