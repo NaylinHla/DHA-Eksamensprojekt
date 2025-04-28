@@ -91,6 +91,122 @@
         }
       }
     },
+    "/GetSensorDataByDeviceId": {
+      "get": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_GetSensorDataByDeviceId",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetAllSensorHistoryByDeviceIdDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/AdminChangesPreferences": {
+      "post": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_AdminChangesPreferences",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/DeleteData": {
+      "delete": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_DeleteData",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/Subscribe": {
       "post": {
         "tags": [
@@ -209,113 +325,6 @@
           }
         }
       }
-    },
-    "/GetLogs": {
-      "get": {
-        "tags": [
-          "WeatherStation"
-        ],
-        "operationId": "WeatherStation_GetLogs",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Devicelog"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/AdminChangesPreferences": {
-      "post": {
-        "tags": [
-          "WeatherStation"
-        ],
-        "operationId": "WeatherStation_AdminChangesPreferences",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 2
-          }
-        ],
-        "requestBody": {
-          "x-name": "dto",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/DeleteData": {
-      "delete": {
-        "tags": [
-          "WeatherStation"
-        ],
-        "operationId": "WeatherStation_DeleteData",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -351,6 +360,66 @@
           }
         }
       },
+      "GetAllSensorHistoryByDeviceIdDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "sensorHistoryRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SensorHistoryDto"
+            }
+          }
+        }
+      },
+      "SensorHistoryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "format": "double"
+          },
+          "humidity": {
+            "type": "number",
+            "format": "double"
+          },
+          "airPressure": {
+            "type": "number",
+            "format": "double"
+          },
+          "airQuality": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminChangesPreferencesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          }
+        }
+      },
       "ChangeSubscriptionDto": {
         "type": "object",
         "additionalProperties": false,
@@ -374,44 +443,6 @@
             "type": "string"
           },
           "message": {
-            "type": "string"
-          }
-        }
-      },
-      "Devicelog": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceid": {
-            "type": "string"
-          },
-          "value": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "id": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AdminChangesPreferencesDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string"
-          },
-          "interval": {
             "type": "string"
           }
         }
@@ -454,7 +485,7 @@
               "logs": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Devicelog"
+                  "$ref": "#/components/schemas/GetAllSensorHistoryByDeviceIdDto"
                 }
               },
               "eventType": {
@@ -579,8 +610,8 @@
           "ServerSendsErrorMessage",
           "Dashboard",
           "Device",
-          "ChangePreferences",
-          "Log"
+          "SensorData",
+          "ChangePreferences"
         ]
       }
     }

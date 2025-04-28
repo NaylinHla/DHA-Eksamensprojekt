@@ -1,14 +1,16 @@
 ﻿using Application.Models;
+using Application.Models.Dtos.MqttDtos.Respone;
 using Application.Models.Dtos.MqttSubscriptionDto;
 using Application.Models.Dtos.RestDtos;
-using Core.Domain.Entities;
 
 namespace Application.Interfaces;
 
-public interface IWeatherStationService
+public interface IGreenhouseDeviceService
 {
-    List<Devicelog> GetDeviceFeed(JwtClaims client);
-    Task AddToDbAndBroadcast(DeviceLogDto? dto);
+    Task<List<GetAllSensorHistoryByDeviceIdDto>>
+        GetSensorHistoryByDeviceIdAndBroadcast(Guid deviceId, JwtClaims claims);
+
+    Task AddToDbAndBroadcast(DeviceSensorDataDto? dto);
     Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims);
     Task DeleteDataAndBroadcast(JwtClaims jwt);
 }
