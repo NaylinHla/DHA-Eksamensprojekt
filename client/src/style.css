@@ -7,7 +7,11 @@
 
     --font-display: "Satoshi", "sans-serif";
     --color-primary: oklch(0.635 0.169 151.4);
+    --color-primaryhover: oklch(0.595 0.157 151.762);
     --color-background: oklch(0.92 0.015 102.471);
     --color-btncolor: oklch(0.313 0 89.876);
     --color-boxcolor: oklch(1 0 89.876);
+
+    --color-textprimary: oklch(0 0 0);
+    --color-textsecondary: oklch(1 0 89.876);
 }

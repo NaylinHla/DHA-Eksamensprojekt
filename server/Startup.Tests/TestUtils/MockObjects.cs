@@ -22,7 +22,7 @@ public static class MockObjects
             UserSettings = new UserSettings(), // Assuming a default constructor exists
             UserPlants = new List<UserPlant>(), // Empty list
             Alerts = new List<Alert>(), // Empty list
-            SensorHistories = new List<SensorHistory>() // Empty list
+            UserDevices = new List<UserDevice>() // Empty list
         };
     }
 }

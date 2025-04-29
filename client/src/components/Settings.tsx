@@ -1,9 +1,9 @@
 import {AdminChangesPreferencesDto} from "../generated-client.ts";
-import {weatherStationClient} from "../apiControllerClients.ts";
+import {greenhouseDeviceClient} from "../apiControllerClients.ts";
 import toast from "react-hot-toast";
 import {useState} from "react";
 import {useAtom} from "jotai";
-import {JwtAtom} from "../atoms.ts";
+import {JwtAtom} from "../atoms/atoms.ts";
 
 export default function Settings() {
     
@@ -30,7 +30,7 @@ export default function Settings() {
                     <img className="w-32"
                          src={"https://joy-it.net/files/files/Produkte/SBC-NodeMCU-ESP32/SBC-NodeMCU-ESP32-01.png"}/>
                     <button className="btn" onClick={() => {
-                        weatherStationClient.adminChangesPreferences(updateState, localStorage.getItem('jwt')!).then(resp => {
+                        greenhouseDeviceClient.adminChangesPreferences(updateState, localStorage.getItem('jwt')!).then(resp => {
                             toast('API sent preference change to edge devices')
                         }).catch(e => {
                             toast.error(JSON.parse(e))

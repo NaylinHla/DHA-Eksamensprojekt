@@ -17,11 +17,11 @@ public partial class MyDbContext : DbContext
     public virtual DbSet<UserPlant> UserPlants { get; set; }
     public virtual DbSet<Alert> Alerts { get; set; }
     public virtual DbSet<SensorHistory> SensorHistories { get; set; }
-    public virtual DbSet<Devicelog> Devicelogs { get; set; }
+    public virtual DbSet<UserDevice> UserDevices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("botanica");
+        modelBuilder.HasDefaultSchema("meetyourplants");
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -137,37 +137,46 @@ public partial class MyDbContext : DbContext
 
         modelBuilder.Entity<SensorHistory>(entity =>
         {
-            entity.HasKey(e => new { e.HistoryId, e.Time });
+            entity.HasKey(e => e.SensorHistoryId);
 
             entity.ToTable("SensorHistory");
-
-            entity.Property(e => e.HistoryId).HasColumnName("HistoryId");
+            
+            entity.Property(e => e.SensorHistoryId).HasColumnName("SensorHistoryId");
             entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
             entity.Property(e => e.Temperature).HasColumnName("Temperature");
             entity.Property(e => e.Humidity).HasColumnName("Humidity");
             entity.Property(e => e.AirPressure).HasColumnName("AirPressure");
             entity.Property(e => e.AirQuality).HasColumnName("AirQuality");
             entity.Property(e => e.Time).HasColumnName("Time");
-
-            entity.HasOne(e => e.User)
-                .WithMany(u => u.SensorHistories)
-                .HasForeignKey(e => e.HistoryId)
+            
+            entity.HasOne(e => e.UserDevice)
+                .WithMany(ud => ud.SensorHistories)
+                .HasForeignKey(e => e.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-        
-        modelBuilder.Entity<Devicelog>(entity =>
+
+        modelBuilder.Entity<UserDevice>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("devicelog_pkey");
+            entity.HasKey(e => e.DeviceId);
 
-            entity.ToTable("devicelog", "weatherstation");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Deviceid).HasColumnName("deviceid");
-            entity.Property(e => e.Timestamp).HasColumnName("timestamp");
-            entity.Property(e => e.Unit).HasColumnName("unit");
-            entity.Property(e => e.Value).HasColumnName("value");
+            entity.ToTable("UserDevice");
+            
+            entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.DeviceName).HasColumnName("DeviceName");
+            entity.Property(e => e.DeviceDescription).HasColumnName("DeviceDescription");
+            entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
+            
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.UserDevices)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasMany(e => e.SensorHistories)
+                .WithOne(sh => sh.UserDevice)
+                .HasForeignKey(sh => sh.DeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
-
         OnModelCreatingPartial(modelBuilder);
     }
 

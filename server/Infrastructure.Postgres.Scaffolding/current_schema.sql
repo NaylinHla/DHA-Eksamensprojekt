@@ -1,0 +1,118 @@
+-- This schema is generated based on the current DBContext. Please check the class Seeder to see.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'meetyourplants') THEN
+        CREATE SCHEMA meetyourplants;
+    END IF;
+END $EF$;
+
+
+CREATE TABLE meetyourplants."Plant" (
+    "PlantID" uuid NOT NULL,
+    "Planted" timestamp with time zone,
+    "PlantName" text NOT NULL,
+    "PlantType" text NOT NULL,
+    "PlantNotes" text NOT NULL,
+    "LastWatered" timestamp with time zone,
+    "WaterEvery" integer,
+    "IsDead" boolean NOT NULL,
+    CONSTRAINT "PK_Plant" PRIMARY KEY ("PlantID")
+);
+
+
+CREATE TABLE meetyourplants."User" (
+    "UserId" uuid NOT NULL,
+    "Hash" text NOT NULL,
+    "Salt" text NOT NULL,
+    "FirstName" text NOT NULL,
+    "LastName" text NOT NULL,
+    "Email" text NOT NULL,
+    "Birthday" timestamp with time zone,
+    "Country" text NOT NULL,
+    "Role" text NOT NULL,
+    CONSTRAINT "PK_User" PRIMARY KEY ("UserId")
+);
+
+
+CREATE TABLE meetyourplants."Alert" (
+    "AlertID" uuid NOT NULL,
+    "AlertUserId" uuid NOT NULL,
+    "AlertName" text NOT NULL,
+    "AlertDesc" text NOT NULL,
+    "AlertTime" timestamp with time zone NOT NULL,
+    "AlertPlant" uuid,
+    CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertID"),
+    CONSTRAINT "FK_Alert_Plant_AlertPlant" FOREIGN KEY ("AlertPlant") REFERENCES meetyourplants."Plant" ("PlantID") ON DELETE SET NULL,
+    CONSTRAINT "FK_Alert_User_AlertUserId" FOREIGN KEY ("AlertUserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE TABLE meetyourplants."UserDevice" (
+    "DeviceId" uuid NOT NULL,
+    "UserId" uuid NOT NULL,
+    "DeviceName" text NOT NULL,
+    "DeviceDescription" text NOT NULL,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    CONSTRAINT "PK_UserDevice" PRIMARY KEY ("DeviceId"),
+    CONSTRAINT "FK_UserDevice_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE TABLE meetyourplants."UserPlant" (
+    "UserID" uuid NOT NULL,
+    "PlantID" uuid NOT NULL,
+    CONSTRAINT "PK_UserPlant" PRIMARY KEY ("UserID", "PlantID"),
+    CONSTRAINT "FK_UserPlant_Plant_PlantID" FOREIGN KEY ("PlantID") REFERENCES meetyourplants."Plant" ("PlantID") ON DELETE CASCADE,
+    CONSTRAINT "FK_UserPlant_User_UserID" FOREIGN KEY ("UserID") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE TABLE meetyourplants."UserSettings" (
+    "UserId" uuid NOT NULL,
+    "Celsius" boolean NOT NULL,
+    "DarkTheme" boolean NOT NULL,
+    "ConfirmDialog" boolean NOT NULL,
+    "SecretMode" boolean NOT NULL,
+    "WaitTime" text NOT NULL,
+    CONSTRAINT "PK_UserSettings" PRIMARY KEY ("UserId"),
+    CONSTRAINT "FK_UserSettings_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE TABLE meetyourplants."Weather" (
+    "UserId" uuid NOT NULL,
+    "City" text NOT NULL,
+    "Country" text NOT NULL,
+    CONSTRAINT "PK_Weather" PRIMARY KEY ("UserId"),
+    CONSTRAINT "FK_Weather_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE TABLE meetyourplants."SensorHistory" (
+    "SensorHistoryId" uuid NOT NULL,
+    "DeviceId" uuid NOT NULL,
+    "Temperature" double precision NOT NULL,
+    "Humidity" double precision NOT NULL,
+    "AirPressure" double precision NOT NULL,
+    "AirQuality" integer NOT NULL,
+    "Time" timestamp with time zone NOT NULL,
+    CONSTRAINT "PK_SensorHistory" PRIMARY KEY ("SensorHistoryId"),
+    CONSTRAINT "FK_SensorHistory_UserDevice_DeviceId" FOREIGN KEY ("DeviceId") REFERENCES meetyourplants."UserDevice" ("DeviceId") ON DELETE CASCADE
+);
+
+
+CREATE INDEX "IX_Alert_AlertPlant" ON meetyourplants."Alert" ("AlertPlant");
+
+
+CREATE INDEX "IX_Alert_AlertUserId" ON meetyourplants."Alert" ("AlertUserId");
+
+
+CREATE INDEX "IX_SensorHistory_DeviceId" ON meetyourplants."SensorHistory" ("DeviceId");
+
+
+CREATE INDEX "IX_UserDevice_UserId" ON meetyourplants."UserDevice" ("UserId");
+
+
+CREATE INDEX "IX_UserPlant_PlantID" ON meetyourplants."UserPlant" ("PlantID");
+
+
