@@ -17,7 +17,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthRequestDto"
+                "$ref": "#/components/schemas/AuthLoginDto"
               }
             }
           },
@@ -49,7 +49,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthRequestDto"
+                "$ref": "#/components/schemas/AuthRegisterDto"
               }
             }
           },
@@ -342,7 +342,7 @@
           }
         }
       },
-      "AuthRequestDto": {
+      "AuthLoginDto": {
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -353,6 +353,45 @@
           "email": {
             "type": "string",
             "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "minLength": 4
+          }
+        }
+      },
+      "AuthRegisterDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "birthday",
+          "country",
+          "password"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1
           },
           "password": {
             "type": "string",
