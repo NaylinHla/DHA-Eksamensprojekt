@@ -56,6 +56,7 @@ public class Program
             conf.DocumentProcessors.Add(new AddAllDerivedTypesProcessor());
             conf.DocumentProcessors.Add(new AddStringConstantsProcessor());
         });
+
         services.AddSingleton<IProxyConfig, ProxyConfig>();
     }
 
@@ -70,27 +71,29 @@ public class Program
                 await scope.ServiceProvider.GetRequiredService<Seeder>().Seed();
         }
 
-
         app.Urls.Clear();
         app.Urls.Add($"http://0.0.0.0:{appOptions.REST_PORT}");
         app.Services.GetRequiredService<IProxyConfig>()
             .StartProxyServer(appOptions.PORT, appOptions.REST_PORT, appOptions.WS_PORT);
 
         app.ConfigureRestApi();
+        
         if (!string.IsNullOrEmpty(appOptions.MQTT_BROKER_HOST))
             await app.ConfigureMqtt();
         else
             Console.WriteLine("Skipping MQTT service configuration");
-        await app.ConfigureWebsocketApi(appOptions.WS_PORT);
 
+        await app.ConfigureWebsocketApi(appOptions.WS_PORT);
 
         app.MapGet("Acceptance", () => "Accepted");
 
+        // === Added Swagger and OpenAPI serving ===
         app.UseOpenApi(conf => { conf.Path = "openapi/v1.json"; });
 
         var document = await app.Services.GetRequiredService<IOpenApiDocumentGenerator>().GenerateAsync("v1");
         var json = document.ToJson();
         await File.WriteAllTextAsync("openapi.json", json);
+
         app.GenerateTypeScriptClient("/../../client/src/generated-client.ts").GetAwaiter().GetResult();
         app.MapScalarApiReference();
     }

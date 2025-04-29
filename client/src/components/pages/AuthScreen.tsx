@@ -1,36 +1,88 @@
 import { useState } from "react";
 import logo from "../../assets/Favicon/favicon.svg";
+import { Api, AuthLoginDto, AuthRegisterDto } from "../../api/api.ts";
 
 type AuthScreenProps = {
     onLogin?: () => void;
 };
 
+const api = new Api({ baseUrl: "http://localhost:5000" });
+
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
-    // idle = main front page - login = login form is opened - register = register form is opened
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
     const [loggedIn, setLoggedIn] = useState(false);
 
-    // --- ANIMATION STUFF ---
     const lift = {
         idle: "translate-y-0",
         login: "-translate-y-10",
         register: "-translate-y-44",
     } as const;
+
     const mobileLogoLift =
-        mode === "register" ? "-translate-y-32" : mode === "login" ? "-translate-y-12" : "translate-y-0";
+        mode === "register"
+            ? "-translate-y-32"
+            : mode === "login"
+                ? "-translate-y-12"
+                : "translate-y-0";
+
     const reset = () => setMode("idle");
+
     const fade = (visible: boolean) =>
-        visible
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none";
+        visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none";
 
-    // ------------------------
-
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLoggedIn(true);
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
 
-        onLogin?.();
+        try {
+            const loginDto: AuthLoginDto = { email, password };
+            const response = await api.api.authLogin(loginDto);
+            const { jwt } = response.data;
+            localStorage.setItem("jwt", jwt);
+            setLoggedIn(true);
+            onLogin?.();
+        } catch (error) {
+            console.error("Login failed", error);
+            alert("Login failed. Please check your credentials.");
+        }
+    };
+
+    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+
+        const firstName = formData.get("firstName") as string;
+        const lastName = formData.get("lastName") as string;
+        const email = formData.get("email") as string;
+        const birthday = formData.get("birthday") as string;
+        const country = formData.get("country") as string;
+        const password = formData.get("password") as string;
+        const confirmPassword = formData.get("confirmPassword") as string;
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match!");
+            return;
+        }
+
+        try {
+            const registerDto: AuthRegisterDto = {
+                firstName,
+                lastName,
+                email,
+                birthday,
+                country,
+                password,
+            };
+
+            await api.api.authRegister(registerDto);
+            alert("Registered successfully! You can now log in.");
+            reset();
+        } catch (error) {
+            console.error("Registration failed", error);
+            alert("Registration failed. Try again.");
+        }
     };
 
     return (
@@ -78,26 +130,27 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         >
                             Register
                         </button>
-                        <span className="mt-1 h-px w-32 bg-base-100"/>
+                        <span className="mt-1 h-px w-32 bg-base-100" />
                     </div>
 
                     {/* Login Form */}
                     <form
                         onSubmit={handleLogin}
-                        className={
-                            `absolute top-0 w-full space-y-2 transition-opacity duration-300 ` +
-                            fade(mode === "login")
-                        }
+                        className={`absolute top-0 w-full space-y-2 transition-opacity duration-300 ${fade(
+                            mode === "login",
+                        )}`}
                     >
-                    <label className="label py-0 text-white">Email</label>
+                        <label className="label py-0 text-white">Email</label>
                         <input
-                            type="text"
+                            name="email"
+                            type="email"
                             placeholder="Email"
                             className="input input-bordered input-sm w-full text-black"
                             required
-                        /> {/* change type to email later when not in testing, this is just to "login" faster */}
+                        />
                         <label className="label py-0 text-white">Password</label>
                         <input
+                            name="password"
                             type="password"
                             placeholder="Password"
                             className="input input-bordered input-sm w-full text-black"
@@ -111,7 +164,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                     {/* Register Form */}
                     <form
-                        onSubmit={(e) => e.preventDefault()}
+                        onSubmit={handleRegister}
                         className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${fade(
                             mode === "register",
                         )}`}
@@ -120,6 +173,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             <div className="flex-1">
                                 <label className="label py-0 text-white">First Name</label>
                                 <input
+                                    name="firstName"
                                     placeholder="First Name"
                                     className="input input-bordered input-sm w-full text-black"
                                     required
@@ -128,6 +182,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Last Name</label>
                                 <input
+                                    name="lastName"
                                     placeholder="Last Name"
                                     className="input input-bordered input-sm w-full text-black"
                                     required
@@ -137,33 +192,37 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                         <label className="label py-0 text-white">Email</label>
                         <input
+                            name="email"
                             type="email"
                             placeholder="Email"
                             className="input input-bordered input-sm w-full text-black"
-                            required/>
+                            required
+                        />
 
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Birthday</label>
                                 <input
+                                    name="birthday"
                                     type="date"
                                     className="input input-bordered input-sm w-full text-black"
-                                    required/>
+                                    required
+                                />
                             </div>
-                                <div className="flex-1">
-                                    <label className="label py-0 text-white">Country</label>
-                                    <select className="select select-bordered select-sm w-full text-black" required>
-                                        <option disabled selected>
-                                            Choose...
-                                        </option>
-                                        <option>Country 1</option>
-                                        <option>Country 2</option>
-                                    </select>
-                                </div>
+                            <div className="flex-1">
+                                <label className="label py-0 text-white">Country</label>
+                                <input
+                                    name="country"
+                                    placeholder="Country"
+                                    className="input input-bordered input-sm w-full text-black"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <label className="label py-0 text-white">Password</label>
                         <input
+                            name="password"
                             type="password"
                             placeholder="Password"
                             className="input input-bordered input-sm w-full text-black"
@@ -172,6 +231,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                         <label className="label py-0 text-white">Confirm password</label>
                         <input
+                            name="confirmPassword"
                             type="password"
                             placeholder="Confirm Password"
                             className="input input-bordered input-sm w-full text-black"
@@ -190,7 +250,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </div>
             </section>
 
-            {/* Fake logged‑in notice */}
+            {/* Logged-in Notice */}
             {loggedIn && (
                 <p className="absolute bottom-4 text-xs italic opacity-60">
                     You are now logged in (placeholder)
