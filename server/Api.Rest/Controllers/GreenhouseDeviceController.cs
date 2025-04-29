@@ -1,6 +1,6 @@
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Websocket;
-using Application.Models.Dtos.MqttDtos.Respone;
+using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos;
 using Microsoft.AspNetCore.Mvc;
 

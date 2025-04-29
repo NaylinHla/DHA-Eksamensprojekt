@@ -1,4 +1,4 @@
-using Application.Models.Dtos.MqttDtos.Respone;
+using Application.Models.Dtos.MqttDtos.Response;
 using Core.Domain.Entities;
 
 namespace Application.Interfaces.Infrastructure.Postgres

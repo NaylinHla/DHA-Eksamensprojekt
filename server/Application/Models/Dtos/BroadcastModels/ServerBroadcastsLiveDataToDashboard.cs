@@ -1,4 +1,4 @@
-using Application.Models.Dtos.MqttDtos.Respone;
+using Application.Models.Dtos.MqttDtos.Response;
 
 namespace Application.Models.Dtos.BroadcastModels;
 

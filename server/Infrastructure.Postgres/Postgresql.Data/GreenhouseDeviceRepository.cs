@@ -1,5 +1,5 @@
 using Application.Interfaces.Infrastructure.Postgres;
-using Application.Models.Dtos.MqttDtos.Respone;
+using Application.Models.Dtos.MqttDtos.Response;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;

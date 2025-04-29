@@ -1,4 +1,4 @@
-namespace Application.Models.Dtos.MqttDtos.Respone
+namespace Application.Models.Dtos.MqttDtos.Response
 {
     public class GetAllSensorHistoryByDeviceIdDto
     {
