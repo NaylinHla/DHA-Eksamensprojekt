@@ -18,7 +18,7 @@ namespace Application.Services;
 
 public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRepository repository) : ISecurityService
 {
-    public AuthResponseDto Login(AuthRequestDto dto)
+    public AuthResponseDto Login(AuthLoginDto dto)
     {
         var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
         VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
@@ -36,7 +36,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         };
     }
 
-    public AuthResponseDto Register(AuthRequestDto dto)
+    public AuthResponseDto Register(AuthRegisterDto dto)
     {
         var player = repository.GetUserOrNull(dto.Email);
         if (player is not null) throw new ValidationException("User already exists");
@@ -45,7 +45,11 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         var insertedPlayer = repository.AddUser(new User
         {
             UserId = Guid.NewGuid(),
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Email = dto.Email,
+            Birthday = dto.Birthday,
+            Country = dto.Country,
             Role = Constants.UserRole,
             Salt = salt,
             Hash = hash

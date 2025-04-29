@@ -21,14 +21,14 @@ public class AuthController(ISecurityService securityService) : ControllerBase
 
     [HttpPost]
     [Route(LoginRoute)]
-    public ActionResult<AuthResponseDto> Login([FromBody] AuthRequestDto dto)
+    public ActionResult<AuthResponseDto> Login([FromBody] AuthLoginDto dto)
     {
         return Ok(securityService.Login(dto));
     }
 
     [Route(RegisterRoute)]
     [HttpPost]
-    public ActionResult<AuthResponseDto> Register([FromBody] AuthRequestDto dto)
+    public ActionResult<AuthResponseDto> Register([FromBody] AuthLoginDto dto)
     {
         return Ok(securityService.Register(dto));
     }
