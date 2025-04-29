@@ -48,7 +48,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            Birthday = dto.Birthday,
+            Birthday = DateTime.SpecifyKind(dto.Birthday, DateTimeKind.Utc), // Force Birthday to UTC
             Country = dto.Country,
             Role = Constants.UserRole,
             Salt = salt,
