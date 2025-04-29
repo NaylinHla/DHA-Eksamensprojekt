@@ -54,7 +54,7 @@ public class MqttTriggeredTests
             Value = 20
         };
         //Act
-        await _scopedServiceProvider.GetRequiredService<IWeatherStationService>()
+        await _scopedServiceProvider.GetRequiredService<IGreenhouseDeviceService>()
             .AddToDbAndBroadcast(testDeviceLogObject);
         await Task.Delay(1000);
 

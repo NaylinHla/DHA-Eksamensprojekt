@@ -20,7 +20,7 @@ public static class Extensions
         });
 
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IWeatherStationRepository, WeatherStationRepository>();
+        services.AddScoped<IGreenhouseDeviceRepository, GreenhouseDeviceRepository>();
         services.AddScoped<Seeder>();
 
         return services;

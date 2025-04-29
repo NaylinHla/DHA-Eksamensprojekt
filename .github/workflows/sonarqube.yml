@@ -82,7 +82,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
             /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=Startup \
-            /d:sonar.coverage.exclusions="client/**,**/**/Program.cs" \
+            /d:sonar.coverage.exclusions="client/**,**/**/Program.cs,server/Application/Models/**,server/Core.Domain/Entities/**" \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 

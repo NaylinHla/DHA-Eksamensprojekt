@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import {randomUid} from "../components/App.tsx";
 import {useWsClient} from "ws-request-hook";
 import {useAtom} from "jotai";
-import {JwtAtom} from "../atoms.ts";
+import {JwtAtom} from "../atoms/atoms.ts";
 import {subscriptionClient} from "../apiControllerClients.ts";
 
 export default function useSubscribeToTopics() {

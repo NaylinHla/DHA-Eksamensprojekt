@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Core.Domain.Entities;
@@ -18,5 +18,5 @@ public class User
     public UserSettings UserSettings { get; set; }
     public ICollection<UserPlant> UserPlants { get; set; } = new List<UserPlant>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
-    public ICollection<SensorHistory> SensorHistories { get; set; } = new List<SensorHistory>();
+    public ICollection<UserDevice> UserDevices { get; set; }
 }
