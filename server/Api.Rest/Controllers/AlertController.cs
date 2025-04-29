@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Application.Models;
+using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Api.Rest.Extensions;
@@ -37,11 +38,11 @@ public class AlertController : ControllerBase
     [HttpPost]
     [Route(CreateAlertRoute)]
     public async Task<ActionResult<AlertResponseDto>> CreateAlert(
-        [FromBody] CreateAlertDto dto,
+        [FromBody] AlertCreate dto,
         [FromHeader] string authorization)
     {
-        var claims = securityService.VerifyJwtOrThrow(authorization);
-        var alert = await alertService.CreateAlertAsync(
+        var claims = _securityService.VerifyJwtOrThrow(authorization);
+        var alert = await _alertService.CreateAlertAsync(
             Guid.Parse(claims.Id),
             dto.AlertName,
             dto.AlertDesc,

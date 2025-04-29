@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.Models.Dtos.RestDtos;
 
-public class CreateAlertDto
+public class AlertCreate
 {
     [Required]
     public string AlertName { get; set; }

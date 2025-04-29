@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { JwtAtom } from "../atoms";
 
-export interface CreateAlertDto {
+export interface AlertCreate {
     alertName: string;
     alertDesc: string;
     alertPlant?: string;
@@ -21,7 +21,7 @@ export default function useCreateAlert() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createAlert = async (dto: CreateAlertDto): Promise<AlertResponseDto | null> => {
+    const createAlert = async (dto: AlertCreate): Promise<AlertResponseDto | null> => {
         setLoading(true);
         setError(null);
 
