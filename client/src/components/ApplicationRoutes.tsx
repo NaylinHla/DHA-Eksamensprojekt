@@ -1,4 +1,4 @@
-import {Route, Routes, useNavigate} from "react-router";
+import {Route, Routes, useNavigate, useLocation} from "react-router";
 import AdminDashboard from "../pages/History/HistoryPage.tsx";
 import useInitializeData from "../hooks/useInitializeData.tsx";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
@@ -10,12 +10,15 @@ import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
+import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
+import AuthScreen from "./pages/AuthScreen.tsx";
 import {HistoryPage} from "../pages";
 import {NavBar} from "./index";
 
 export default function ApplicationRoutes() {
     
     const navigate = useNavigate();
+    const location = useLocation();
     const [jwt] = useAtom(JwtAtom);
     useInitializeData();
     useSubscribeToTopics();
@@ -26,16 +29,24 @@ export default function ApplicationRoutes() {
             toast("Please sign in to continue")
         }
     }, [])
+
+    const isAuthScreen = location.pathname === SignInRoute
     
     return (<>
-        <NavBar/>
+        {!isAuthScreen && <NavBar/>}
             <Routes>
                 <Route element={<HistoryPage/>} path={"/history"}/>
 
                 <Route element={<AdminDashboard/>} path={DashboardRoute}/>
                 <Route element={<Settings/>} path={SettingsRoute}/>
-                <Route element={<SignIn/>} path={SignInRoute}/>
+
+                <Route
+                    path={SignInRoute}
+                    element={
+                        <AuthScreen onLogin={() => navigate(DashboardRoute)} />
+                    }
+                />
             </Routes>
-        <Dock/>
+        {!isAuthScreen && <Dock />}
     </>)
 }
