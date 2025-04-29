@@ -5,12 +5,11 @@ import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
 import useSubscribeToTopics from "../hooks/useSubscribeToTopics.tsx";
 import Settings from "./Settings.tsx";
 import Dock from "./Dock.tsx";
-import SignIn from "./SignIn.tsx";
+import {AlertPage} from "../pages"
 import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
-import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
 import AuthScreen from "./pages/AuthScreen.tsx";
 import {HistoryPage} from "../pages";
 import {NavBar} from "./index";
@@ -36,16 +35,10 @@ export default function ApplicationRoutes() {
         {!isAuthScreen && <NavBar/>}
             <Routes>
                 <Route element={<HistoryPage/>} path={"/history"}/>
-
                 <Route element={<AdminDashboard/>} path={DashboardRoute}/>
                 <Route element={<Settings/>} path={SettingsRoute}/>
-
-                <Route
-                    path={SignInRoute}
-                    element={
-                        <AuthScreen onLogin={() => navigate(DashboardRoute)} />
-                    }
-                />
+                <Route element={<AlertPage/>} path={"/Alerts"}></Route>
+                <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)} />}/>
             </Routes>
         {!isAuthScreen && <Dock />}
     </>)
