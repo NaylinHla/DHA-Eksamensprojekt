@@ -9,6 +9,91 @@ import { BaseDto } from 'ws-request-hook';
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
+export class AlertClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getAlerts(authorization: string | undefined, year: number | null | undefined): Promise<Alert[]> {
+        let url_ = this.baseUrl + "/api/Alert/GetAlerts?";
+        if (year !== undefined && year !== null)
+            url_ += "year=" + encodeURIComponent("" + year) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAlerts(_response);
+        });
+    }
+
+    protected processGetAlerts(response: Response): Promise<Alert[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Alert[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<Alert[]>(null as any);
+    }
+
+    createAlert(dto: AlertCreate, authorization: string | undefined): Promise<AlertResponseDto> {
+        let url_ = this.baseUrl + "/api/Alert/CreateAlert";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateAlert(_response);
+        });
+    }
+
+    protected processCreateAlert(response: Response): Promise<AlertResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AlertResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AlertResponseDto>(null as any);
+    }
+}
+
 export class AuthClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -451,52 +536,15 @@ export class UserClient {
     }
 }
 
-export interface AuthResponseDto {
-    jwt: string;
-}
-
-export interface AuthLoginDto {
-    email: string;
-    password: string;
-}
-
-export interface AuthRegisterDto {
-    firstName: string;
-    lastName: string;
-    email: string;
-    birthday: Date;
-    country: string;
-    password: string;
-}
-
-export interface GetAllSensorHistoryByDeviceIdDto {
-    deviceId?: string;
-    deviceName?: string;
-    sensorHistoryRecords?: SensorHistoryDto[];
-}
-
-export interface SensorHistoryDto {
-    temperature?: number;
-    humidity?: number;
-    airPressure?: number;
-    airQuality?: number;
-    time?: Date;
-}
-
-export interface AdminChangesPreferencesDto {
-    deviceId?: string;
-    unit?: string;
-    interval?: string;
-}
-
-export interface ChangeSubscriptionDto {
-    clientId?: string;
-    topicIds?: string[];
-}
-
-export interface ExampleBroadcastDto {
-    eventType?: string;
-    message?: string;
+export interface Alert {
+    alertID?: string;
+    alertUserId?: string;
+    alertName?: string;
+    alertDesc?: string;
+    alertTime?: Date;
+    alertPlant?: string | undefined;
+    user?: User;
+    plant?: Plant;
 }
 
 export interface User {
@@ -553,17 +601,6 @@ export interface Plant {
     alerts?: Alert[];
 }
 
-export interface Alert {
-    alertID?: string;
-    alertUserId?: string;
-    alertName?: string;
-    alertDesc?: string;
-    alertTime?: Date;
-    alertPlant?: string | undefined;
-    user?: User;
-    plant?: Plant;
-}
-
 export interface UserDevice {
     deviceId?: string;
     userId?: string;
@@ -585,8 +622,69 @@ export interface SensorHistory {
     userDevice?: UserDevice;
 }
 
+export interface AlertResponseDto {
+    alertID?: string;
+    alertName?: string;
+    alertDesc?: string;
+    alertTime?: Date;
+    alertPlant?: string | undefined;
+}
+
+export interface AlertCreate {
+    alertName: string;
+    alertDesc: string;
+    alertPlant?: string | undefined;
+}
+
+export interface AuthResponseDto {
+    jwt: string;
+}
+
+export interface AuthLoginDto {
+    email: string;
+    password: string;
+}
+
+export interface AuthRegisterDto {
+    firstName: string;
+    lastName: string;
+    email: string;
+    birthday: Date;
+    country: string;
+    password: string;
+}
+
+export interface GetAllSensorHistoryByDeviceIdDto {
+    deviceId?: string;
+    deviceName?: string;
+    sensorHistoryRecords?: SensorHistoryDto[];
+}
+
+export interface SensorHistoryDto {
+    temperature?: number;
+    humidity?: number;
+    airPressure?: number;
+    airQuality?: number;
+    time?: Date;
+}
+
+export interface AdminChangesPreferencesDto {
+    deviceId?: string;
+    unit?: string;
+    interval?: string;
+}
+
+export interface ChangeSubscriptionDto {
+    clientId?: string;
+    topicIds?: string[];
+}
+
+export interface ExampleBroadcastDto {
+    eventType?: string;
+    message?: string;
+}
+
 export interface DeleteUserDto {
-    userId?: string;
     email: string;
 }
 

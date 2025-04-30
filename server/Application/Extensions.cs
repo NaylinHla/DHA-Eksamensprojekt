@@ -11,6 +11,7 @@ public static class Extensions
         services.AddScoped<ISecurityService, SecurityService>();
         services.AddScoped<IGreenhouseDeviceService, GreenhouseDeviceService>();
         services.AddScoped<IWebsocketSubscriptionService, WebsocketSubscriptionService>();
+        services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<IUserService, UserService>();
         return services;
     }

@@ -6,6 +6,91 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/Alert/GetAlerts": {
+      "get": {
+        "tags": [
+          "Alert"
+        ],
+        "operationId": "Alert_GetAlerts",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Alert/CreateAlert": {
+      "post": {
+        "tags": [
+          "Alert"
+        ],
+        "operationId": "Alert_CreateAlert",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertCreate"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/Login": {
       "post": {
         "tags": [
@@ -371,160 +456,38 @@
   },
   "components": {
     "schemas": {
-      "AuthResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "jwt"
-        ],
-        "properties": {
-          "jwt": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
-      },
-      "AuthLoginDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "email",
-          "password"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "minLength": 3
-          },
-          "password": {
-            "type": "string",
-            "minLength": 4
-          }
-        }
-      },
-      "AuthRegisterDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "firstName",
-          "lastName",
-          "email",
-          "birthday",
-          "country",
-          "password"
-        ],
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "minLength": 2
-          },
-          "lastName": {
-            "type": "string",
-            "minLength": 2
-          },
-          "email": {
-            "type": "string",
-            "minLength": 3
-          },
-          "birthday": {
-            "type": "string",
-            "format": "date-time",
-            "minLength": 1
-          },
-          "country": {
-            "type": "string",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "minLength": 4
-          }
-        }
-      },
-      "GetAllSensorHistoryByDeviceIdDto": {
+      "Alert": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceId": {
+          "alertID": {
             "type": "string",
             "format": "guid"
           },
-          "deviceName": {
+          "alertUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "alertName": {
             "type": "string"
           },
-          "sensorHistoryRecords": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SensorHistoryDto"
-            }
-          }
-        }
-      },
-      "SensorHistoryDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "temperature": {
-            "type": "number",
-            "format": "double"
+          "alertDesc": {
+            "type": "string"
           },
-          "humidity": {
-            "type": "number",
-            "format": "double"
-          },
-          "airPressure": {
-            "type": "number",
-            "format": "double"
-          },
-          "airQuality": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "time": {
+          "alertTime": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "AdminChangesPreferencesDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "string"
           },
-          "unit": {
-            "type": "string"
+          "alertPlant": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
-          "interval": {
-            "type": "string"
-          }
-        }
-      },
-      "ChangeSubscriptionDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "clientId": {
-            "type": "string"
+          "user": {
+            "$ref": "#/components/schemas/User"
           },
-          "topicIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "ExampleBroadcastDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "eventType": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
+          "plant": {
+            "$ref": "#/components/schemas/Plant"
           }
         }
       },
@@ -704,41 +667,6 @@
           }
         }
       },
-      "Alert": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "alertID": {
-            "type": "string",
-            "format": "guid"
-          },
-          "alertUserId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "alertName": {
-            "type": "string"
-          },
-          "alertDesc": {
-            "type": "string"
-          },
-          "alertTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "alertPlant": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          },
-          "plant": {
-            "$ref": "#/components/schemas/Plant"
-          }
-        }
-      },
       "UserDevice": {
         "type": "object",
         "additionalProperties": false,
@@ -809,6 +737,211 @@
           }
         }
       },
+      "AlertResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "alertID": {
+            "type": "string",
+            "format": "guid"
+          },
+          "alertName": {
+            "type": "string"
+          },
+          "alertDesc": {
+            "type": "string"
+          },
+          "alertTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "alertPlant": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "AlertCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "alertName",
+          "alertDesc"
+        ],
+        "properties": {
+          "alertName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "alertDesc": {
+            "type": "string",
+            "minLength": 1
+          },
+          "alertPlant": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "jwt"
+        ],
+        "properties": {
+          "jwt": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "AuthLoginDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "minLength": 4
+          }
+        }
+      },
+      "AuthRegisterDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "birthday",
+          "country",
+          "password"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 4
+          }
+        }
+      },
+      "GetAllSensorHistoryByDeviceIdDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "sensorHistoryRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SensorHistoryDto"
+            }
+          }
+        }
+      },
+      "SensorHistoryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "format": "double"
+          },
+          "humidity": {
+            "type": "number",
+            "format": "double"
+          },
+          "airPressure": {
+            "type": "number",
+            "format": "double"
+          },
+          "airQuality": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminChangesPreferencesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          }
+        }
+      },
+      "ChangeSubscriptionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "topicIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ExampleBroadcastDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "eventType": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "DeleteUserDto": {
         "type": "object",
         "additionalProperties": false,
@@ -816,9 +949,6 @@
           "email"
         ],
         "properties": {
-          "userId": {
-            "type": "string"
-          },
           "email": {
             "type": "string",
             "format": "email",
