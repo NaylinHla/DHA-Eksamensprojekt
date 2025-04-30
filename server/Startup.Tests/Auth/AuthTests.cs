@@ -75,8 +75,8 @@ public class AuthTests : WebApplicationFactory<Program>
     [Test]
     public async Task Register_With_Short_Pass_Returns_Bad_Request()
     {
-        var response = await _httpClient.PostAsJsonAsync<AuthRequestDto>(
-            AuthController.RegisterRoute, new AuthRequestDto
+        var response = await _httpClient.PostAsJsonAsync<AuthLoginDto>(
+            AuthController.RegisterRoute, new AuthLoginDto
             {
                 Email = "bob@bob.dk",
                 Password = "a"
@@ -127,7 +127,7 @@ public class AuthTests : WebApplicationFactory<Program>
     public async Task Login_For_Non_Existing_User_Is_Unauthorized()
     {
         var response = await CreateClient().PostAsJsonAsync(AuthController.LoginRoute,
-            new AuthRequestDto { Email = "bob@bob.dk", Password = "password" });
+            new AuthLoginDto { Email = "bob@bob.dk", Password = "password" });
         if (HttpStatusCode.BadRequest != response.StatusCode)
             throw new Exception("Expected BadRequest status code");
     }
