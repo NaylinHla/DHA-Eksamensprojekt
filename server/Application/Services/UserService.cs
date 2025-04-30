@@ -3,7 +3,7 @@ using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
 
-public class UserService
+public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
 
