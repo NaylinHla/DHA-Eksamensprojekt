@@ -1,6 +1,9 @@
 import { useState } from "react";
 import logo from "../../assets/Favicon/favicon.svg";
 import { PasswordField } from "../../components/PasswordField/PasswordField.tsx"
+import { JwtAtom } from "../../atoms/atoms.ts"
+import {useAtom} from "jotai";
+import toast from "react-hot-toast";
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -9,7 +12,9 @@ type AuthScreenProps = {
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     // idle = main front page - login = login form is opened - register = register form is opened
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
-    const [loggedIn, setLoggedIn] = useState(false);
+    const [, setJwt]   = useAtom(JwtAtom);
+    const [email, setEmail]       = useState("");
+    const [password, setPassword] = useState("");
 
     // --- ANIMATION STUFF ---
     const lift = {
@@ -27,11 +32,29 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
     // ------------------------
 
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLoggedIn(true);
 
-        onLogin?.();
+        try {
+            const res = await fetch("/api/auth/Login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!res.ok) {
+                toast.error("Wrong e-mail or password");
+                return;
+            }
+
+            const data: { token: string } = await res.json();
+            setJwt(data.token);
+            localStorage.setItem("jwt", data.token);
+
+            onLogin?.();
+        } catch (err) {
+            toast.error("Couldn’t reach the server – try again later");
+        }
     };
 
     return (
@@ -92,13 +115,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     >
                         <label className="label py-0 text-white">Email</label>
                         <input
-                            type="text"
+                            type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
                             placeholder="Email"
                             className="input input-bordered input-sm w-full text-black"
                             required
                         /> {/* change type to email later when not in testing, this is just to "login" faster */}
                         <label className="label py-0 text-white">Password</label>
                         <PasswordField
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="Password"
                             required
                         />
@@ -184,13 +211,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     </form>
                 </div>
             </section>
-
-            {/* Fake logged‑in notice */}
-            {loggedIn && (
-                <p className="absolute bottom-4 text-xs italic opacity-60">
-                    You are now logged in (placeholder)
-                </p>
-            )}
         </main>
     );
 };
