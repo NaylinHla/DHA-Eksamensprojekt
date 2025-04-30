@@ -1,12 +1,16 @@
 import { useState } from "react";
 import logo from "../../assets/Favicon/favicon.svg";
-import { Api, AuthLoginDto, AuthRegisterDto } from "../../api/api.ts";
+import {
+    AuthClient,
+    AuthLoginDto,
+    AuthRegisterDto
+} from "../../generated-client.ts";
 
 type AuthScreenProps = {
     onLogin?: () => void;
 };
 
-const api = new Api({ baseUrl: "http://localhost:5000" });
+const authClient = new AuthClient("http://localhost:5000");
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
@@ -38,8 +42,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
         try {
             const loginDto: AuthLoginDto = { email, password };
-            const response = await api.api.authLogin(loginDto);
-            const { jwt } = response.data;
+            const response = await authClient.login(loginDto);
+            const { jwt } = response;
             localStorage.setItem("jwt", jwt);
             setLoggedIn(true);
             onLogin?.();
@@ -56,7 +60,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         const firstName = formData.get("firstName") as string;
         const lastName = formData.get("lastName") as string;
         const email = formData.get("email") as string;
-        const birthday = formData.get("birthday") as string;
+        const birthday = new Date(formData.get("birthday") as string);
         const country = formData.get("country") as string;
         const password = formData.get("password") as string;
         const confirmPassword = formData.get("confirmPassword") as string;
@@ -76,7 +80,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 password,
             };
 
-            await api.api.authRegister(registerDto);
+            await authClient.register(registerDto);
             alert("Registered successfully! You can now log in.");
             reset();
         } catch (error) {
