@@ -1,6 +1,6 @@
 import { useState } from "react";
 import logo from "../../assets/Favicon/favicon.svg";
-import { PasswordField } from "../../components/PasswordField/PasswordField.tsx"
+import { PasswordField } from "../../components/utils/PasswordField/PasswordField.tsx"
 import { JwtAtom } from "../../atoms/atoms.ts"
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";

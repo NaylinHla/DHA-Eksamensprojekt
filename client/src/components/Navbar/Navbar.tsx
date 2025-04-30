@@ -1,9 +1,21 @@
-import { Link, NavLink } from "react-router";
+import {Link, NavLink, useNavigate} from "react-router";
 import React from "react";
 import { links } from "../../types/NavLinks.ts"
 import logo from "../../assets/Favicon/favicon.svg";
+import toast from "react-hot-toast";
+import {useAtom} from "jotai";
+import {Logout} from "../utils/Logout/Logout.tsx";
+import {JwtAtom} from "../../atoms";
 
 export default function NavBar() {
+    const [, setJwt] = useAtom(JwtAtom);
+    const navigate   = useNavigate();
+
+    const handleLogout = () => {
+        Logout(setJwt, navigate);
+        toast("Logged out");
+    };
+    
     return (
         <header className="navbar bg-primary text-white sticky top-0 z-50 px-4 shadow-md">
             <div className="navbar-start">
@@ -88,7 +100,7 @@ export default function NavBar() {
                             <Link to="/profile">Profile</Link>
                         </li>
                         <li>
-                            <button>Logout</button>
+                            <button onClick={handleLogout}>Logout</button>
                         </li>
                     </ul>
                 </details>
