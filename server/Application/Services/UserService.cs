@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Infrastructure.Postgres;
+﻿using Application.Interfaces;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
 

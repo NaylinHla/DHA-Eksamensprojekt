@@ -326,14 +326,24 @@
         }
       }
     },
-    "/api/User/delete": {
-      "delete": {
+    "/api/User/DeleteUser": {
+      "post": {
         "tags": [
           "User"
         ],
         "operationId": "User_DeleteUser",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
         "requestBody": {
-          "x-name": "request",
+          "x-name": "dto",
           "content": {
             "application/json": {
               "schema": {
@@ -342,7 +352,7 @@
             }
           },
           "required": true,
-          "x-position": 1
+          "x-position": 2
         },
         "responses": {
           "200": {
@@ -806,6 +816,9 @@
           "email"
         ],
         "properties": {
+          "userId": {
+            "type": "string"
+          },
           "email": {
             "type": "string",
             "format": "email",

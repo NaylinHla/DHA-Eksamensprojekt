@@ -412,16 +412,17 @@ export class UserClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    deleteUser(request: DeleteUserDto): Promise<User> {
-        let url_ = this.baseUrl + "/api/User/delete";
+    deleteUser(authorization: string | undefined, dto: DeleteUserDto): Promise<User> {
+        let url_ = this.baseUrl + "/api/User/DeleteUser";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(request);
+        const content_ = JSON.stringify(dto);
 
         let options_: RequestInit = {
             body: content_,
-            method: "DELETE",
+            method: "POST",
             headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             }
@@ -585,6 +586,7 @@ export interface SensorHistory {
 }
 
 export interface DeleteUserDto {
+    userId?: string;
     email: string;
 }
 
