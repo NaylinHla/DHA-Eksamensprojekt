@@ -5,7 +5,7 @@ import {useAtom} from "jotai";
 import {
     AdminHasDeletedData,
     ConfirmModal,
-    GetAllSensorHistoryByDeviceIdDto,
+    formatDateTimeForUserTZ,
     GreenhouseSensorDataAtom,
     JwtAtom,
     SelectedDeviceIdAtom,
@@ -24,15 +24,25 @@ export default function DeviceHistory() {
     const [isModalOpen, setModalOpen] = useState(false);
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
+    const [loadingDevices, setLoadingDevices] = useState(true);
+    const [loadingData, setLoadingData] = useState(false);
     const prevId = useRef<string | null>(null);
     const {subscribe, unsubscribe} = useTopicManager();
-    // WebSocket topic subscribe/unsubscribe
 
+    const Spinner = () => (
+        <div className="flex justify-center items-center h-32">
+            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <path className="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            </svg>
+            <span className="text-gray-500">Loading…</span>
+        </div>
+    );
+
+    // WebSocket subscriptions
     useEffect(() => {
-
         if (!selectedDeviceId) return;
-
-        // Correctly interpolate the selectedDeviceId in the topic string
         const topic = `GreenhouseSensorData/${selectedDeviceId}`;
         // Unsubscribe from the previous device if it's different from the new one
         if (prevId.current && prevId.current !== selectedDeviceId) {
@@ -41,87 +51,57 @@ export default function DeviceHistory() {
         subscribe(topic).then();
         prevId.current = selectedDeviceId;
 
-        // Cleanup on unmount
         return () => {
             unsubscribe(topic).then();
         };
     }, [selectedDeviceId, subscribe, unsubscribe]);
 
-    // Fetch devices when the component mounts
+
+    // Fetch devices
     useEffect(() => {
-
-        console.log("JWT ER: " + jwt)
-
         if (!jwt) return;
-
+        setLoadingDevices(true);
         greenhouseDeviceClient.getAllUserDevices(jwt).then((res: any) => {
             const list = res.allUserDevice || [];
             setDevices(list);
             if (!selectedDeviceId && list.length) {
                 setSelectedDeviceId(list[0].deviceId!); // If no device is selected, pick the first one
+                setLoadingData(true);
             }
-        }).catch(() => {
-            toast.error("Failed to load devices");
-        });
+        })
+            .catch(() => toast.error("Failed to load devices"))
+            .finally(() => setLoadingDevices(false));
     }, [jwt, selectedDeviceId, setSelectedDeviceId]);
 
 
     // Fetch data for selected device once the device is selected
     useEffect(() => {
-        if (!jwt || !selectedDeviceId) return; // Ensure both JWT and deviceId are available
+        if (!jwt || !selectedDeviceId) return;
+        setLoadingData(true);
+        greenhouseDeviceClient.getSensorDataByDeviceId(selectedDeviceId, jwt)
+            .then(response => setGreenhouseSensorDataAtom(response))
+            .catch(() => toast.error("Failed to load sensor data"))
+            .finally(() => setLoadingData(false));
+    }, [jwt, selectedDeviceId, setGreenhouseSensorDataAtom]);
 
-        greenhouseDeviceClient
-            .getSensorDataByDeviceId(selectedDeviceId, jwt)
-            .then(response => {
-                setGreenhouseSensorDataAtom(response);  // Assuming you want to set it to an atom
-            })
-            .catch(error => {
-                console.error("Error fetching data:", error);
-            });
-    }, [jwt, selectedDeviceId, setGreenhouseSensorDataAtom]); // Re-run when either jwt or selectedDeviceId changes
-
-
-// Inside the useWebSocketMessage hook
+    // Live updates
     useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
-        console.log("Received WebSocket message:", dto); //Debug Stuff
         const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
-
-        if (newLogs.length > 0) {
-            // Filter out duplicate logs
-            const uniqueNewLogs = newLogs.filter((newLog: SensorHistoryDto) => {
-                const logTime = newLog.time ? new Date(newLog.time) : null;
-                if (!logTime || isNaN(logTime.getTime())) {
-                    console.error("Invalid time value", newLog.time);
-                    return false;
-                }
-                return !greenhouseSensorDataAtom.some((deviceData: GetAllSensorHistoryByDeviceIdDto) =>
-                    deviceData.sensorHistoryRecords?.some((existingLog) => {
-                        const existingLogTime = existingLog.time ? new Date(existingLog.time) : null;
-                        return existingLogTime && existingLogTime.getTime() === logTime.getTime();
-                    })
-                );
-            });
-
-            if (uniqueNewLogs.length > 0) {
-                // Only update the relevant device data
-                const updatedData = greenhouseSensorDataAtom.map((deviceData: GetAllSensorHistoryByDeviceIdDto) => {
-                    if (deviceData.deviceId === selectedDeviceId) {
-                        return {
-                            ...deviceData,
-                            sensorHistoryRecords: [...deviceData.sensorHistoryRecords || [], ...uniqueNewLogs],
-                        };
-                    }
-                    return deviceData;
-                });
-
-                // Only update the atom if data has changed
-                if (updatedData !== greenhouseSensorDataAtom) {
-                    setGreenhouseSensorDataAtom(updatedData);
-                }
-
-                toast.success(`📡 New data for device ${selectedDeviceId}`);
-            }
-        }
+        if (!newLogs.length) return;
+        const unique = newLogs.filter(log => {
+            const t = log.time ? new Date(log.time).getTime() : NaN;
+            return !isNaN(t) && !greenhouseSensorDataAtom.some(dev =>
+                dev.sensorHistoryRecords?.some(old => new Date(old.time!).getTime() === t)
+            );
+        });
+        if (!unique.length) return;
+        setGreenhouseSensorDataAtom(prev =>
+            prev.map(dev =>
+                dev.deviceId === selectedDeviceId
+                    ? {...dev, sensorHistoryRecords: [...(dev.sensorHistoryRecords||[]), ...unique]}
+                    : dev
+            )
+        );
     });
 
     // Deleted data broadcast
@@ -130,18 +110,12 @@ export default function DeviceHistory() {
         setGreenhouseSensorDataAtom([]);
     });
 
-    // Optimized chart data per selected device
+    // Prepare chart data
     const chartDataByKey = useMemo(() => {
         const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
-        const records = deviceData?.sensorHistoryRecords || [];
-
+        const recs = deviceData?.sensorHistoryRecords || [];
         const format = (key: keyof SensorHistoryDto) =>
-            records.map(e => ({
-                time: e.time ? new Date(e.time).toLocaleString() : "",
-                value: e[key] ?? NaN,
-            }));
-
-
+            recs.map(e => ({time: formatDateTimeForUserTZ(e.time), value: e[key] ?? NaN}));
         return {
             temperature: format("temperature"),
             humidity: format("humidity"),
@@ -176,46 +150,118 @@ export default function DeviceHistory() {
 
     return (
         <div>
-
-
+            {/* Top Bar + Status Box */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
-                <h1 className="text-2xl font-bold text-[var(--color-textprimary)]">Overview:</h1>
-                
-                <button
-                    onClick={() => setModalOpen(true)}
-                    className="btn btn-secondary btn-xl flex items-center justify-center gap-2"
-                >
-                    <span>Delete All Data For All User</span>
-                    <TrashBinIcon size={20}/>
-                </button>
+                <h1 className="text-2xl font-bold">Overview:</h1>
 
+                {/* Current Status Box */}
+                {/* Current Status Box */}
+                <div className="border rounded p-4 shadow bg-white min-w-[260px] w-full sm:w-auto relative">
+                    <div className={loadingDevices || loadingData ? "invisible" : ""}>
+                        {(() => {
+                            const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
+                            const latest = deviceData?.sensorHistoryRecords
+                                ?.sort((a, b) =>
+                                    new Date(b.time ?? 0).getTime() - new Date(a.time ?? 0).getTime()
+                                )[0];
+
+                            const formatNumber = (value: number | null | undefined) =>
+                                value != null ? value.toFixed(2) : "N/A";
+
+                            if (!latest) {
+                                return (
+                                    <>
+                                        <h2 className="font-bold mb-3">Current Status</h2>
+                                        <p className="text-sm text-gray-500">No data available</p>
+                                    </>
+                                );
+                            }
+
+                            return (
+                                <>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h2 className="font-bold">Current Status</h2>
+                                        <span className="text-xs text-gray-500">
+                                          {formatDateTimeForUserTZ(latest.time)}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm space-y-2">
+                                        <div className="grid grid-cols-2 gap-x-4">
+                                            <div className="flex justify-between">
+                                                <span className="font-medium w-24">Temperature:</span>
+                                                <span>{formatNumber(latest.temperature)} °C</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="font-medium w-24">Humidity:</span>
+                                                <span>{formatNumber(latest.humidity)} %</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="font-medium w-24">Air Pressure:</span>
+                                                <span>{formatNumber(latest.airPressure)} hPa</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="font-medium w-24">Air Quality:</span>
+                                                <span>{formatNumber(latest.airQuality)} ppm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Spinner overlay */}
+                    {(loadingDevices || loadingData) && (
+                        <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-80 rounded">
+                            <div className="flex flex-col items-center">
+                                <svg className="animate-spin h-6 w-6 text-gray-500 mb-2" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                </svg>
+                                <span className="text-sm text-gray-500">Loading...</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Device selector */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <label className="font-medium">Select Device:</label>
                     <select
                         className="border rounded p-2"
-                        value={selectedDeviceId || ""}
-                        onChange={e => setSelectedDeviceId(e.target.value)}
+                        value={selectedDeviceId||""}
+                        onChange={e => { setSelectedDeviceId(e.target.value); setLoadingData(true); }}
+                        disabled={loadingDevices}
                     >
-                        {/* Check if there are devices */}
-                        {devices.length === 0 ? (
-                            <option value="" disabled>No device</option> // Disabled option when no devices are available
-                        ) : (
-                            devices.map(d => (
-                                <option key={d.deviceId} value={d.deviceId}>
-                                    {d.deviceName}
-                                </option>
-                            ))
-                        )}
+                        {devices.map(d => (
+                            <option key={d.deviceId} value={d.deviceId}>{d.deviceName}</option>
+                        ))}
                     </select>
                 </div>
 
+                {/* Delete button */}
+                <button
+                    onClick={() => setModalOpen(true)}
+                    className="btn btn-secondary btn-xl flex items-center gap-2"
+                >
+                    Delete All Data <TrashBinIcon size={20}/>
+                </button>
             </div>
 
-            {renderChart(chartDataByKey.temperature || [], "Temperature")}
-            {renderChart(chartDataByKey.humidity || [], "Humidity")}
-            {renderChart(chartDataByKey.airPressure || [], "Air Pressure")}
-            {renderChart(chartDataByKey.airQuality || [], "Air Quality")}
+            {/* Chart loader or charts underneath top bar */}
+            {loadingData
+                ? <Spinner/>
+                : (
+                    <>
+                        {renderChart(chartDataByKey.temperature,  "Temperature")}
+                        {renderChart(chartDataByKey.humidity,     "Humidity")}
+                        {renderChart(chartDataByKey.airPressure,  "Air Pressure")}
+                        {renderChart(chartDataByKey.airQuality,   "Air Quality")}
+                    </>
+                )
+            }
 
+            {/* Confirm modal */}
             <ConfirmModal
                 isOpen={isModalOpen}
                 title="Confirm Deletion"

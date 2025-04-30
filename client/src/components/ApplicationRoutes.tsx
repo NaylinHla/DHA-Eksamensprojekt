@@ -1,9 +1,8 @@
 import {Route, Routes, useLocation, useNavigate} from "react-router";
-import AdminDashboard from "../pages/History/HistoryPage.tsx";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
 import Settings from "./Settings.tsx";
 import Dock from "./Dock.tsx";
-import {AlertPage, HistoryPage} from "../pages"
+import {AlertPage, DashboardPage, HistoryPage} from "../pages"
 import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
@@ -30,7 +29,7 @@ export default function ApplicationRoutes() {
         {!isAuthScreen && <NavBar/>}
         <Routes>
             <Route element={<HistoryPage/>} path={"/history"}/>
-            <Route element={<AdminDashboard/>} path={DashboardRoute}/>
+            <Route element={<DashboardPage/>} path={DashboardRoute}/>
             <Route element={<Settings/>} path={SettingsRoute}/>
             <Route element={<AlertPage/>} path={"/alerts"}></Route>
             <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
