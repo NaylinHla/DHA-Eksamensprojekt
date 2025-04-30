@@ -34,6 +34,7 @@ public class Program
         services.RegisterApplicationServices();
 
         services.AddDataSourceAndRepositories();
+
         services.AddWebsocketInfrastructure();
 
         services.RegisterWebsocketApiServices();
@@ -65,6 +66,7 @@ public class Program
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         logger.LogInformation(JsonSerializer.Serialize(appOptions));
+        
         using (var scope = app.Services.CreateScope())
         {
             if (appOptions.Seed)
