@@ -5,22 +5,19 @@ const getYear = (dateString: string) => new Date(dateString).getFullYear();
 
 const AlertOverview = () => {
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
-    const { alerts, loading } = useAlertsRest(selectedYear);
+    const { alerts, loading } = useAlertsRest();
 
-    const years = [...new Set(alerts.map(a => new Date(a.alertTime).getFullYear()))].sort((a, b) => b - a);
+    const allYears = [...new Set(alerts.map(a => getYear(a.alertTime)))].sort((a, b) => b - a);
 
     const filteredAlerts = selectedYear
-        ? alerts.filter((a: { alertTime: string; }) => getYear(a.alertTime) === selectedYear)
+        ? alerts.filter((a) => getYear(a.alertTime) === selectedYear)
         : alerts;
 
     return (
         <div className="flex flex-col min-h-screen bg-[--color-background] text-[--color-primary] font-display">
             <div className="flex flex-grow overflow-hidden">
                 {/* Sidebar Year Filter */}
-                <aside
-                    className="bg-base-100 w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm text-gray-500">
-
-                    {/* Clear year button */}
+                <aside className="bg-base-100 w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm text-gray-500">
                     {selectedYear && (
                         <button
                             onClick={() => setSelectedYear(null)}
@@ -31,8 +28,7 @@ const AlertOverview = () => {
                         </button>
                     )}
 
-                    {/* Year filter buttons */}
-                    {years.map((year) => (
+                    {allYears.map((year) => (
                         <button
                             key={year}
                             onClick={() => setSelectedYear(year)}
@@ -50,17 +46,13 @@ const AlertOverview = () => {
                     {loading ? (
                         <div className="flex justify-center items-center mt-20 text-gray-500">
                             <svg className="animate-spin h-6 w-6 mr-3 text-gray-500" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10"
-                                        stroke="currentColor" strokeWidth="4" fill="none"/>
-                                <path className="opacity-75" fill="currentColor"
-                                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                             </svg>
                             Loading alerts...
                         </div>
                     ) : filteredAlerts.length === 0 ? (
-                        <div className="text-gray-400 text-center mt-12">
-                            No alerts found.
-                        </div>
+                        <div className="text-gray-400 text-center mt-12">No alerts found.</div>
                     ) : (
                         filteredAlerts.map((alert: Alert, index: number) => (
                             <div key={index}>
@@ -77,7 +69,6 @@ const AlertOverview = () => {
             </div>
         </div>
     );
-
 };
 
 export default AlertOverview;

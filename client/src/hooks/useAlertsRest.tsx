@@ -4,7 +4,6 @@ import { useAtom } from "jotai";
 import toast from "react-hot-toast";
 import { alertClient } from "../apiControllerClients";
 
-// Local stricter Alert interface
 export interface Alert {
     alertID: string;
     alertName: string;
@@ -13,11 +12,11 @@ export interface Alert {
     alertPlant?: string;
 }
 
-export default function useAlertsRest(selectedYear: number | null) {
+export default function useAlertsRest() {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [jwt] = useAtom(JwtAtom);
-    
+
     useEffect(() => {
         if (!jwt) {
             setLoading(false);
@@ -26,7 +25,7 @@ export default function useAlertsRest(selectedYear: number | null) {
 
         setLoading(true);
 
-        alertClient.getAlerts(jwt, selectedYear)
+        alertClient.getAlerts(jwt, null)
             .then((data) => {
                 const mapped = data.map((a) => ({
                     alertID: a.alertID ?? "",
@@ -42,7 +41,7 @@ export default function useAlertsRest(selectedYear: number | null) {
                 toast.error("Failed to fetch alerts.");
             })
             .finally(() => setLoading(false));
-    }, [jwt, selectedYear]);
+    }, [jwt]);
 
     return { alerts, loading };
 }
