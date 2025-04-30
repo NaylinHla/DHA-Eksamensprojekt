@@ -10,7 +10,6 @@ import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
-import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
 import AuthScreen from "../pages/Auth/AuthScreen.tsx";
 import {HistoryPage} from "../pages";
 import {NavBar} from "./index";
@@ -38,7 +37,7 @@ export default function ApplicationRoutes() {
                 <Route element={<HistoryPage/>} path={"/history"}/>
                 <Route element={<AdminDashboard/>} path={DashboardRoute}/>
                 <Route element={<Settings/>} path={SettingsRoute}/>
-                <Route element={<AlertPage/>} path={"/Alerts"}></Route>
+                <Route element={<AlertPage/>} path={"/alerts"}></Route>
                 <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)} />}/>
             </Routes>
         {!isAuthScreen && <Dock />}
