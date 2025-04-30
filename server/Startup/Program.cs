@@ -4,9 +4,12 @@ using Api.Websocket;
 using Application;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.MQTT;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
+using Application.Services;
 using Infrastructure.MQTT;
 using Infrastructure.Postgres;
+using Infrastructure.Postgres.Postgresql.Data;
 using Infrastructure.Websocket;
 using Microsoft.Extensions.Options;
 using NSwag.Generation;
@@ -34,6 +37,11 @@ public class Program
         services.RegisterApplicationServices();
 
         services.AddDataSourceAndRepositories();
+
+        // ✅ ADD NEW SERVICES HERE
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<UserService>();
+
         services.AddWebsocketInfrastructure();
 
         services.RegisterWebsocketApiServices();
@@ -65,6 +73,7 @@ public class Program
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         logger.LogInformation(JsonSerializer.Serialize(appOptions));
+        
         using (var scope = app.Services.CreateScope())
         {
             if (appOptions.Seed)
