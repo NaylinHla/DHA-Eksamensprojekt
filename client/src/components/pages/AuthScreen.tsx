@@ -1,5 +1,6 @@
 import { useState } from "react";
 import logo from "../../assets/Favicon/favicon.svg";
+import { PasswordField } from "../PasswordField/PasswordField.tsx"
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -97,11 +98,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             required
                         /> {/* change type to email later when not in testing, this is just to "login" faster */}
                         <label className="label py-0 text-white">Password</label>
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            className="input input-bordered input-sm w-full text-black"
-                            required
+                        <PasswordField
+                          placeholder="Password"
+                          required
                         />
                         <button className="btn btn-neutral btn-sm w-full">Login</button>
                         <button type="button" className="btn btn-link btn-xs w-full" onClick={reset}>
@@ -163,18 +162,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         </div>
 
                         <label className="label py-0 text-white">Password</label>
-                        <input
-                            type="password"
+                        <PasswordField
                             placeholder="Password"
-                            className="input input-bordered input-sm w-full text-black"
                             required
                         />
 
                         <label className="label py-0 text-white">Confirm password</label>
-                        <input
-                            type="password"
-                            placeholder="Confirm Password"
-                            className="input input-bordered input-sm w-full text-black"
+                        <PasswordField
+                            placeholder="Password"
                             required
                         />
 
