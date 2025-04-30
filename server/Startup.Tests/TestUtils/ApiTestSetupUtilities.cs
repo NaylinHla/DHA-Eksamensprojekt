@@ -73,18 +73,33 @@ public static class ApiTestSetupUtilities
 
     public static async Task<AuthResponseDto> TestRegisterAndAddJwt(HttpClient httpClient)
     {
-        var registerDto = new AuthLoginDto
+        var random = new Random().Next(100000, 999999);
+        var email = $"test{random}@example.com";
+        var password = $"Pass{random}!";
+        
+        var registerDto = new AuthRegisterDto
         {
-            Email = new Random().NextDouble() * 123 + "@gmail.com",
-            Password = new Random().NextDouble() * 123 + "@gmail.com"
+            FirstName = "Test",
+            LastName = "User",
+            Email = email,
+            Password = password,
+            Country = "Testland",
+            Birthday = DateTime.UtcNow.AddYears(-25) // Required and UTC
         };
-        var signIn = await httpClient.PostAsJsonAsync(
-            AuthController.RegisterRoute, registerDto);
-        var authResponseDto = await signIn.Content
-                                  .ReadFromJsonAsync<AuthResponseDto>(new JsonSerializerOptions
-                                      { PropertyNameCaseInsensitive = true }) ??
-                              throw new Exception("Failed to deserialize " + await signIn.Content.ReadAsStringAsync() +
-                                                  " to " + nameof(AuthResponseDto));
+         
+        var signIn = await httpClient.PostAsJsonAsync(AuthController.RegisterRoute, registerDto);
+        
+        if (!signIn.IsSuccessStatusCode)
+        {
+            var error = await signIn.Content.ReadAsStringAsync();
+            throw new Exception($"Registration failed: {signIn.StatusCode} - {error}");
+        }
+        
+        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(new JsonSerializerOptions
+                              {
+                                  PropertyNameCaseInsensitive = true 
+                                  
+                              }) ?? throw new Exception("Failed to deserialize AuthResponseDto");
         httpClient.DefaultRequestHeaders.Add("Authorization", authResponseDto.Jwt);
         return authResponseDto;
     }
