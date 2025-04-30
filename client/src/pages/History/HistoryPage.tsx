@@ -1,201 +1,234 @@
-import { useWsClient } from "ws-request-hook";
-import {useEffect, useMemo, useState} from "react";
-import {
-    CartesianGrid,
-    Legend,
-    Tooltip,
-    XAxis,
-    YAxis,
-    ResponsiveContainer,
-    Line,
-    LineChart
-} from "recharts";
-import { AdminHasDeletedData, ServerBroadcastsLiveDataToDashboard, StringConstants } from "../../generated-client.ts";
+import {useEffect, useMemo, useRef, useState} from "react";
+import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import toast from "react-hot-toast";
-import { useAtom } from "jotai";
-import {ConfirmModal, GreenhouseSensorDataAtom, JwtAtom, TrashBinIcon} from "../import";
-import { greenhouseDeviceClient } from "../../apiControllerClients.ts";
-import useInitializeData from "../../hooks/useInitializeData";
+import {useAtom} from "jotai";
+import {
+    AdminHasDeletedData,
+    ConfirmModal,
+    GetAllSensorHistoryByDeviceIdDto,
+    GreenhouseSensorDataAtom,
+    JwtAtom,
+    SelectedDeviceIdAtom,
+    SensorHistoryDto,
+    StringConstants,
+    TrashBinIcon,
+    UserDevice,
+    useTopicManager,
+    useWebSocketMessage,
+} from "../import";
+import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
 
-// Function to handle websocket message
-const useWebSocketMessage = (messageKey: string, callback: (dto: any) => void) => {
-    const { onMessage, readyState } = useWsClient();
-    const [jwt] = useAtom(JwtAtom);
-
-    useEffect(() => {
-        if (readyState !== 1 || !jwt) return;
-
-        const reactToMessageSetup = onMessage<any>(messageKey, callback);
-
-        return () => reactToMessageSetup();
-    }, [readyState, jwt, messageKey, callback]);
-};
-
-// Format the data for charts
-const formatDataForChart = (logs: any[], key: string) => {
-    return logs?.map((record: any) => ({
-        time: record.time ? new Date(record.time).toLocaleString() : '',
-        value: record[key],
-    })) || [];
-};
-
-export default function AdminDashboard() {
+export default function DeviceHistory() {
     const [greenhouseSensorDataAtom, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [jwt] = useAtom(JwtAtom);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    useInitializeData();
+    const [isModalOpen, setModalOpen] = useState(false);
+    const [devices, setDevices] = useState<UserDevice[]>([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
+    const prevId = useRef<string | null>(null);
+    const {subscribe, unsubscribe} = useTopicManager();
+    // WebSocket topic subscribe/unsubscribe
 
-    // Use WebSocket to handle live data updates
-    useWebSocketMessage(
-        StringConstants.ServerBroadcastsLiveDataToDashboard,
-        (dto: ServerBroadcastsLiveDataToDashboard) => {
-            toast("New data from IoT device!");
+    useEffect(() => {
 
-            // Ensure you're accessing the correct field from the payload
-            if (dto.logs && dto.logs.length > 0) {
-                const sensorHistoryRecords = dto.logs[0]?.sensorHistoryRecords || [];
-                setGreenhouseSensorDataAtom(sensorHistoryRecords);
+        if (!selectedDeviceId) return;
+
+        // Correctly interpolate the selectedDeviceId in the topic string
+        const topic = `GreenhouseSensorData/${selectedDeviceId}`;
+        // Unsubscribe from the previous device if it's different from the new one
+        if (prevId.current && prevId.current !== selectedDeviceId) {
+            unsubscribe(`GreenhouseSensorData/${prevId.current}`).then();
+        }
+        subscribe(topic).then();
+        prevId.current = selectedDeviceId;
+
+        // Cleanup on unmount
+        return () => {
+            unsubscribe(topic).then();
+        };
+    }, [selectedDeviceId, subscribe, unsubscribe]);
+
+    // Fetch devices when the component mounts
+    useEffect(() => {
+
+        console.log("JWT ER: " + jwt)
+
+        if (!jwt) return;
+
+        greenhouseDeviceClient.getAllUserDevices(jwt).then((res: any) => {
+            const list = res.allUserDevice || [];
+            setDevices(list);
+            if (!selectedDeviceId && list.length) {
+                setSelectedDeviceId(list[0].deviceId!); // If no device is selected, pick the first one
+            }
+        }).catch(() => {
+            toast.error("Failed to load devices");
+        });
+    }, [jwt, selectedDeviceId, setSelectedDeviceId]);
+
+
+    // Fetch data for selected device once the device is selected
+    useEffect(() => {
+        if (!jwt || !selectedDeviceId) return; // Ensure both JWT and deviceId are available
+
+        greenhouseDeviceClient
+            .getSensorDataByDeviceId(selectedDeviceId, jwt)
+            .then(response => {
+                setGreenhouseSensorDataAtom(response);  // Assuming you want to set it to an atom
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+            });
+    }, [jwt, selectedDeviceId, setGreenhouseSensorDataAtom]); // Re-run when either jwt or selectedDeviceId changes
+
+
+// Inside the useWebSocketMessage hook
+    useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
+        console.log("Received WebSocket message:", dto); //Debug Stuff
+        const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
+
+        if (newLogs.length > 0) {
+            // Filter out duplicate logs
+            const uniqueNewLogs = newLogs.filter((newLog: SensorHistoryDto) => {
+                const logTime = newLog.time ? new Date(newLog.time) : null;
+                if (!logTime || isNaN(logTime.getTime())) {
+                    console.error("Invalid time value", newLog.time);
+                    return false;
+                }
+                return !greenhouseSensorDataAtom.some((deviceData: GetAllSensorHistoryByDeviceIdDto) =>
+                    deviceData.sensorHistoryRecords?.some((existingLog) => {
+                        const existingLogTime = existingLog.time ? new Date(existingLog.time) : null;
+                        return existingLogTime && existingLogTime.getTime() === logTime.getTime();
+                    })
+                );
+            });
+
+            if (uniqueNewLogs.length > 0) {
+                // Only update the relevant device data
+                const updatedData = greenhouseSensorDataAtom.map((deviceData: GetAllSensorHistoryByDeviceIdDto) => {
+                    if (deviceData.deviceId === selectedDeviceId) {
+                        return {
+                            ...deviceData,
+                            sensorHistoryRecords: [...deviceData.sensorHistoryRecords || [], ...uniqueNewLogs],
+                        };
+                    }
+                    return deviceData;
+                });
+
+                // Only update the atom if data has changed
+                if (updatedData !== greenhouseSensorDataAtom) {
+                    setGreenhouseSensorDataAtom(updatedData);
+                }
+
+                toast.success(`📡 New data for device ${selectedDeviceId}`);
             }
         }
-    );
+    });
 
-    // Use WebSocket to handle deleted data updates
-    useWebSocketMessage(StringConstants.AdminHasDeletedData, (dto: AdminHasDeletedData) => {
+    // Deleted data broadcast
+    useWebSocketMessage(StringConstants.AdminHasDeletedData, (_: AdminHasDeletedData) => {
         toast("Someone has deleted everything.");
         setGreenhouseSensorDataAtom([]);
     });
 
-    const handleDeleteData = () => {
-        setIsModalOpen(true);
-    };
+    // Optimized chart data per selected device
+    const chartDataByKey = useMemo(() => {
+        const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
+        const records = deviceData?.sensorHistoryRecords || [];
 
-    const handleConfirmDelete = () => {
-        //Call the API to delete all data
-        greenhouseDeviceClient.deleteData(jwt!)
-            .then(() => {
-                toast.success("Successfully deleted all data.");
-            })
-            .catch(() => {
-                toast.error("Failed to delete data.");
-            });
-        setIsModalOpen(false);
+        const format = (key: keyof SensorHistoryDto) =>
+            records.map(e => ({
+                time: e.time ? new Date(e.time).toLocaleString() : "",
+                value: e[key] ?? NaN,
+            }));
 
-        toast.success("Successfully deleted all data.");
-    };
 
-    const handleCancelDelete = () => {
-        setIsModalOpen(false);
-    };
+        return {
+            temperature: format("temperature"),
+            humidity: format("humidity"),
+            airPressure: format("airPressure"),
+            airQuality: format("airQuality"),
+        };
+    }, [greenhouseSensorDataAtom, selectedDeviceId]);
 
-    // Memoize the formatted data to optimize re-renders
-    const formattedTemperatureData = useMemo(() => formatDataForChart(greenhouseSensorDataAtom, "temperature"), [greenhouseSensorDataAtom]);
-    const formattedHumidityData = useMemo(() => formatDataForChart(greenhouseSensorDataAtom, "humidity"), [greenhouseSensorDataAtom]);
-    const formattedAirPressureData = useMemo(() => formatDataForChart(greenhouseSensorDataAtom, "airPressure"), [greenhouseSensorDataAtom]);
-    const formattedAirQualityData = useMemo(() => formatDataForChart(greenhouseSensorDataAtom, "airQuality"), [greenhouseSensorDataAtom]);
+    const renderChart = (data: any[], label: string) => (
+        <div className="mb-10 px-2">
+            <h2 className="text-xl font-semibold mb-2">{label}</h2>
+            <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3"/>
+                    <XAxis dataKey="time"/>
+                    <YAxis/>
+                    <Tooltip/>
+                    <Legend/>
+                    <Line
+                        type="monotone"
+                        dataKey="value"
+                        name={label}
+                        stroke="var(--color-primary)"
+                        dot={false}
+                        isAnimationActive={false}
+                        animationDuration={500}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
 
     return (
-        <>
-            <h1 className="text-2xl font-bold mb-4 p-10">Data logs from greenhouse station devices</h1>
+        <div>
 
-            <div className="flex items-center space-x-4"> {/* Added flex and spacing for alignment */}
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+                <h1 className="text-2xl font-bold text-[var(--color-textprimary)]">Overview:</h1>
+                
                 <button
-                    onClick={handleDeleteData}
-                    className="btn btn-secondary btn-xl m-10 flex items-center space-x-2"
+                    onClick={() => setModalOpen(true)}
+                    className="btn btn-secondary btn-xl flex items-center justify-center gap-2"
                 >
-                    <span>Click here to delete data</span>
-                    <TrashBinIcon color="currentColor" size={20}/>
+                    <span>Delete All Data For All User</span>
+                    <TrashBinIcon size={20}/>
                 </button>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <label className="font-medium">Select Device:</label>
+                    <select
+                        className="border rounded p-2"
+                        value={selectedDeviceId || ""}
+                        onChange={e => setSelectedDeviceId(e.target.value)}
+                    >
+                        {/* Check if there are devices */}
+                        {devices.length === 0 ? (
+                            <option value="" disabled>No device</option> // Disabled option when no devices are available
+                        ) : (
+                            devices.map(d => (
+                                <option key={d.deviceId} value={d.deviceId}>
+                                    {d.deviceName}
+                                </option>
+                            ))
+                        )}
+                    </select>
+                </div>
+
             </div>
 
-            {/* Temperature Line Chart */}
-            <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={formattedTemperatureData} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                    <CartesianGrid strokeDasharray="3 3"/>
-                    <XAxis dataKey="time"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Legend/>
-                    <Line
-                        type="monotone"
-                        dataKey="value"
-                        name="Temperature"
-                        stroke="var(--color-primary)"
-                        dot={false}  // Initially hide dots
-                        isAnimationActive={true}  // Enable smooth animation
-                        animationDuration={500}  // Set animation duration
-                    />
-                </LineChart>
-            </ResponsiveContainer>
+            {renderChart(chartDataByKey.temperature || [], "Temperature")}
+            {renderChart(chartDataByKey.humidity || [], "Humidity")}
+            {renderChart(chartDataByKey.airPressure || [], "Air Pressure")}
+            {renderChart(chartDataByKey.airQuality || [], "Air Quality")}
 
-            {/* Humidity Line Chart */}
-            <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={formattedHumidityData} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                    <CartesianGrid strokeDasharray="3 3"/>
-                    <XAxis dataKey="time"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Legend/>
-                    <Line
-                        type="monotone"
-                        dataKey="value"
-                        name="Humidity"
-                        stroke="var(--color-primary)"
-                        dot={false}  // Initially hide dots
-                        isAnimationActive={true}  // Enable smooth animation
-                        animationDuration={500}  // Set animation duration
-                    />
-                </LineChart>
-            </ResponsiveContainer>
-
-            {/* Air Pressure Line Chart */}
-            <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={formattedAirPressureData} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                    <CartesianGrid strokeDasharray="3 3"/>
-                    <XAxis dataKey="time"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Legend/>
-                    <Line
-                        type="monotone"
-                        dataKey="value"
-                        name="Air Pressure"
-                        stroke="var(--color-primary)"
-                        dot={false}  // Initially hide dots
-                        isAnimationActive={true}  // Enable smooth animation
-                        animationDuration={500}  // Set animation duration
-                    />
-                </LineChart>
-            </ResponsiveContainer>
-
-            {/* Air Quality Line Chart */}
-            <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={formattedAirQualityData} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                    <CartesianGrid strokeDasharray="3 3"/>
-                    <XAxis dataKey="time"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Legend/>
-                    <Line
-                        type="monotone"
-                        dataKey="value"
-                        name="Air Quality"
-                        stroke="var(--color-primary)"
-                        dot={false}  // Initially hide dots
-                        isAnimationActive={true}  // Enable smooth animation
-                        animationDuration={500}  // Set animation duration
-                    />
-                </LineChart>
-            </ResponsiveContainer>
-
-            {/* Modal Component */}
             <ConfirmModal
                 isOpen={isModalOpen}
                 title="Confirm Deletion"
-                subtitle="Are you sure you want to delete all data? This action cannot be undone."
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
+                subtitle="Are you sure you want to delete all data?"
+                onConfirm={() => {
+                    greenhouseDeviceClient
+                        .deleteData(jwt!)
+                        .then(() => toast.success("Deleted"))
+                        .catch(() => toast.error("Failed"));
+                    setModalOpen(false);
+                }}
+                onCancel={() => setModalOpen(false)}
             />
-        </>
-
+        </div>
     );
 }

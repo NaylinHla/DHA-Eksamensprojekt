@@ -218,6 +218,39 @@
         }
       }
     },
+    "/GetAllUserDevices": {
+      "get": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_GetAllUserDevices",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetAllUserDeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/AdminChangesPreferences": {
       "post": {
         "tags": [
@@ -900,6 +933,42 @@
           }
         }
       },
+      "GetAllUserDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allUserDevice": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDevice2"
+            }
+          }
+        }
+      },
+      "UserDevice2": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceDescription": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AdminChangesPreferencesDto": {
         "type": "object",
         "additionalProperties": false,
@@ -1118,6 +1187,7 @@
           "Pong",
           "ServerSendsErrorMessage",
           "Dashboard",
+          "GreenhouseSensorData",
           "Device",
           "SensorData",
           "ChangePreferences"

@@ -2,6 +2,8 @@ using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos;
+using Application.Models.Dtos.RestDtos.UserDevice;
+using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -13,8 +15,9 @@ public class GreenhouseDeviceController(
     ISecurityService securityService) : ControllerBase
 {
     public const string GetSensorDataRoute = nameof(GetSensorDataByDeviceId);
-
-
+    
+    public const string GetAllUserDevicesRoute = nameof(GetAllUserDevices);
+    
     public const string AdminChangesPreferencesRoute = nameof(AdminChangesPreferences);
 
     [HttpGet]
@@ -25,6 +28,16 @@ public class GreenhouseDeviceController(
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var data = await greenhouseDeviceService.GetSensorHistoryByDeviceIdAndBroadcast(deviceId, claims);
+        return Ok(data);
+    }
+
+    [HttpGet]
+    [Route(GetAllUserDevicesRoute)]
+    public async Task<ActionResult<IEnumerable<GetAllUserDeviceDto>>> GetAllUserDevices(
+        [FromHeader] string authorization)
+    {
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var data = await greenhouseDeviceService.GetAllUserDevice(claims);
         return Ok(data);
     }
 

@@ -4,15 +4,17 @@ import { links } from "../../types/NavLinks.ts"
 import logo from "../../assets/Favicon/favicon.svg";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
-import {Logout} from "../utils/Logout/Logout.tsx";
+import {useLogout} from "../index.ts";
 import {JwtAtom} from "../../atoms";
 
 export default function NavBar() {
     const [, setJwt] = useAtom(JwtAtom);
     const navigate   = useNavigate();
 
+    const { logout } = useLogout();
+
     const handleLogout = () => {
-        Logout(setJwt, navigate);
+        logout();
         toast("Logged out");
     };
     

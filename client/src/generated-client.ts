@@ -265,6 +265,40 @@ export class GreenhouseDeviceClient {
         return Promise.resolve<GetAllSensorHistoryByDeviceIdDto[]>(null as any);
     }
 
+    getAllUserDevices(authorization: string | undefined): Promise<GetAllUserDeviceDto[]> {
+        let url_ = this.baseUrl + "/GetAllUserDevices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAllUserDevices(_response);
+        });
+    }
+
+    protected processGetAllUserDevices(response: Response): Promise<GetAllUserDeviceDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GetAllUserDeviceDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GetAllUserDeviceDto[]>(null as any);
+    }
+
     adminChangesPreferences(dto: AdminChangesPreferencesDto, authorization: string | undefined): Promise<FileResponse> {
         let url_ = this.baseUrl + "/AdminChangesPreferences";
         url_ = url_.replace(/[?&]$/, "");
@@ -668,6 +702,18 @@ export interface SensorHistoryDto {
     time?: Date;
 }
 
+export interface GetAllUserDeviceDto {
+    allUserDevice?: UserDevice2[];
+}
+
+export interface UserDevice2 {
+    deviceId?: string;
+    userId?: string;
+    deviceName?: string;
+    deviceDescription?: string;
+    createdAt?: Date;
+}
+
 export interface AdminChangesPreferencesDto {
     deviceId?: string;
     unit?: string;
@@ -736,6 +782,7 @@ export enum StringConstants {
     Pong = "Pong",
     ServerSendsErrorMessage = "ServerSendsErrorMessage",
     Dashboard = "Dashboard",
+    GreenhouseSensorData = "GreenhouseSensorData",
     Device = "Device",
     SensorData = "SensorData",
     ChangePreferences = "ChangePreferences",
