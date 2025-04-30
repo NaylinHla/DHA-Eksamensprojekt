@@ -73,7 +73,7 @@ public static class ApiTestSetupUtilities
 
     public static async Task<AuthResponseDto> TestRegisterAndAddJwt(HttpClient httpClient)
     {
-        var registerDto = new AuthRequestDto
+        var registerDto = new AuthLoginDto
         {
             Email = new Random().NextDouble() * 123 + "@gmail.com",
             Password = new Random().NextDouble() * 123 + "@gmail.com"
