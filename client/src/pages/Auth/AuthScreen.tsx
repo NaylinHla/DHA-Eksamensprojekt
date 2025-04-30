@@ -90,7 +90,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             fade(mode === "login")
                         }
                     >
-                    <label className="label py-0 text-white">Email</label>
+                        <label className="label py-0 text-white">Email</label>
                         <input
                             type="text"
                             placeholder="Email"
@@ -99,8 +99,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         /> {/* change type to email later when not in testing, this is just to "login" faster */}
                         <label className="label py-0 text-white">Password</label>
                         <PasswordField
-                          placeholder="Password"
-                          required
+                            placeholder="Password"
+                            required
                         />
                         <button className="btn btn-neutral btn-sm w-full">Login</button>
                         <button type="button" className="btn btn-link btn-xs w-full" onClick={reset}>
@@ -149,16 +149,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                     className="input input-bordered input-sm w-full text-black"
                                     required/>
                             </div>
-                                <div className="flex-1">
-                                    <label className="label py-0 text-white">Country</label>
-                                    <select className="select select-bordered select-sm w-full text-black" required>
-                                        <option disabled selected>
-                                            Choose...
-                                        </option>
-                                        <option>Country 1</option>
-                                        <option>Country 2</option>
-                                    </select>
-                                </div>
+                            <div className="flex-1">
+                                <label className="label py-0 text-white">Country</label>
+                                <select className="select select-bordered select-sm w-full text-black" required>
+                                    <option disabled selected>
+                                        Choose...
+                                    </option>
+                                    <option>Country 1</option>
+                                    <option>Country 2</option>
+                                </select>
+                            </div>
                         </div>
 
                         <label className="label py-0 text-white">Password</label>

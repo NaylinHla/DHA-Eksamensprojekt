@@ -32,7 +32,6 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
-    "swagger-typescript-api": "13.0.13",
     "typescript": "^5.2.2",
     "vite": "^6.3.3"
   }

@@ -11,7 +11,7 @@ import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
 import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
-import AuthScreen from "./pages/AuthScreen.tsx";
+import AuthScreen from "../pages/Auth/AuthScreen.tsx";
 import {HistoryPage} from "../pages";
 import {NavBar} from "./index";
 
