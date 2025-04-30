@@ -47,10 +47,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 return;
             }
 
-            const data: { token: string } = await res.json();
-            setJwt(data.token);
-            localStorage.setItem("jwt", data.token);
+            const { jwt: token } = (await res.json()) as { jwt: string };
 
+            if (!token) {
+                toast.error("Server didn’t return a token");
+                return;
+            }
+
+            setJwt(token);
+            localStorage.setItem("jwt", token);
+            
             onLogin?.();
         } catch (err) {
             toast.error("Couldn’t reach the server – try again later");
