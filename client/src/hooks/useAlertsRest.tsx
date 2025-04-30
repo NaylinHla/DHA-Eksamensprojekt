@@ -28,8 +28,6 @@ export default function useAlertsRest(selectedYear: number | null) {
 
         alertClient.getAlerts(jwt, selectedYear)
             .then((data) => {
-                console.log("Raw data from server:", data);
-
                 const mapped = data.map((a) => ({
                     alertID: a.alertID ?? "",
                     alertName: a.alertName ?? "",
@@ -37,8 +35,6 @@ export default function useAlertsRest(selectedYear: number | null) {
                     alertTime: a.alertTime?.toString() ?? "",
                     alertPlant: a.alertPlant
                 }));
-
-                console.log("Mapped alerts:", mapped);
                 setAlerts(mapped);
             })
             .catch((err) => {
