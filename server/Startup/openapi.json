@@ -1,5 +1,5 @@
 {
-  "x-generator": "NSwag v14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))",
+  "x-generator": "NSwag v14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))",
   "openapi": "3.0.0",
   "info": {
     "title": "My Title",
@@ -102,7 +102,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthRequestDto"
+                "$ref": "#/components/schemas/AuthLoginDto"
               }
             }
           },
@@ -134,7 +134,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthRequestDto"
+                "$ref": "#/components/schemas/AuthRegisterDto"
               }
             }
           },
@@ -756,7 +756,7 @@
           }
         }
       },
-      "AuthRequestDto": {
+      "AuthLoginDto": {
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -767,6 +767,45 @@
           "email": {
             "type": "string",
             "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "minLength": 4
+          }
+        }
+      },
+      "AuthRegisterDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "birthday",
+          "country",
+          "password"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1
           },
           "password": {
             "type": "string",
