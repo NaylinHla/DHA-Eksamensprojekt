@@ -39,8 +39,8 @@ public class AlertControllerTests
     public async Task CreateAlert_ShouldPersistAndReturnAlert()
     {
         // Arrange
-        var auth = await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
-
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
+        
         var alertDto = new AlertCreate
         {
             AlertName = "High Temp",
@@ -63,7 +63,7 @@ public class AlertControllerTests
     public async Task GetAlerts_ShouldReturnOnlyCurrentUserAlerts()
     {
         // Arrange
-        var auth = await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
 
         // Act
         var response = await _client.GetAsync("api/Alert/GetAlerts");

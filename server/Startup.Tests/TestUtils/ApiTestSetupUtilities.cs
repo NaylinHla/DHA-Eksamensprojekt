@@ -100,7 +100,7 @@ public static class ApiTestSetupUtilities
                                   PropertyNameCaseInsensitive = true 
                                   
                               }) ?? throw new Exception("Failed to deserialize AuthResponseDto");
-        httpClient.DefaultRequestHeaders.Add("Authorization", authResponseDto.Jwt);
+        httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
         return authResponseDto;
     }
 }
