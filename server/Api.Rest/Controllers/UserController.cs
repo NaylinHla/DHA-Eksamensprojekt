@@ -8,7 +8,7 @@ namespace Api.Rest.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserController(UserService userService, ISecurityService securityService) : ControllerBase
+public class UserController(IUserService userService, ISecurityService securityService) : ControllerBase
 {
     public const string DeleteUserRoute = nameof(DeleteUser);
 
@@ -34,6 +34,40 @@ public class UserController(UserService userService, ISecurityService securitySe
         catch (KeyNotFoundException e)
         {
             return NotFound(new { message = e.Message });
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
+        }
+    }
+    
+    [HttpPatch]
+    [Route("email")]
+    public ActionResult<User> PatchUserEmail([FromHeader] string authorization, [FromBody] PatchUserEmailDto dto)
+    {
+        try
+        {
+            // Verify JWT and extract user claims (e.g., Email)
+            var claims = securityService.VerifyJwtOrThrow(authorization);
+
+            // Create request DTO using email from claims
+            var request = new PatchUserEmailDto
+            {
+                OldEmail = claims.Email,
+                NewEmail = dto.NewEmail
+            };
+
+            // Perform email update and return result
+            var updatedUser = userService.PatchUserEmail(request);
+            return Ok(updatedUser);
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(new { message = e.Message });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
         }
         catch (Exception e)
         {

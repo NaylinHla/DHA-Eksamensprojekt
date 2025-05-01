@@ -485,6 +485,48 @@
           }
         }
       }
+    },
+    "/api/User/email": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_PatchUserEmail",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchUserEmailDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1019,6 +1061,26 @@
         ],
         "properties": {
           "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          }
+        }
+      },
+      "PatchUserEmailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "oldEmail",
+          "newEmail"
+        ],
+        "properties": {
+          "oldEmail": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "newEmail": {
             "type": "string",
             "format": "email",
             "minLength": 1

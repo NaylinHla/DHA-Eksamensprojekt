@@ -42,4 +42,21 @@ public class UserService : IUserService
 
         return user;
     }
+    
+    public User PatchUserEmail(PatchUserEmailDto request)
+    {
+        var user = _userRepository.GetUserOrNull(request.OldEmail);
+        if (user == null)
+            throw new KeyNotFoundException("Bruger blev ikke fundet.");
+
+        // Ensure email is unique
+        if (_userRepository.EmailExists(request.NewEmail))
+            throw new ArgumentException("Emailen er allerede i brug.");
+
+        user.Email = request.NewEmail;
+        _userRepository.UpdateUser(user);
+        _userRepository.Save();
+
+        return user;
+    }
 }
