@@ -44,6 +44,15 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         localStorage.setItem(LOCAL_KEY, theme);
     }, [darkTheme]);
 
+    useEffect(() => {
+        if (!jwt) {
+            // user just logged out, force light mode
+            setDarkTheme(false);
+            localStorage.removeItem(LOCAL_KEY);
+            document.documentElement.setAttribute("data-theme", "light");
+        }
+    }, [jwt]);
+
     const spinner = (
         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
             <circle className="opacity-25 animate-gradientSpinner" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
