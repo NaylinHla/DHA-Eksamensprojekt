@@ -1,52 +1,80 @@
-import React from 'react';
-import { CancelIcon } from '../import';
+import React, {ReactNode} from "react";
+import {CancelIcon} from "../import";
 
-
-interface ConfirmModalProps {
+export interface ConfirmModalProps {
     isOpen: boolean;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     onConfirm: () => void;
     onCancel: () => void;
+    confirmVariant?: "primary" | "error";
+    loading?: boolean;
+    children?: ReactNode;
 }
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, title, subtitle, onConfirm, onCancel }) => {
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
+                                                       isOpen,
+                                                       title,
+                                                       subtitle,
+                                                       onConfirm,
+                                                       onCancel,
+                                                       confirmVariant = "primary",
+                                                       loading = false,
+                                                       children,
+                                                   }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="relative bg-[var(--color-background)] rounded-lg shadow-lg p-6 w-11/12 max-w-md">
-                {/* Cancel/Close Icon */}
+        <dialog open className="modal modal-middle">
+            <div className="modal-box max-w-md space-y-5 relative">
+
+                {/* Close icon */}
                 <button
+                    type="button"
                     onClick={onCancel}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                     aria-label="Close modal"
                 >
-                    <CancelIcon size={14} color="currentColor" />
+                    <CancelIcon size={14}/>
                 </button>
 
-                {/* Title */}
-                <h2 className="text-lg font-bold text-gray-800">{title}</h2>
-                {/* Subtitle */}
-                <p className="text-gray-600 mt-2">{subtitle}</p>
+                {/* Heading */}
+                <h3 className="text-center text-xl font-semibold">{title}</h3>
+                {subtitle && (
+                    <p className="text-center text-gray-500 text-sm -mt-3">{subtitle}</p>
+                )}
 
-                {/* Buttons */}
-                <div className="flex mt-6 space-x-4">
+                {/* Custom content */}
+                {children}
+
+                {/* Actions */}
+                <div className="modal-action mt-6">
                     <button
+                        type="button"
                         onClick={onCancel}
-                        className="flex-1 px-6 py-3 bg-transparent border border-black text-[var(--color-textprimary)] rounded hover:bg-gray-100"
+                        className="btn btn-neutral btn-sm"
                     >
-                        No
+                        Cancel
                     </button>
                     <button
+                        type="button"
                         onClick={onConfirm}
-                        className="flex-1 px-6 py-3 bg-primary text-[var(--color-textsecondary)] rounded hover:bg-[var(--color-primaryhover)]"
+                        className={`btn btn-sm ${
+                            confirmVariant === "error" ? "btn-error" : "btn-primary"
+                        } flex items-center gap-2`}
                     >
-                        Yes, confirm
+                        {loading && <span className="loading loading-spinner w-4"/>}
+                        Confirm
                     </button>
                 </div>
+
+                {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                        <span className="loading loading-spinner w-6 h-6 text-white"/>
+                    </div>
+                )}
             </div>
-        </div>
+        </dialog>
     );
 };
 

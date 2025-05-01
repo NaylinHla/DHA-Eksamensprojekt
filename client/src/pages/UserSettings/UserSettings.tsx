@@ -3,6 +3,10 @@ import {Pencil, Trash2} from "lucide-react";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
 import {JwtAtom, PatchUserEmailDto, PatchUserPasswordDto, UserClient} from "../../atoms";
+import {useNavigate} from "react-router";
+import EmailModal from "../../components/Modals/EmailModal.tsx";
+import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.tsx";
+import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
 
 type Props = { onChange?: () => void };
 
@@ -45,41 +49,26 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         } finally { setSaving(false); }
     }
 
-    async function handlePassword(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        const dto: PatchUserPasswordDto = {
-            oldPassword: fd.get("old") as string,
-            newPassword: fd.get("new") as string
-        };
-        if (dto.newPassword !== fd.get("confirm")) {
-            toast.error("Passwords don’t match"); return;
-        }
+    async function handlePasswordDto(dto: PasswordDto) {
+        if (dto.newPassword !== dto.confirm) { toast.error("Passwords don’t match"); return; }
         try {
             setSaving(true);
-            await userClient.patchUserPassword(`Bearer ${jwt}`, dto);
+            await userClient.patchUserPassword(`Bearer ${jwt}`, {
+                oldPassword: dto.oldPassword,
+                newPassword: dto.newPassword,
+            });
             toast.success("Password updated");
             setOpenPassword(false);
-        } catch (e: any) {
-            toast.error(e.message ?? "Failed");
-        } finally { setSaving(false); }
+        } catch (e:any) { toast.error(e.message ?? "Failed"); } finally { setSaving(false); }
     }
 
-    async function handleMail(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        const dto: PatchUserEmailDto = {
-            oldEmail: fd.get("old") as string,
-            newEmail: fd.get("new") as string
-        };
+    async function handleEmail(oldMail:string,newMail:string) {
         try {
             setSaving(true);
-            await userClient.patchUserEmail(`Bearer ${jwt}`, dto);
+            await userClient.patchUserEmail(`Bearer ${jwt}`, {oldEmail: oldMail, newEmail: newMail});
             toast.success("E-mail updated – please log in with the new address.");
             setOpenEmail(false);
-        } catch (e: any) {
-            toast.error(e.message ?? "Failed");
-        } finally { setSaving(false); }
+        } catch (e:any){ toast.error(e.message ?? "Failed"); } finally { setSaving(false); }
     }
 
     const saveToggles = () => {
@@ -90,7 +79,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
-            {/* Header matches Dashboard */}
+            {/* Header */}
             <header className="w-full bg-white shadow px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Profile</h1>
             </header>
@@ -133,7 +122,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <button onClick={saveToggles} className="btn btn-primary btn-sm mt-auto">Save settings</button>
                 </aside>
 
-                {/* RIGHT column – user meta (placeholder) */}
+                {/* RIGHT column – user data */}
                 <article className="relative flex-1 p-8 overflow-y-auto">
                     <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]" aria-label="edit">
                         <Pencil size={20}/>
@@ -145,54 +134,29 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 </article>
             </section>
 
-            {/* ── Modals ─────────────────────────────────────────── */}
+            {/* Modals */}
             {openPassword && (
-                <dialog open className="modal modal-middle">
-                    <form onSubmit={handlePassword} method="dialog" className="modal-box space-y-3">
-                        <h3 className="font-bold text-lg">Change password</h3>
-                        <input name="old"  type="password" className="input input-bordered w-full" placeholder="Current password" required/>
-                        <input name="new"  type="password" className="input input-bordered w-full" placeholder="New password" required/>
-                        <input name="confirm" type="password" className="input input-bordered w-full" placeholder="Confirm new password" required/>
-                        <div className="modal-action">
-                            <button type="button" onClick={()=>setOpenPassword(false)} className="btn btn-sm">Cancel</button>
-                            <button type="submit" className="btn btn-primary btn-sm flex items-center gap-2">
-                                {saving && spinner} Save
-                            </button>
-                        </div>
-                    </form>
-                </dialog>
+                <PasswordModal
+                    open={openPassword}
+                    loading={saving}
+                    onClose={()=>setOpenPassword(false)}
+                    onSubmit={handlePasswordDto}
+                />
             )}
 
-            {openEmail && (
-                <dialog open className="modal modal-middle">
-                    <form onSubmit={handleMail} method="dialog" className="modal-box space-y-3">
-                        <h3 className="font-bold text-lg">Change e-mail</h3>
-                        <input name="old" type="email" className="input input-bordered w-full" placeholder="Current e-mail" required/>
-                        <input name="new" type="email" className="input input-bordered w-full" placeholder="New e-mail" required/>
-                        <div className="modal-action">
-                            <button type="button" onClick={()=>setOpenEmail(false)} className="btn btn-sm">Cancel</button>
-                            <button type="submit" className="btn btn-primary btn-sm flex items-center gap-2">
-                                {saving && spinner} Save
-                            </button>
-                        </div>
-                    </form>
-                </dialog>
-            )}
+            <EmailModal
+                open={openEmail}
+                loading={saving}
+                onClose={()=>setOpenEmail(false)}
+                onSubmit={handleEmail}
+            />
 
-            {openDelete && (
-                <dialog open className="modal modal-middle">
-                    <form method="dialog" onSubmit={(e)=>{e.preventDefault();handleDelete();}} className="modal-box space-y-4">
-                        <h3 className="text-lg font-bold text-error">Delete account</h3>
-                        <p>This action is <b>irreversible</b>. All your data will be permanently removed.</p>
-                        <div className="modal-action">
-                            <button type="button" onClick={()=>setOpenDelete(false)} className="btn btn-sm">Cancel</button>
-                            <button type="submit" className="btn btn-error btn-sm flex items-center gap-2">
-                                {saving && spinner} Yes, delete
-                            </button>
-                        </div>
-                    </form>
-                </dialog>
-            )}
+            +<DeleteAccountModal
+                open={openDelete}
+                loading={saving}
+                onCancel={()=>setOpenDelete(false)}
+                onConfirm={handleDelete}
+            />
 
             {/* gradient spinner keyframes */}
             <style jsx>{`
