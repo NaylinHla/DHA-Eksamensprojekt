@@ -25,6 +25,9 @@ jobs:
           dotnet tool install -g dotnet-reportgenerator-globaltool
 
       - name: Run Unit Tests with Coverage
+        env:
+          APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
+          APPOPTIONS__MQTT_USERNAME: ${{secrets.MQTT_USERNAME}}
         run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
 
       - name: Generate Code Coverage Report

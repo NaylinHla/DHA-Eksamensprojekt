@@ -13,27 +13,18 @@ namespace Startup.Tests.Auth;
 
 public class AuthTests : WebApplicationFactory<Program>
 {
-    private const string TestUsername = "bob@bob.dk";
-    private const string TestPassword = "asdASD123,-.";
-    private const string TestSalt = "5cbd23b9-0cb4-4afe-8497-c81bc6691a42";
-
-    private const string TestHash =
-        "J4SHSN9SKisNBoijKZkNAA5GNWJlO/RNsiXWhoWq2lOpd7hBtmwnqb6bOcxxYP8tEvNRomJunrVkWKNa5W3lXg==";
-
     private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
 
     [SetUp]
     public void Setup()
     {
         _httpClient = CreateClient();
-        _scopedServiceProvider = Services.CreateScope().ServiceProvider;
     }
 
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services => { services.DefaultTestConfig(); });
+        builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
     }
 
 
@@ -56,26 +47,30 @@ public class AuthTests : WebApplicationFactory<Program>
             throw new Exception("Expected Unauthorized status code");
     }
 
-    /*[Test]
+    [Test]
     public async Task Register_Can_Register_And_Return_Jwt()
     {
         var user = MockObjects.GetUser();
         var response = await _httpClient.PostAsJsonAsync(AuthController.RegisterRoute,
-            new AuthRequestDto
+            new AuthRegisterDto
             {
                 Email = user.Email,
-                Password = "pass"
+                Password = "pass",
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Country = user.Country,
+                Birthday = user.Birthday ?? DateTime.UtcNow.AddYears(-30)
             });
         if (HttpStatusCode.OK != response.StatusCode)
             throw new Exception("Expected OK status code");
         if ((await response.Content.ReadFromJsonAsync<AuthResponseDto>())!.Jwt.Length < 10)
             throw new Exception("Expected jwt to be longer than 10 characters");
-    }*/
+    }
 
     [Test]
     public async Task Register_With_Short_Pass_Returns_Bad_Request()
     {
-        var response = await _httpClient.PostAsJsonAsync<AuthLoginDto>(
+        var response = await _httpClient.PostAsJsonAsync(
             AuthController.RegisterRoute, new AuthLoginDto
             {
                 Email = "bob@bob.dk",
@@ -85,7 +80,7 @@ public class AuthTests : WebApplicationFactory<Program>
             throw new Exception("Expected BadRequest status code");
     }
 
-    /*[Test]
+    [Test]
     public async Task Login_Can_Login_And_Return_Jwt()
     {
         using var scope = Services.CreateScope();
@@ -95,16 +90,16 @@ public class AuthTests : WebApplicationFactory<Program>
         await ctx.SaveChangesAsync();
 
         var response = await _httpClient.PostAsJsonAsync(
-            AuthController.LoginRoute, new AuthRequestDto
+            AuthController.LoginRoute, new AuthLoginDto
             {
                 Email = user.Email,
                 Password = "pass"
             });
         if (HttpStatusCode.OK != response.StatusCode)
             throw new Exception("Expected OK status code");
-    }*/
+    }
 
-    /*[Test]
+    [Test]
     public async Task Invalid_Login_Gives_Unauthorized()
     {
         using var scope = Services.CreateScope();
@@ -114,14 +109,14 @@ public class AuthTests : WebApplicationFactory<Program>
         await ctx.SaveChangesAsync();
 
         var response = await CreateClient().PostAsJsonAsync(AuthController.LoginRoute,
-            new AuthRequestDto
+            new AuthLoginDto
             {
                 Email = user.Email,
                 Password = "invalid password"
             });
         if (HttpStatusCode.Unauthorized != response.StatusCode)
             throw new Exception("Expected Unauthorized status code");
-    }*/
+    }
 
     [Test]
     public async Task Login_For_Non_Existing_User_Is_Unauthorized()
@@ -132,7 +127,7 @@ public class AuthTests : WebApplicationFactory<Program>
             throw new Exception("Expected BadRequest status code");
     }
 
-    /*[Test]
+    [Test]
     public async Task Register_For_Existing_User_Is_Bad_Request()
     {
         using var scope = Services.CreateScope();
@@ -142,11 +137,12 @@ public class AuthTests : WebApplicationFactory<Program>
         await ctx.SaveChangesAsync();
 
         var response = await CreateClient().PostAsJsonAsync(AuthController.RegisterRoute,
-            new AuthRequestDto
+            new AuthRegisterDto
             {
                 Email = user.Email,
                 Password = "password"
             });
-        if (HttpStatusCode.BadRequest != response.StatusCode) ;
-    }*/
+        if (HttpStatusCode.BadRequest != response.StatusCode)
+            throw new Exception("Expected BadRequest status code");
+    }
 }

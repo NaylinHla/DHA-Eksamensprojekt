@@ -21,7 +21,7 @@ public class AlertControllerTests
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig();
+                    services.DefaultTestConfig(makeMqttClient: false);;
                 });
             });
 

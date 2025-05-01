@@ -22,7 +22,7 @@ public static class ApiTestSetupUtilities
         bool useTestContainer = true,
         bool mockProxyConfig = true,
         bool makeWsClient = true,
-        bool makeMqttClient = true,
+        bool makeMqttClient = false,
         Action? customSeeder = null
     )
     {
@@ -37,6 +37,7 @@ public static class ApiTestSetupUtilities
             options.PORT = 8080;
             options.WS_PORT = 8181;
             options.REST_PORT = 5000;
+            options.IsTesting = true;
         });
         
         if (useTestContainer)
@@ -65,6 +66,7 @@ public static class ApiTestSetupUtilities
         }
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
+        
         if (makeMqttClient)
         {
             RemoveExistingService<TestMqttClient>(services);
