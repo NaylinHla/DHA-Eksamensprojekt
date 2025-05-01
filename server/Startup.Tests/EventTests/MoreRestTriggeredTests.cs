@@ -1,4 +1,3 @@
-
 /*
 using System.Text.Json;
 using Api.Rest.Controllers;
@@ -45,7 +44,7 @@ public class MoreRestTriggeredTests
     private IServiceProvider _scopedServiceProvider;
 
 
-    /*[Test]
+    [Test]
     public async Task WhenAdminDeletesData_AllWsClientsAreNotified_AndDataIsGoneInDatabase()
     {
         //Arrange
@@ -92,8 +91,5 @@ public class MoreRestTriggeredTests
         var filtered2 = receivedDtosForClient2.Where(dto => dto.eventType == nameof(AdminHasDeletedData));
         if (filtered2.Count() != 1)
             throw new Exception("There should be exactly one broadcast of the type " + nameof(AdminHasDeletedData));
-
-
-    }#1#
-    
+    }
 }*/
