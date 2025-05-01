@@ -78,12 +78,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 AllUserDevice = devices
             };
         }
-
-        public List<GetAllSensorHistoryByDeviceIdDto> GetSensorHistoryByDeviceId(Guid deviceId)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId)
         {
             // Fetch device information

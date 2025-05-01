@@ -88,7 +88,6 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
         {
             Logs = recentHistory
         };
-        //TODO Should be something like GreenhouseSensorData%DeviceID% instead of Dashboard
         await _connectionManager.BroadcastToTopic(StringConstants.GreenhouseSensorData + "/" + dto.DeviceId, broadcast);
     }
 

@@ -41,6 +41,10 @@ public class GreenhouseDeviceController(
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var data = await greenhouseDeviceService.GetRecentSensorDataForAllUserDevicesAsync(claims);
+        if (data.SensorHistoryWithDeviceRecords.Count == 0)
+        {
+            return NoContent();
+        }
         return Ok(data);
     }
 
