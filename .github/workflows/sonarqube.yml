@@ -32,7 +32,8 @@ jobs:
           reportgenerator \
             -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:server/coverage-report \
-            -reporttypes:SonarQube
+            -reporttypes:SonarQube \
+            -sourcepath:server
 
       - name: Upload Coverage Report
         if: always()
@@ -79,18 +80,18 @@ jobs:
           dotnet sonarscanner begin \
             /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" \
             /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" \
+            /d:sonar.projectBaseDir="server" \
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
             /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=Startup \
             /d:sonar.coverage.exclusions="\
-            client/**,\
-            **/**/Program.cs,\
-            server/Application/Models/**,\
-            server/Application/Interfaces/**,\
-            server/Core.Domain/Entities/**,\
-            server/Infrastructure.Postgres.Scaffolding/**,\
-            server/Application/Extensions.cs,\
-            server/Infrastructure.Postgres/Extensions.cs" \
+            **/Program.cs,\
+            Application/Models/**,\
+            Application/Interfaces/**,\
+            Core.Domain/Entities/**,\
+            Infrastructure.Postgres.Scaffolding/**,\
+            Application/Extensions.cs,\
+            Infrastructure.Postgres/Extensions.cs"
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 
