@@ -19,8 +19,12 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             ValidationException => StatusCodes.Status400BadRequest,
             AuthenticationException => StatusCodes.Status401Unauthorized,
             UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+            FileNotFoundException => StatusCodes.Status404NotFound,
+            KeyNotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
+
+        // Problem details structure
         var problemDetails = new ProblemDetails
         {
             Title = exception.Message,

@@ -2,13 +2,14 @@ using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos;
+using Application.Models.Dtos.RestDtos.SensorHistory;
 using Application.Models.Dtos.RestDtos.UserDevice;
-using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
 
 [ApiController]
+[Route("api/[controller]")]
 public class GreenhouseDeviceController(
     IGreenhouseDeviceService greenhouseDeviceService,
     IConnectionManager connectionManager,
@@ -17,6 +18,8 @@ public class GreenhouseDeviceController(
     public const string GetSensorDataRoute = nameof(GetSensorDataByDeviceId);
     
     public const string GetAllUserDevicesRoute = nameof(GetAllUserDevices);
+    
+    public const string GetRecentSensorDataForAllUserDeviceRoute = nameof(GetRecentSensorDataForAllUserDevice);
     
     public const string AdminChangesPreferencesRoute = nameof(AdminChangesPreferences);
 
@@ -28,6 +31,16 @@ public class GreenhouseDeviceController(
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var data = await greenhouseDeviceService.GetSensorHistoryByDeviceIdAndBroadcast(deviceId, claims);
+        return Ok(data);
+    }
+    
+    [HttpGet]
+    [Route(GetRecentSensorDataForAllUserDeviceRoute)]
+    public async Task<ActionResult<GetRecentSensorDataForAllUserDeviceDto>> GetRecentSensorDataForAllUserDevice(
+        [FromHeader] string authorization)
+    {
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var data = await greenhouseDeviceService.GetRecentSensorDataForAllUserDevicesAsync(claims);
         return Ok(data);
     }
 

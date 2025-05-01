@@ -1,5 +1,6 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.MqttDtos.Response;
+using Application.Models.Dtos.RestDtos.SensorHistory;
 using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
@@ -25,7 +26,39 @@ namespace Infrastructure.Postgres.Postgresql.Data
 
             return device.UserId;
         }
-        
+
+        public async Task<List<SensorHistoryWithDeviceDto>> GetLatestSensorDataForUserDevicesAsync(Guid userId)
+        {
+            return await ctx.UserDevices
+                .Where(device => device.UserId == userId)
+                .Select(device => new SensorHistoryWithDeviceDto
+                {
+                    DeviceId = device.DeviceId,
+                    DeviceName = device.DeviceName,
+                    Temperature = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Temperature)
+                        .FirstOrDefault(),
+                    Humidity = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Humidity)
+                        .FirstOrDefault(),
+                    AirPressure = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.AirPressure)
+                        .FirstOrDefault(),
+                    AirQuality = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.AirQuality)
+                        .FirstOrDefault(),
+                    Time = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Time)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+        }
+
         public async Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId)
         {
             var devices = await ctx.UserDevices
