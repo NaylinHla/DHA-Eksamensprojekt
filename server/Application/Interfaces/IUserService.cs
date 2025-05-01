@@ -7,4 +7,6 @@ namespace Application.Interfaces;
 public interface IUserService
 {
     public User DeleteUser(DeleteUserDto request);
+    public User PatchUserEmail(PatchUserEmailDto request);
+    public User PatchUserPassword(string email, PatchUserPasswordDto request);
 }

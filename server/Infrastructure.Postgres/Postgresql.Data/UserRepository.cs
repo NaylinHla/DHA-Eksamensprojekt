@@ -16,6 +16,11 @@ public class UserRepository(MyDbContext ctx) : IUserRepository
     {
         return ctx.Users.Any(u => u.Email == email);
     }
+    
+    public bool HashExists(string hash)
+    {
+        return ctx.Users.Any(u => u.Hash == hash);
+    }
 
     public void UpdateUser(User user)
     {

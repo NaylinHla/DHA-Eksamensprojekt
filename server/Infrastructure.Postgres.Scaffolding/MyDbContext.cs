@@ -1,5 +1,8 @@
 ﻿using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
+using System.Linq;
 
 namespace Infrastructure.Postgres.Scaffolding;
 
@@ -21,6 +24,28 @@ public partial class MyDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Ensure all DateTime values are stored with UTC kind
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        var nullableUtcConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime)))
+            {
+                property.SetValueConverter(utcConverter);
+            }
+
+            foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime?)))
+            {
+                property.SetValueConverter(nullableUtcConverter);
+            }
+        }
+
         modelBuilder.HasDefaultSchema("meetyourplants");
 
         modelBuilder.Entity<User>(entity =>
@@ -177,6 +202,7 @@ public partial class MyDbContext : DbContext
                 .HasForeignKey(sh => sh.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
         OnModelCreatingPartial(modelBuilder);
     }
 
