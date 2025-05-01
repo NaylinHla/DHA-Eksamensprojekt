@@ -115,9 +115,7 @@ public static class ApiTestSetupUtilities
                                   
                               }) ?? throw new Exception("Failed to deserialize AuthResponseDto");
         
-        Console.WriteLine("JWT FROM DTO: " + authResponseDto.Jwt);
         httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
-        Console.WriteLine("JWT HEADER: " + httpClient.DefaultRequestHeaders);
         return authResponseDto;
     }
 }
