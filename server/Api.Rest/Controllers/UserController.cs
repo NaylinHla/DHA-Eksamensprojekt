@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using System.Security.Authentication;
+using Application.Interfaces;
 using Application.Models.Dtos.RestDtos.Request;
 using Application.Services;
 using Core.Domain.Entities;
@@ -74,4 +75,33 @@ public class UserController(IUserService userService, ISecurityService securityS
             return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
         }
     }
+    
+    [HttpPatch]
+    [Route("password")]
+    public ActionResult<User> PatchUserPassword([FromHeader] string authorization, [FromBody] PatchUserPasswordDto dto)
+    {
+        try
+        {
+            var claims = securityService.VerifyJwtOrThrow(authorization);
+            var updatedUser = userService.PatchUserPassword(claims.Email, dto);
+            return Ok(updatedUser);
+        }
+        catch (AuthenticationException e)
+        {
+            return Unauthorized(new { message = e.Message });
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(new { message = e.Message });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
+        }
+    }
+
 }

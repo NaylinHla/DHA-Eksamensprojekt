@@ -527,6 +527,48 @@
           }
         }
       }
+    },
+    "/api/User/password": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_PatchUserPassword",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchUserPasswordDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1083,6 +1125,24 @@
           "newEmail": {
             "type": "string",
             "format": "email",
+            "minLength": 1
+          }
+        }
+      },
+      "PatchUserPasswordDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ],
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
             "minLength": 1
           }
         }
