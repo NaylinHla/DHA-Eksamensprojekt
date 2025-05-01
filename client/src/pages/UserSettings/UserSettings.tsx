@@ -7,6 +7,7 @@ import {useNavigate} from "react-router";
 import EmailModal from "../../components/Modals/EmailModal.tsx";
 import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.tsx";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
+import {formatDateTimeForUserTZ} from "../../components";
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
@@ -16,7 +17,8 @@ const userClient = new UserClient("http://localhost:5000");
 const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
     const [saving, setSaving] = useState(false);
-
+    const [currentTime, setCurrentTime] = useState(new Date());
+    
     const [confirmWater, setConfirmWater] = useState(false);
     const [fahrenheit, setFahrenheit] = useState(false);
     const [darkTheme, setDarkTheme] = useState(
@@ -29,7 +31,13 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const navigate = useNavigate();;
 
     // ------
-
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+    
     useEffect(() => {
         const theme = darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
@@ -47,7 +55,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleDelete() {
         try {
             setSaving(true);
-            await userClient.deleteUser(`Bearer ${jwt}`, {email: ""});
+            await userClient.deleteUser(jwt, { email: "" });
             toast.success("Account deleted – goodbye!");
             localStorage.removeItem("jwt");
             setJwt("");
@@ -61,7 +69,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         if (dto.newPassword !== dto.confirm) { toast.error("Passwords don’t match"); return; }
         try {
             setSaving(true);
-            await userClient.patchUserPassword(`Bearer ${jwt}`, {
+            await userClient.patchUserPassword(jwt, {
                 oldPassword: dto.oldPassword,
                 newPassword: dto.newPassword,
             });
@@ -73,7 +81,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleEmail(oldMail:string,newMail:string) {
         try {
             setSaving(true);
-            await userClient.patchUserEmail(`Bearer ${jwt}`, {oldEmail: oldMail, newEmail: newMail});
+            await userClient.patchUserEmail(jwt, {
+                oldEmail: oldMail,
+                newEmail: newMail,
+            });
             toast.success("E-mail updated – please log in with the new address.");
             setOpenEmail(false);
         } catch (e:any){ toast.error(e.message ?? "Failed"); } finally { setSaving(false); }
@@ -90,7 +101,11 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             {/* Header */}
             <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Profile</h1>
+                <span className="text-sm text-gray-600">
+                    {formatDateTimeForUserTZ(currentTime)}
+                </span>
             </header>
+
 
             {/* Content card */}
             <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
