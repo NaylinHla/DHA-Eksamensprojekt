@@ -1,3 +1,3 @@
 export const DashboardRoute = '/';
-export const SettingsRoute = '/settings';
+export const SettingsRoute = '/profile';
 export const SignInRoute = '/signin';
