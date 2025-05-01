@@ -41,6 +41,8 @@ public class AlertControllerTests
         // Arrange
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
         
+        Console.WriteLine("JWT FROM HEADER IN TEST CreateAlert: " + _client.DefaultRequestHeaders);
+        
         var alertDto = new AlertCreate
         {
             AlertName = "High Temp",
@@ -64,6 +66,8 @@ public class AlertControllerTests
     {
         // Arrange
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
+        
+        Console.WriteLine("JWT FROM HEADER IN TEST GETALERTS: " + _client.DefaultRequestHeaders);
 
         // Act
         var response = await _client.GetAsync("api/Alert/GetAlerts");
