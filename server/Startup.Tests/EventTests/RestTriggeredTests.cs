@@ -1,4 +1,4 @@
-/*using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Api.Rest.Controllers;
 using Application.Interfaces.Infrastructure.Websocket;
@@ -22,7 +22,7 @@ public class RestTriggeredTests
         var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
-                builder.ConfigureServices(services => { services.DefaultTestConfig(); });
+                builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: true); });
             });
 
         _httpClient = factory.CreateClient();
@@ -38,7 +38,7 @@ public class RestTriggeredTests
     private HttpClient _httpClient;
     private IServiceProvider _scopedServiceProvider;
 
-    /*[Test]
+    [Test]
     public async Task WhenSubscribingToTopicUsingRestRequest_ResponseIsOkAndConnectionManagerHasAddedToTopic()
     {
         //Arrange
@@ -66,10 +66,10 @@ public class RestTriggeredTests
         if (members.Count != 1)
             throw new Exception("Expected exactly one subscriber to topic " + StringConstants.Dashboard +
                                 ", but this is the topic members: " + JsonSerializer.Serialize(members));
-    }#1#
+    }
 
 
-    /*[Test]
+    [Test]
     public async Task WhenAdminChangesDevicePreferencesFromWebDashboard_MqttClientPublishesToEdgeDevice()
     {
         //Arrange MQTT client to perform publish on REST trigger
@@ -92,7 +92,7 @@ public class RestTriggeredTests
 
         //Act
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
-        _ = await _httpClient.PostAsJsonAsync(WeatherStationController.AdminChangesPreferencesRoute,
+        _ = await _httpClient.PostAsJsonAsync(GreenhouseDeviceController.AdminChangesPreferencesRoute,
             changePrefernecesDto);
         await Task.Delay(1000); // Hardcoded delay to account for network overhead to the edge device
 
@@ -102,5 +102,5 @@ public class RestTriggeredTests
         var comparison = new CompareLogic().Compare(actualObjectReceivedByMqttDevice, changePrefernecesDto);
         if (!comparison.AreEqual)
             throw new Exception("Comparison failed: " + comparison.DifferencesString);
-    }#1#
-}*/
+    }
+}

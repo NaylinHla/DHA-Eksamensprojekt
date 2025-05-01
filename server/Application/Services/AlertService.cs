@@ -6,6 +6,8 @@ using Core.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+namespace Application.Services;
+
 public class AlertService : IAlertService
 {
     private readonly IAlertRepository _alertRepo;

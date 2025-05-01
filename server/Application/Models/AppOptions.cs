@@ -14,4 +14,5 @@ public sealed class AppOptions
     public int REST_PORT { get; set; } = 5000;
     public string MQTT_BROKER_HOST { get; set; } = null!;
     public string MQTT_USERNAME { get; set; } = null!;
+    public bool IsTesting { get; set; }
 }

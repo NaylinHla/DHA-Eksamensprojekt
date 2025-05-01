@@ -4,6 +4,8 @@ using Application.Models.Dtos.RestDtos.Request;
 using Application.Services;
 using Core.Domain.Entities;
 
+namespace Application.Services;
+
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
