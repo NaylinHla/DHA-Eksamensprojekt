@@ -218,6 +218,39 @@
         }
       }
     },
+    "/GetAllUserDevices": {
+      "get": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_GetAllUserDevices",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetAllUserDeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/AdminChangesPreferences": {
       "post": {
         "tags": [
@@ -433,6 +466,90 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DeleteUserDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/PatchUserEmail": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_PatchUserEmail",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchUserEmailDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/PatchUserPassword": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_PatchUserPassword",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchUserPasswordDto"
               }
             }
           },
@@ -900,6 +1017,42 @@
           }
         }
       },
+      "GetAllUserDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allUserDevice": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDevice2"
+            }
+          }
+        }
+      },
+      "UserDevice2": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceDescription": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AdminChangesPreferencesDto": {
         "type": "object",
         "additionalProperties": false,
@@ -952,6 +1105,44 @@
           "email": {
             "type": "string",
             "format": "email",
+            "minLength": 1
+          }
+        }
+      },
+      "PatchUserEmailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "oldEmail",
+          "newEmail"
+        ],
+        "properties": {
+          "oldEmail": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "newEmail": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          }
+        }
+      },
+      "PatchUserPasswordDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ],
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
             "minLength": 1
           }
         }
@@ -1118,6 +1309,7 @@
           "Pong",
           "ServerSendsErrorMessage",
           "Dashboard",
+          "GreenhouseSensorData",
           "Device",
           "SensorData",
           "ChangePreferences"
