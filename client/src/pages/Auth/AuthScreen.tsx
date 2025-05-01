@@ -6,6 +6,7 @@ import {
     AuthRegisterDto
 } from "../../generated-client.ts";
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
+import {JwtAtom, useAtom} from "../../components/import";
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -16,6 +17,7 @@ const authClient = new AuthClient("http://localhost:5000");
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
     const [loggedIn, setLoggedIn] = useState(false);
+    const [, setJwt] = useAtom(JwtAtom);
 
     const lift = {
         idle: "translate-y-0",
@@ -45,6 +47,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             const loginDto: AuthLoginDto = { email, password };
             const response = await authClient.login(loginDto);
             const { jwt } = response;
+            setJwt(jwt);
             localStorage.setItem("jwt", jwt);
             setLoggedIn(true);
             onLogin?.();

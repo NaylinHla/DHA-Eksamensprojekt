@@ -1,5 +1,6 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.MqttDtos.Response;
+using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,26 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 throw new FileNotFoundException("Device not found.");
 
             return device.UserId;
+        }
+        
+        public async Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId)
+        {
+            var devices = await ctx.UserDevices
+                .Where(device => device.UserId == userId)
+                .Select(device => new Application.Models.Dtos.RestDtos.UserDevice.UserDevice
+                {
+                    DeviceId = device.DeviceId,
+                    UserId = device.UserId,
+                    DeviceName = device.DeviceName,
+                    DeviceDescription = device.DeviceDescription,
+                    CreatedAt = device.CreatedAt
+                })
+                .ToListAsync();
+
+            return new GetAllUserDeviceDto
+            {
+                AllUserDevice = devices
+            };
         }
 
         public List<GetAllSensorHistoryByDeviceIdDto> GetSensorHistoryByDeviceId(Guid deviceId)

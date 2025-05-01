@@ -8,6 +8,7 @@ using Application.Models.Dtos.BroadcastModels;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
 using Application.Models.Dtos.RestDtos;
+using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -86,7 +87,7 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
             Logs = recentHistory
         };
         //TODO Should be something like GreenhouseSensorData%DeviceID% instead of Dashboard
-        await _connectionManager.BroadcastToTopic(StringConstants.Dashboard, broadcast);
+        await _connectionManager.BroadcastToTopic(StringConstants.GreenhouseSensorData + "/" + dto.DeviceId, broadcast);
     }
 
     public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAndBroadcast(
@@ -105,7 +106,15 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
 
         return await repo.GetSensorHistoryByDeviceIdAsync(deviceId);
     }
-
+    
+    public async Task<GetAllUserDeviceDto> GetAllUserDevice(JwtClaims claims)
+    {
+        using var scope = _services.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
+        
+        return await repo.GetAllUserDevices(Guid.Parse(claims.Id));
+    }
+    
     public Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims)
     {
         _mqttPublisher.Publish(
