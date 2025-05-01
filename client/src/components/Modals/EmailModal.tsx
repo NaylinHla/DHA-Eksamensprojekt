@@ -26,16 +26,16 @@ const EmailModal: React.FC<Props> = ({open, loading, onClose, onSubmit}) => {
 
                 <label className="block">
                     <span className="label-text mb-1">Current e-mailaddress</span>
-                    <input name="old" type="email" className="input input-bordered w-full" required/>
+                    <input name="old" type="email" className="input input-bordered w-full" placeholder="Email" required/>
                 </label>
 
                 <label className="block">
                     <span className="label-text mb-1">New e-mailaddress</span>
-                    <input name="new" type="email" className="input input-bordered w-full" required/>
+                    <input name="new" type="email" className="input input-bordered w-full" placeholder="Email" required/>
                 </label>
 
                 <div className="modal-action mt-6">
-                    <button type="button" onClick={onClose} className="btn btn-neutral btn-sm">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn btn-neutral bg-transparent btn-sm">Cancel</button>
                     <button type="submit" className="btn btn-primary btn-sm">
                         {loading && <span className="loading loading-spinner w-4 mr-1"/>}
                         Confirm

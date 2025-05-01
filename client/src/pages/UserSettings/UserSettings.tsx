@@ -9,6 +9,7 @@ import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
 
 type Props = { onChange?: () => void };
+const LOCAL_KEY = "theme";
 
 const userClient = new UserClient("http://localhost:5000");
 
@@ -18,8 +19,9 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     const [confirmWater, setConfirmWater] = useState(false);
     const [fahrenheit, setFahrenheit] = useState(false);
-    const [darkTheme, setDarkTheme] = useState(false);
-
+    const [darkTheme, setDarkTheme] = useState(
+        () => localStorage.getItem(LOCAL_KEY) === "dark"
+    );
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
@@ -27,6 +29,12 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const navigate = useNavigate();;
 
     // ------
+
+    useEffect(() => {
+        const theme = darkTheme ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem(LOCAL_KEY, theme);
+    }, [darkTheme]);
 
     const spinner = (
         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -80,7 +88,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
             {/* Header */}
-            <header className="w-full bg-white shadow px-6 py-4 flex justify-between items-center">
+            <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Profile</h1>
             </header>
 
@@ -92,10 +100,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <h2 className="text-xl font-semibold">Settings</h2>
 
                     <div className="flex flex-col gap-3">
-                        <button onClick={()=>setOpenPassword(true)}   className="btn btn-neutral btn-sm">Change password</button>
-                        <button onClick={()=>setOpenEmail(true)} className="btn btn-neutral btn-sm">Change e-mail</button>
-                        <button onClick={()=>setOpenDelete(true)} className="btn btn-error btn-sm flex items-center gap-1">
-                            Delete my account <Trash2 size={14}/>
+                        <button onClick={()=>setOpenPassword(true)}   className="btn btn-neutral bg-transparent btn-sm">Change password</button>
+                        <button onClick={()=>setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">Change e-mail</button>
+                        <button onClick={()=>setOpenDelete(true)} className="btn btn-error  btn-sm flex items-center gap-1">
+                            <Trash2 size={14}/> Delete my account
                         </button>
                     </div>
 
@@ -113,10 +121,15 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Dark Theme</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={darkTheme} onChange={()=>setDarkTheme(!darkTheme)}/>
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-sm"
+                                checked={darkTheme}
+                                onChange={() => setDarkTheme(!darkTheme)}
+                            />
                         </li>
-                        <li className="flex justify-between"><span>IoT Wait time</span><span className="text-sm opacity-70">12 m</span></li>
+                        <li className="flex justify-between"><span>IoT Wait time</span><span
+                            className="text-sm opacity-70">12 m</span></li>
                     </ul>
 
                     <button onClick={saveToggles} className="btn btn-primary btn-sm mt-auto">Save settings</button>

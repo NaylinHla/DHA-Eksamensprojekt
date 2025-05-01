@@ -52,7 +52,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="btn btn-neutral btn-sm"
+                        className="btn btn-neutral bg-transparent btn-sm"
                     >
                         Cancel
                     </button>

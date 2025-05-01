@@ -57,7 +57,7 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit}) => {
                 ))}
 
                 <div className="modal-action mt-6">
-                    <button type="button" onClick={onClose} className="btn btn-neutral btn-sm">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn btn-neutral bg-transparent btn-sm">Cancel</button>
                     <button type="submit" className="btn btn-primary btn-sm">
                         {loading && <span className="loading loading-spinner w-4 mr-1"/>}
                         Confirm
