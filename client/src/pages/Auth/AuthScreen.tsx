@@ -5,6 +5,7 @@ import {
     AuthLoginDto,
     AuthRegisterDto
 } from "../../generated-client.ts";
+import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
 import {JwtAtom, useAtom} from "../../components/import";
 
 type AuthScreenProps = {
@@ -156,11 +157,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             required
                         />
                         <label className="label py-0 text-white">Password</label>
-                        <input
+                        <PasswordField
                             name="password"
-                            type="password"
                             placeholder="Password"
-                            className="input input-bordered input-sm w-full text-black"
                             required
                         />
                         <button className="btn btn-neutral btn-sm w-full">Login</button>
@@ -228,20 +227,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         </div>
 
                         <label className="label py-0 text-white">Password</label>
-                        <input
+                        <PasswordField
                             name="password"
-                            type="password"
                             placeholder="Password"
-                            className="input input-bordered input-sm w-full text-black"
                             required
                         />
 
                         <label className="label py-0 text-white">Confirm password</label>
-                        <input
+                        <PasswordField
                             name="confirmPassword"
-                            type="password"
-                            placeholder="Confirm Password"
-                            className="input input-bordered input-sm w-full text-black"
+                            placeholder="Password"
                             required
                         />
 
