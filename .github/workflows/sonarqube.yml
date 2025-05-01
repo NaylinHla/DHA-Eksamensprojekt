@@ -47,7 +47,10 @@ jobs:
     needs: coverage_testing
     runs-on: ubuntu-latest
     
-    
+    defaults:
+      run:
+        working-directory: server
+        
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,14 +76,13 @@ jobs:
 
       - name: Normalize paths in coverage report
         run: |
-          find server/coverage-report -name "SonarQube.xml" -exec sed -i 's|/home/runner/work/.*/server/||g' {} +
+          find coverage-report -name "SonarQube.xml" -exec sed -i 's|/home/runner/work/.*/server/||g' {} +
 
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
             /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" \
             /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" \
-            /d:sonar.projectBaseDir="server" \
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
             /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=Startup \
@@ -96,7 +98,7 @@ jobs:
             /d:sonar.qualitygate.timeout=300
 
       - name: Build
-        run: dotnet build server/Startup
+        run: dotnet build Startup
 
       - name: Complete Static Code Analysis
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
