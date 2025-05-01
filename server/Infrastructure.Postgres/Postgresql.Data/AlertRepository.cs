@@ -18,9 +18,6 @@ public class AlertRepository(MyDbContext ctx) : IAlertRepository
     {
         var query = ctx.Alerts.Where(a => a.AlertUserId == userId);
 
-        if (year.HasValue)
-            query = query.Where(a => a.AlertTime.Year == year.Value);
-
         return await query.OrderByDescending(a => a.AlertTime).ToListAsync();
     }
 }

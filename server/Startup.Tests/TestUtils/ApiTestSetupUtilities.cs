@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Api.Rest.Controllers;
 using Application.Models;
@@ -25,6 +26,19 @@ public static class ApiTestSetupUtilities
         Action? customSeeder = null
     )
     {
+        var jwtSecretBytes = RandomNumberGenerator.GetBytes(32); // 256 bits
+        var jwtSecret = Convert.ToBase64String(jwtSecretBytes);
+        
+        services.Configure<AppOptions>(options =>
+        {
+            options.JwtSecret = jwtSecret;
+            options.Seed = true;
+            options.DbConnectionString = "testDBConnectionString"; 
+            options.PORT = 8080;
+            options.WS_PORT = 8181;
+            options.REST_PORT = 5000;
+        });
+        
         if (useTestContainer)
         {
             var db = new PgCtxSetup<MyDbContext>();
@@ -74,7 +88,7 @@ public static class ApiTestSetupUtilities
     public static async Task<AuthResponseDto> TestRegisterAndAddJwt(HttpClient httpClient)
     {
         var random = new Random().Next(100000, 999999);
-        var email = $"test{random}@example.com";
+        var email = $"test{random}@gmail.com";
         var password = $"Pass{random}!";
         
         var registerDto = new AuthRegisterDto
@@ -83,7 +97,7 @@ public static class ApiTestSetupUtilities
             LastName = "User",
             Email = email,
             Password = password,
-            Country = "Testland",
+            Country = "TestCountry",
             Birthday = DateTime.UtcNow.AddYears(-25) // Required and UTC
         };
          
@@ -100,7 +114,8 @@ public static class ApiTestSetupUtilities
                                   PropertyNameCaseInsensitive = true 
                                   
                               }) ?? throw new Exception("Failed to deserialize AuthResponseDto");
-        httpClient.DefaultRequestHeaders.Add("Authorization", authResponseDto.Jwt);
+        
+        httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
         return authResponseDto;
     }
 }

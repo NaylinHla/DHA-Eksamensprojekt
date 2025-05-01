@@ -50,7 +50,7 @@ jobs:
     defaults:
       run:
         working-directory: server
-    
+        
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,6 +74,10 @@ jobs:
           name: coverage-report
           path: server/coverage-report
 
+      - name: Normalize paths in coverage report
+        run: |
+          find coverage-report -name "SonarQube.xml" -exec sed -i 's|/home/runner/work/.*/server/||g' {} +
+
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
@@ -82,7 +86,14 @@ jobs:
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
             /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=Startup \
-            /d:sonar.coverage.exclusions="client/**,**/**/Program.cs,server/Application/Models/**,server/Core.Domain/Entities/**" \
+            /d:sonar.coverage.exclusions="\
+            **/Program.cs,\
+            Application/Models/**,\
+            Application/Interfaces/**,\
+            Core.Domain/Entities/**,\
+            Infrastructure.Postgres.Scaffolding/**,\
+            Application/Extensions.cs,\
+            Infrastructure.Postgres/Extensions.cs" \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 
