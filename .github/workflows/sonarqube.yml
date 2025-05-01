@@ -96,7 +96,7 @@ jobs:
             /d:sonar.qualitygate.timeout=300
 
       - name: Build
-        run: dotnet build Startup
+        run: dotnet build server/Startup
 
       - name: Complete Static Code Analysis
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
