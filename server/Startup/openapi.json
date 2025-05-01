@@ -486,7 +486,7 @@
         }
       }
     },
-    "/api/User/email": {
+    "/api/User/PatchUserEmail": {
       "patch": {
         "tags": [
           "User"
@@ -528,7 +528,7 @@
         }
       }
     },
-    "/api/User/password": {
+    "/api/User/PatchUserPassword": {
       "patch": {
         "tags": [
           "User"

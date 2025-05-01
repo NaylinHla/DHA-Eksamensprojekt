@@ -43,7 +43,7 @@ public class UserController(IUserService userService, ISecurityService securityS
     }
     
     [HttpPatch]
-    [Route("email")]
+    [Route("PatchUserEmail")]
     public ActionResult<User> PatchUserEmail([FromHeader] string authorization, [FromBody] PatchUserEmailDto dto)
     {
         try
@@ -77,7 +77,7 @@ public class UserController(IUserService userService, ISecurityService securityS
     }
     
     [HttpPatch]
-    [Route("password")]
+    [Route("PatchUserPassword")]
     public ActionResult<User> PatchUserPassword([FromHeader] string authorization, [FromBody] PatchUserPasswordDto dto)
     {
         try

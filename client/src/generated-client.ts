@@ -570,7 +570,7 @@ export class UserClient {
     }
 
     patchUserEmail(authorization: string | undefined, dto: PatchUserEmailDto): Promise<User> {
-        let url_ = this.baseUrl + "/api/User/email";
+        let url_ = this.baseUrl + "/api/User/PatchUserEmail";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
@@ -608,7 +608,7 @@ export class UserClient {
     }
 
     patchUserPassword(authorization: string | undefined, dto: PatchUserPasswordDto): Promise<User> {
-        let url_ = this.baseUrl + "/api/User/password";
+        let url_ = this.baseUrl + "/api/User/PatchUserPassword";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
