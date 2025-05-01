@@ -32,8 +32,7 @@ jobs:
           reportgenerator \
             -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:server/coverage-report \
-            -reporttypes:SonarQube \
-            -sourcepath:server
+            -reporttypes:SonarQube
 
       - name: Upload Coverage Report
         if: always()
@@ -75,6 +74,10 @@ jobs:
           name: coverage-report
           path: server/coverage-report
 
+      - name: Normalize paths in coverage report
+        run: |
+          sed -i 's|/home/runner/work/.*/server/||g' server/coverage-report/SonarQube.xml
+
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
@@ -91,7 +94,7 @@ jobs:
             Core.Domain/Entities/**,\
             Infrastructure.Postgres.Scaffolding/**,\
             Application/Extensions.cs,\
-            Infrastructure.Postgres/Extensions.cs"
+            Infrastructure.Postgres/Extensions.cs" \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 
