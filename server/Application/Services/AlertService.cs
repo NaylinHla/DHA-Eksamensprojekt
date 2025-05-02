@@ -23,7 +23,7 @@ public class AlertService : IAlertService
     {
         var alert = new Alert
         {
-            AlertID = Guid.NewGuid(),
+            AlertId = Guid.NewGuid(),
             AlertUserId = userId,
             AlertName = title,
             AlertDesc = description,
@@ -38,7 +38,7 @@ public class AlertService : IAlertService
             type = "alert",
             data = new
             {
-                alert.AlertID,
+                alert.AlertId,
                 alert.AlertName,
                 alert.AlertDesc,
                 alert.AlertTime,

@@ -5,7 +5,7 @@ namespace Core.Domain.Entities;
 
 public class Plant
 {
-    public required Guid PlantID { get; set; }
+    public required Guid PlantId { get; set; }
     public DateTime? Planted { get; set; }
     public string PlantName { get; set; } = null!;
     public string PlantType { get; set; } = null!;

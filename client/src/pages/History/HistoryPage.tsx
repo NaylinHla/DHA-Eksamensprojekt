@@ -4,14 +4,12 @@ import toast from "react-hot-toast";
 import {useAtom} from "jotai";
 import {
     AdminHasDeletedData,
-    ConfirmModal,
     formatDateTimeForUserTZ,
     GreenhouseSensorDataAtom,
     JwtAtom,
     SelectedDeviceIdAtom,
     SensorHistoryDto,
     StringConstants,
-    TrashBinIcon,
     UserDevice,
     useTopicManager,
     useWebSocketMessage,
@@ -21,7 +19,6 @@ import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
 export default function DeviceHistory() {
     const [greenhouseSensorDataAtom, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [jwt] = useAtom(JwtAtom);
-    const [isModalOpen, setModalOpen] = useState(false);
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
     const [loadingDevices, setLoadingDevices] = useState(true);
@@ -32,7 +29,8 @@ export default function DeviceHistory() {
     const Spinner = () => (
         <div className="flex justify-center items-center h-32">
             <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"
+                        fill="none"/>
                 <path className="opacity-75" fill="currentColor"
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
             </svg>
@@ -98,7 +96,7 @@ export default function DeviceHistory() {
         setGreenhouseSensorDataAtom(prev =>
             prev.map(dev =>
                 dev.deviceId === selectedDeviceId
-                    ? {...dev, sensorHistoryRecords: [...(dev.sensorHistoryRecords||[]), ...unique]}
+                    ? {...dev, sensorHistoryRecords: [...(dev.sensorHistoryRecords || []), ...unique]}
                     : dev
             )
         );
@@ -232,19 +230,18 @@ export default function DeviceHistory() {
                         onChange={e => { setSelectedDeviceId(e.target.value); setLoadingData(true); }}
                         disabled={loadingDevices}
                     >
-                        {devices.map(d => (
-                            <option key={d.deviceId} value={d.deviceId}>{d.deviceName}</option>
-                        ))}
+                        {devices.length === 0 ? (
+                            <option>No device found</option>
+                        ) : (
+                            devices.map(d => (
+                                <option key={d.deviceId} value={d.deviceId}>
+                                    {d.deviceName}
+                                </option>
+                            ))
+                        )}
                     </select>
                 </div>
 
-                {/* Delete button */}
-                <button
-                    onClick={() => setModalOpen(true)}
-                    className="btn btn-secondary btn-xl flex items-center gap-2"
-                >
-                    Delete All Data <TrashBinIcon size={20}/>
-                </button>
             </div>
 
             {/* Chart loader or charts underneath top bar */}
@@ -252,28 +249,14 @@ export default function DeviceHistory() {
                 ? <Spinner/>
                 : (
                     <>
-                        {renderChart(chartDataByKey.temperature,  "Temperature")}
-                        {renderChart(chartDataByKey.humidity,     "Humidity")}
-                        {renderChart(chartDataByKey.airPressure,  "Air Pressure")}
-                        {renderChart(chartDataByKey.airQuality,   "Air Quality")}
+                        {renderChart(chartDataByKey.temperature, "Temperature")}
+                        {renderChart(chartDataByKey.humidity, "Humidity")}
+                        {renderChart(chartDataByKey.airPressure, "Air Pressure")}
+                        {renderChart(chartDataByKey.airQuality, "Air Quality")}
                     </>
                 )
             }
 
-            {/* Confirm modal */}
-            <ConfirmModal
-                isOpen={isModalOpen}
-                title="Confirm Deletion"
-                subtitle="Are you sure you want to delete all data?"
-                onConfirm={() => {
-                    greenhouseDeviceClient
-                        .deleteData(jwt!)
-                        .then(() => toast.success("Deleted"))
-                        .catch(() => toast.error("Failed"));
-                    setModalOpen(false);
-                }}
-                onCancel={() => setModalOpen(false)}
-            />
         </div>
     );
 }
