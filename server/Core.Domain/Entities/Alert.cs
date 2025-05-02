@@ -1,10 +1,8 @@
-using System;
-
 namespace Core.Domain.Entities;
 
 public class Alert
 {
-    public required Guid AlertID { get; set; }
+    public required Guid AlertId { get; set; }
     public required Guid AlertUserId { get; set; }
     public required string AlertName { get; set; }
     public required string AlertDesc { get; set; }

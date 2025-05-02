@@ -577,7 +577,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "alertID": {
+          "alertId": {
             "type": "string",
             "format": "guid"
           },
@@ -719,11 +719,11 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "userID": {
+          "userId": {
             "type": "string",
             "format": "guid"
           },
-          "plantID": {
+          "plantId": {
             "type": "string",
             "format": "guid"
           },
@@ -739,7 +739,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "plantID": {
+          "plantId": {
             "type": "string",
             "format": "guid"
           },
@@ -858,7 +858,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "alertID": {
+          "alertId": {
             "type": "string",
             "format": "guid"
           },
@@ -882,20 +882,19 @@
       "AlertCreate": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "alertName",
-          "alertDesc"
-        ],
         "properties": {
           "alertName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "alertDesc": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "alertPlant": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "alertUser": {
             "type": "string",
             "format": "guid",
             "nullable": true

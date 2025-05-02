@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Web;
+using Application;
 using Application.Interfaces.Infrastructure.Websocket;
 using Fleck;
 using WebSocketBoilerplate;
@@ -25,7 +26,7 @@ public static class Extensions
         Environment.SetEnvironmentVariable("PORT", port.ToString());
         var url = $"ws://0.0.0.0:{port}";
         var logger = app.Services.GetRequiredService<ILogger<NonStaticWsExtensionClassForLogger>>();
-        logger.LogInformation("WS running on url: " + url);
+        logger.LogInformation("WS running on url: {url} ", url);
         var server = new WebSocketServer(url);
         Action<IWebSocketConnection> config = ws =>
         {
@@ -51,10 +52,7 @@ public static class Extensions
                 catch (Exception e)
                 {
                     logger.LogError(e, "Error in handling message: {message}", message);
-                    var baseDto = JsonSerializer.Deserialize<BaseDto>(message, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    }) ?? new BaseDto
+                    var baseDto = JsonSerializer.Deserialize<BaseDto>(message, JsonDefaults.CaseInsensitive) ?? new BaseDto
                     {
                         eventType = nameof(ServerSendsErrorMessage)
                     };

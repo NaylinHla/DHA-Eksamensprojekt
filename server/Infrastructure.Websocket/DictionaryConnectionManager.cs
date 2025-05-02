@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Application;
 using Application.Interfaces.Infrastructure.Websocket;
 using Fleck;
 using Microsoft.Extensions.Logging;
@@ -120,7 +121,7 @@ public sealed class WebSocketConnectionManager : IConnectionManager
                 return newSet;
             });
 
-        if (_topicMembers.TryGetValue(topic, out var members) && !members.Any()) _topicMembers.TryRemove(topic, out _);
+        if (_topicMembers.TryGetValue(topic, out var members) && members.Count == 0) _topicMembers.TryRemove(topic, out _);
 
         _memberTopics.AddOrUpdate(
             memberId,
@@ -132,7 +133,7 @@ public sealed class WebSocketConnectionManager : IConnectionManager
                 return newSet;
             });
 
-        if (_memberTopics.TryGetValue(memberId, out var topics) && !topics.Any())
+        if (_memberTopics.TryGetValue(memberId, out var topics) && topics.Count == 0)
             _memberTopics.TryRemove(memberId, out _);
 
         await LogCurrentState();
@@ -157,7 +158,7 @@ public sealed class WebSocketConnectionManager : IConnectionManager
             try
             {
                 var json = JsonSerializer.Serialize(message,
-                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                    JsonDefaults.CamelCase);
                 await socket.Send(json);
                 _logger.LogDebug("Sent message to client {ClientId} on topic {Topic}", memberId, topic);
             }
@@ -212,7 +213,7 @@ public sealed class WebSocketConnectionManager : IConnectionManager
             };
 
             _logger.LogDebug("Current state: {State}",
-                JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
+                JsonSerializer.Serialize(state, JsonDefaults.WriteIndented));
         }
         catch (Exception ex)
         {

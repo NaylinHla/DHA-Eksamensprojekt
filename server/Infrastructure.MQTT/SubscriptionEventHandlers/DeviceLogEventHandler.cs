@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using Application;
 using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.MqttSubscriptionDto;
@@ -16,10 +17,8 @@ public class DeviceLogEventHandler(IGreenhouseDeviceService greenhouseDeviceServ
     public void Handle(object? sender, OnMessageReceivedEventArgs args)
     {
         var dto = JsonSerializer.Deserialize<DeviceSensorDataDto>(args.PublishMessage.PayloadAsString,
-            new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? throw new Exception("Could not deserialize into " + nameof(DeviceSensorDataDto) + " from " +
+            JsonDefaults.CaseInsensitive) 
+                  ?? throw new Exception("Could not deserialize into " + nameof(DeviceSensorDataDto) + " from " +
                                       args.PublishMessage.PayloadAsString);
         var context = new ValidationContext(dto);
         Validator.ValidateObject(dto, context);

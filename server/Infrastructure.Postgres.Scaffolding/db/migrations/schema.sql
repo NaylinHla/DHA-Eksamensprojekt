@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS meetyourplants."UserSettings" (
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."Plant" (
-                                                      "PlantID" UUID PRIMARY KEY,
+                                                      "PlantId" UUID PRIMARY KEY,
                                                       "Planted" DATE,
                                                       "PlantName" VARCHAR(100),
                                                       "PlantType" VARCHAR(100),
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS meetyourplants."UserPlant" (
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."Alert" (
-                                                      "AlertID" UUID PRIMARY KEY,
+                                                      "AlertId" UUID PRIMARY KEY,
                                                       "AlertUserId" UUID REFERENCES meetyourplants."User"("UserId") ON DELETE CASCADE,
                                                       "AlertName" VARCHAR(100),
                                                       "AlertDesc" TEXT,

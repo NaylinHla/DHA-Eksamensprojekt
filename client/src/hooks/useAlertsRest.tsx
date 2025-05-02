@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { alertClient } from "../apiControllerClients";
 
 export interface Alert {
-    alertID: string;
+    alertId: string;
     alertName: string;
     alertDesc: string;
     alertTime: string;
@@ -28,7 +28,7 @@ export default function useAlertsRest() {
         alertClient.getAlerts(jwt, null)
             .then((data) => {
                 const mapped = data.map((a) => ({
-                    alertID: a.alertID ?? "",
+                    alertId: a.alertId ?? "",
                     alertName: a.alertName ?? "",
                     alertDesc: a.alertDesc ?? "",
                     alertTime: a.alertTime?.toString() ?? "",

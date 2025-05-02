@@ -4,5 +4,5 @@ namespace Api.Websocket;
 
 public class ServerSendsErrorMessage : BaseDto
 {
-    public string Message { get; set; }
+    public required string Message { get; set; }
 }

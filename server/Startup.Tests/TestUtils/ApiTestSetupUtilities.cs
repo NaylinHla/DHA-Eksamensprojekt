@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Api.Rest.Controllers;
+using Application;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Infrastructure.Postgres;
@@ -111,11 +112,7 @@ public static class ApiTestSetupUtilities
             throw new Exception($"Registration failed: {signIn.StatusCode} - {error}");
         }
         
-        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(new JsonSerializerOptions
-                              {
-                                  PropertyNameCaseInsensitive = true 
-                                  
-                              }) ?? throw new Exception("Failed to deserialize AuthResponseDto");
+        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(JsonDefaults.CaseInsensitive) ?? throw new Exception("Failed to deserialize AuthResponseDto");
         
         httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
         return authResponseDto;
