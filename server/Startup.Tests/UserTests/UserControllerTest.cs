@@ -107,4 +107,92 @@ public class UserControllerTest
         var response = await unauthClient.DeleteAsync("api/User/DeleteUser");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
+    
+    [Test]
+    public async Task PatchUserEmail_ShouldReturnNotFound_WhenUserDoesNotExist()
+    {
+        // Delete the user manually to simulate "not found"
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        var user = db.Users.First();
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+
+        var patchDto = new PatchUserEmailDto
+        {
+            OldEmail = "AAAAAAAAAAAAAAAAA@JEGEKSISTERERIKKE.DK",
+            NewEmail = "new@example.com"
+        };
+
+        // Act
+        var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
+
+        // Assert
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+    
+    [Test]
+    public async Task PatchUserEmail_ShouldReturnBadRequest_WhenEmailIsInvalid()
+    {
+
+        var patchDto = new PatchUserEmailDto { NewEmail = "" }; // empty email should trigger ArgumentException
+        var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+    
+    [Test]
+    public async Task PatchUserPassword_ShouldReturnNotFound_WhenUserDoesNotExist()
+    {
+        using var scope = _factory.Services.CreateScope();
+        
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        var user = db.Users.First();
+        
+        db.Users.Remove(user);
+        
+        await db.SaveChangesAsync();
+
+        var patchDto = new PatchUserPasswordDto
+        {
+            OldPassword = "pass",
+            NewPassword = "newpass123"
+        };
+
+        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+    
+    [Test]
+    public async Task PatchUserPassword_ShouldReturnBadRequest_WhenNewPasswordIsInvalid()
+    {
+
+        var patchDto = new PatchUserPasswordDto
+        {
+            OldPassword = "pass",
+            NewPassword = "" // invalid password
+        };
+
+        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+    
+    [Test]
+    public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+    {
+        
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        var user = db.Users.First();
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+
+        var response = await _client.DeleteAsync("api/User/DeleteUser");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
 }
