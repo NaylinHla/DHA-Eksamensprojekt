@@ -67,7 +67,7 @@ export default function DeviceHistory() {
                 setLoadingData(true);
             }
         })
-            .catch(() => toast.error("Failed to load devices"))
+            .catch(() => toast.error("Failed to load devices", { id: "load-devices-error" }))
             .finally(() => setLoadingDevices(false));
     }, [jwt, selectedDeviceId, setSelectedDeviceId]);
 
@@ -78,7 +78,7 @@ export default function DeviceHistory() {
         setLoadingData(true);
         greenhouseDeviceClient.getSensorDataByDeviceId(selectedDeviceId, jwt)
             .then(response => setGreenhouseSensorDataAtom(response))
-            .catch(() => toast.error("Failed to load sensor data"))
+            .catch(() => toast.error("Failed to load sensor data", { id: "load-sensor-error" }))
             .finally(() => setLoadingData(false));
     }, [jwt, selectedDeviceId, setGreenhouseSensorDataAtom]);
 
@@ -104,7 +104,7 @@ export default function DeviceHistory() {
 
     // Deleted data broadcast
     useWebSocketMessage(StringConstants.AdminHasDeletedData, (_: AdminHasDeletedData) => {
-        toast("Someone has deleted everything.");
+        toast("Someone has deleted everything.", { id: "admin-deleted-data" });
         setGreenhouseSensorDataAtom([]);
     });
 
