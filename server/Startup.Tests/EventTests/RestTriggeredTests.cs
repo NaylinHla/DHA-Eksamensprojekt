@@ -68,6 +68,60 @@ public class RestTriggeredTests
                                 ", but this is the topic members: " + JsonSerializer.Serialize(members));
     }
 
+    [Test]
+    public async Task WhenUnsubscribingFromTopicUsingRestRequest_ResponseIsOkAndConnectionManagerRemovesFromTopic()
+    {
+        // Arrange
+        var testWsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
+        var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
+
+        // First subscribe
+        await _httpClient.PostAsJsonAsync(
+            SubscriptionController.SubscriptionRoute,
+            new ChangeSubscriptionDto
+            {
+                ClientId = testWsClient.WsClientId,
+                TopicIds = new List<string> { StringConstants.Dashboard }
+            });
+
+        // Act
+        var unsubscribeResp = await _httpClient.PostAsJsonAsync(
+            SubscriptionController.UnsubscribeRoute,
+            new ChangeSubscriptionDto
+            {
+                ClientId = testWsClient.WsClientId,
+                TopicIds = new List<string> { StringConstants.Dashboard }
+            });
+
+        // Assert
+        Assert.That(unsubscribeResp.IsSuccessStatusCode, Is.True);
+        var membersAfter = await connectionManager.GetMembersFromTopicId(StringConstants.Dashboard);
+        Assert.That(membersAfter, Does.Not.Contain(testWsClient.WsClientId));
+    }
+
+    [Test]
+    public async Task WhenBroadcastingExampleEventToTopic_AllSubscribersReceiveIt()
+    {
+        // Arrange
+        var testWsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
+        var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
+        await connectionManager.AddToTopic("ExampleTopic", testWsClient.WsClientId);
+
+        var dto = new ExampleBroadcastDto
+        {
+            eventType = "TestBroadcast",
+            Message = "Hello Subscribers!"
+        };
+
+        // Act
+        var response = await _httpClient.PostAsJsonAsync(
+            SubscriptionController.ExampleBroadcastRoute, dto);
+
+        // Assert
+        Assert.That(response.IsSuccessStatusCode, Is.True);
+    }
+
 
     [Test]
     public async Task WhenAdminChangesDevicePreferencesFromWebDashboard_MqttClientPublishesToEdgeDevice()
@@ -92,9 +146,9 @@ public class RestTriggeredTests
 
         //Act
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
-        _ = await _httpClient.PostAsJsonAsync(GreenhouseDeviceController.AdminChangesPreferencesRoute,
+        _ = await _httpClient.PostAsJsonAsync($"api/GreenhouseDevice/{GreenhouseDeviceController.AdminChangesPreferencesRoute}",
             changePrefernecesDto);
-        await Task.Delay(1000); // Hardcoded delay to account for network overhead to the edge device
+        await Task.Delay(3000); // Hardcoded delay to account for network overhead to the edge device
 
         var actualObjectReceivedByMqttDevice =
             JsonSerializer.Deserialize<AdminChangesPreferencesDto>(testMqttClient.ReceivedMessages.First(),

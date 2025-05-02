@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS meetyourplants."UserSettings" (
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."Plant" (
-                                                      "PlantID" UUID PRIMARY KEY,
+                                                      "PlantId" UUID PRIMARY KEY,
                                                       "Planted" DATE,
                                                       "PlantName" VARCHAR(100),
                                                       "PlantType" VARCHAR(100),
@@ -41,18 +41,18 @@ CREATE TABLE IF NOT EXISTS meetyourplants."Plant" (
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."UserPlant" (
-                                                          "UserID" UUID REFERENCES meetyourplants."User"("UserId") ON DELETE CASCADE,
-                                                          "PlantID" UUID REFERENCES meetyourplants."Plant"("PlantID") ON DELETE CASCADE,
-                                                          PRIMARY KEY ("UserID", "PlantID")
+                                                          "UserId" UUID REFERENCES meetyourplants."User"("UserId") ON DELETE CASCADE,
+                                                          "PlantId" UUID REFERENCES meetyourplants."Plant"("PlantId") ON DELETE CASCADE,
+                                                          PRIMARY KEY ("UserId", "PlantId")
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."Alert" (
-                                                      "AlertID" UUID PRIMARY KEY,
+                                                      "AlertId" UUID PRIMARY KEY,
                                                       "AlertUserId" UUID REFERENCES meetyourplants."User"("UserId") ON DELETE CASCADE,
                                                       "AlertName" VARCHAR(100),
                                                       "AlertDesc" TEXT,
                                                       "AlertTime" TIMESTAMP,
-                                                      "AlertPlant" UUID REFERENCES meetyourplants."Plant"("PlantID") ON DELETE SET NULL
+                                                      "AlertPlant" UUId REFERENCES meetyourplants."Plant"("PlantId") ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."UserDevice" (

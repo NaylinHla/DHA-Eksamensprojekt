@@ -176,7 +176,7 @@
         }
       }
     },
-    "/GetSensorDataByDeviceId": {
+    "/api/GreenhouseDevice/GetSensorDataByDeviceId": {
       "get": {
         "tags": [
           "GreenhouseDevice"
@@ -218,7 +218,37 @@
         }
       }
     },
-    "/GetAllUserDevices": {
+    "/api/GreenhouseDevice/GetRecentSensorDataForAllUserDevice": {
+      "get": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_GetRecentSensorDataForAllUserDevice",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRecentSensorDataForAllUserDeviceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/GreenhouseDevice/GetAllUserDevices": {
       "get": {
         "tags": [
           "GreenhouseDevice"
@@ -251,7 +281,7 @@
         }
       }
     },
-    "/AdminChangesPreferences": {
+    "/api/GreenhouseDevice/AdminChangesPreferences": {
       "post": {
         "tags": [
           "GreenhouseDevice"
@@ -294,7 +324,7 @@
         }
       }
     },
-    "/DeleteData": {
+    "/api/GreenhouseDevice/DeleteData": {
       "delete": {
         "tags": [
           "GreenhouseDevice"
@@ -983,6 +1013,51 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "temperature": {
+            "type": "number",
+            "format": "double"
+          },
+          "humidity": {
+            "type": "number",
+            "format": "double"
+          },
+          "airPressure": {
+            "type": "number",
+            "format": "double"
+          },
+          "airQuality": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GetRecentSensorDataForAllUserDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sensorHistoryWithDeviceRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SensorHistoryWithDeviceDto"
+            }
+          }
+        }
+      },
+      "SensorHistoryWithDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
           "temperature": {
             "type": "number",
             "format": "double"

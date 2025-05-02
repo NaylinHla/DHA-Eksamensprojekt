@@ -1,8 +1,8 @@
-/*using System.Text.Json;
+using System.Text.Json;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models;
-using Application.Models.Dtos.BroadcastModels;
+using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -11,63 +11,106 @@ using NUnit.Framework;
 using Startup.Tests.TestUtils;
 using WebSocketBoilerplate;
 
-namespace Startup.Tests.EventTests;
-
-[TestFixture]
-public class MqttTriggeredTests
+namespace Startup.Tests.EventTests
 {
-    [SetUp]
-    public void Setup()
+    [TestFixture]
+    public class MqttTriggeredTests
     {
-        var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services => { services.DefaultTestConfig(); });
-            });
+        private HttpClient _httpClient;
+        private IServiceProvider _scopedServiceProvider;
 
-        _httpClient = factory.CreateClient();
-        _scopedServiceProvider = factory.Services.CreateScope().ServiceProvider;
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _httpClient?.Dispose();
-    }
-
-    private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
-
-
-    [Test]
-    public async Task WhenServerReceivesTimeSeriesData_ServerSavesInDbAndBroadcastsToClient()
-    {
-        //Arrange
-        var connectionManager = _scopedServiceProvider.GetService<IConnectionManager>();
-        var wsClient = _scopedServiceProvider.GetService<TestWsClient>();
-        await connectionManager.AddToTopic(StringConstants.Dashboard, wsClient.WsClientId);
-        var deviceId = "TestDevice" + new Random().NextDouble() * 1234;
-        var testDeviceLogObject = new DeviceLogDto
+        [SetUp]
+        public void Setup()
         {
-            DeviceId = deviceId,
-            Unit = "Celcius",
-            Value = 20
-        };
-        //Act
-        await _scopedServiceProvider.GetRequiredService<IGreenhouseDeviceService>()
-            .AddToDbAndBroadcast(testDeviceLogObject);
-        await Task.Delay(1000);
+            var factory = new WebApplicationFactory<Program>()
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureServices(services =>
+                    {
+                        services.DefaultTestConfig();
+                        services.DefaultTestConfig(makeMqttClient: true);
+                    });
+                });
 
-        //Assert
-        var receivedDtos = wsClient.ReceivedMessages
-            .Select(str => JsonSerializer.Deserialize<BaseDto>(str));
+            _httpClient = factory.CreateClient();
+            _scopedServiceProvider = factory.Services.CreateScope().ServiceProvider; // Create scope here for services
+        }
 
-        if (!receivedDtos.Any(baseDto => baseDto.eventType == nameof(ServerBroadcastsLiveDataToDashboard)))
-            throw new Exception("Did not receive any websocket messages indicating a broadcast to the expected client");
+        [TearDown]
+        public void TearDown()
+        {
+            _httpClient?.Dispose();
+        }
 
-        var dbCtx = _scopedServiceProvider.GetRequiredService<MyDbContext>();
-        if (!dbCtx.Devicelogs.Any(log => log.Deviceid.Equals(deviceId)))
-            throw new Exception("Expected a log form device of ID " + deviceId + " but only found: " +
-                                JsonSerializer.Serialize(dbCtx.Devicelogs.ToList()));
+        [Test]
+        public async Task WhenServerReceivesTimeSeriesData_ServerSavesInDbAndBroadcastsToClient()
+        {
+            // Arrange
+            var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
+            var wsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
+
+            // Create a new scope to get access to DB context within the test
+            using var scope = _scopedServiceProvider.CreateScope();
+            var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            var user = MockObjects.GetUser();
+
+            ctx.Users.Add(user);
+            await ctx.SaveChangesAsync();
+
+            // Get the first device's ID from the user
+            var deviceId = user.UserDevices.FirstOrDefault()?.DeviceId ?? Guid.NewGuid();
+
+            // Set up WebSocket to listen to the specific device topic
+            await connectionManager.AddToTopic(StringConstants.GreenhouseSensorData + "/" + deviceId,
+                wsClient.WsClientId);
+
+            // Sample sensor reading to be sent
+            var sensorReading = new SensorHistoryDto
+            {
+                Temperature = 21.3,
+                Humidity = 45.2,
+                AirPressure = 1009.6,
+                AirQuality = 2,
+                Time = DateTime.UtcNow
+            };
+
+            var inputDto = new DeviceSensorDataDto
+            {
+                DeviceId = deviceId.ToString(),
+                Temperature = sensorReading.Temperature,
+                Humidity = sensorReading.Humidity,
+                AirPressure = sensorReading.AirPressure,
+                AirQuality = sensorReading.AirQuality,
+                Time = sensorReading.Time
+            };
+
+            var greenhouseService = _scopedServiceProvider.GetRequiredService<IGreenhouseDeviceService>();
+
+            // Act: Add the data to DB and broadcast to WebSocket clients
+            await greenhouseService.AddToDbAndBroadcast(inputDto);
+
+            await Task.Delay(2000); // Allow time for async DB and WebSocket operations
+
+            // Assert - WebSocket: Verify that the broadcast message contains the expected event type
+            var receivedDtos = wsClient.ReceivedMessages
+                .Select(str => JsonSerializer.Deserialize<BaseDto>(str))
+                .Where(dto => dto != null)
+                .ToList();
+
+            Assert.That(
+                receivedDtos.Any(dto => dto!.eventType == "ServerBroadcastsLiveDataToDashboard"),
+                Is.True,
+                "Expected WebSocket broadcast with event type 'ServerBroadcastsLiveDataToDashboard' not received."
+            );
+
+            // Assert - Database: Verify that the sensor data was saved in the database
+            var dbCtx = _scopedServiceProvider.GetRequiredService<MyDbContext>();
+            var matchingLogs = dbCtx.SensorHistories
+                .Where(log => log.DeviceId == deviceId && log.Time == sensorReading.Time)
+                .ToList();
+
+            Assert.That(matchingLogs.Count > 0,
+                $"Expected at least one SensorHistory for device ID {deviceId}, but found none.");
+        }
     }
-}*/
+}
