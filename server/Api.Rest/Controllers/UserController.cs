@@ -32,10 +32,6 @@ public class UserController(IUserService userService, ISecurityService securityS
         {
             return NotFound(new { message = e.Message });
         }
-        catch (Exception e)
-        {
-            return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
-        }
     }
 
     
@@ -63,14 +59,6 @@ public class UserController(IUserService userService, ISecurityService securityS
         {
             return NotFound(new { message = e.Message });
         }
-        catch (ArgumentException e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-        catch (Exception e)
-        {
-            return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
-        }
     }
     
     [HttpPatch]
@@ -90,14 +78,6 @@ public class UserController(IUserService userService, ISecurityService securityS
         catch (KeyNotFoundException e)
         {
             return NotFound(new { message = e.Message });
-        }
-        catch (ArgumentException e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-        catch (Exception e)
-        {
-            return StatusCode(500, new { message = "Der opstod en fejl", detail = e.Message });
         }
     }
 
