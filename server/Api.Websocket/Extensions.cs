@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Web;
 using Application;
 using Application.Interfaces.Infrastructure.Websocket;
+using Core.Domain.Exceptions;
 using Fleck;
 using WebSocketBoilerplate;
 
@@ -35,7 +36,7 @@ public static class Extensions
                 : "";
 
             var id = HttpUtility.ParseQueryString(queryString)["id"] ??
-                     throw new Exception("Please specify ID query param for websocket connection");
+                     throw new NotFoundException("Please specify ID query param for websocket connection");
             using var scope = app.Services.CreateScope();
             var manager = scope.ServiceProvider.GetRequiredService<IConnectionManager>();
 

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Application;
 using Application.Interfaces.Infrastructure.Websocket;
+using Core.Domain.Exceptions;
 using Fleck;
 using Microsoft.Extensions.Logging;
 
@@ -192,13 +193,13 @@ public sealed class WebSocketConnectionManager : IConnectionManager
 
         if (_socketToConnectionId.TryGetValue(webSocket.ConnectionInfo.Id.ToString(), out var clientId))
             return clientId;
-        throw new Exception("Could not find clientId for socket: " + webSocket.ConnectionInfo.Id);
+        throw new NotFoundException("Could not find clientId for socket: " + webSocket.ConnectionInfo.Id);
     }
 
     public object GetSocketFromClientId(string clientId)
     {
         if (_connectionIdToSocket.TryGetValue(clientId, out var socket)) return socket;
-        throw new Exception("Could not find socket for clientId: " + clientId);
+        throw new NotFoundException("Could not find socket for clientId: " + clientId);
     }
 
     private async Task LogCurrentState()
