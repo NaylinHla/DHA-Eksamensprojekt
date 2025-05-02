@@ -66,16 +66,16 @@ public class GreenhouseDeviceController(
         return Ok();
     }
 
-    public const string DeleteDataRoute = nameof(DeleteData);
+    // public const string DeleteDataRoute = nameof(DeleteData);
 
-    [HttpDelete]
-    [Route(DeleteDataRoute)]
-    public async Task<ActionResult> DeleteData([FromHeader] string authorization)
-    {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
-
-        await greenhouseDeviceService.DeleteDataAndBroadcast(jwt);
-
-        return Ok();
-    }
+    // [HttpDelete]
+    // [Route(DeleteDataRoute)]
+    // public async Task<ActionResult> DeleteData([FromHeader] string authorization)
+    // {
+    //     var jwt = securityService.VerifyJwtOrThrow(authorization);
+    //
+    //     await greenhouseDeviceService.DeleteDataAndBroadcast(jwt);
+    //
+    //     return Ok();
+    // }
 }
