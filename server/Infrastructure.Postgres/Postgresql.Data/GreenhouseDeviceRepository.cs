@@ -129,7 +129,9 @@ namespace Infrastructure.Postgres.Postgresql.Data
             // Assuming each device has a unique device ID, and a user is associated with it
             var device = await ctx.UserDevices.Include(userDevice => userDevice.User)
                 .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
-
+            
+            if (device == null)
+                throw new NotFoundException("Device not found");
             return device.User;
         }
 

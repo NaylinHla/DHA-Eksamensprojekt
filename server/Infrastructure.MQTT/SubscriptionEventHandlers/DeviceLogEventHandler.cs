@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using Application;
 using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.MqttSubscriptionDto;
+using Core.Domain.Exceptions;
 using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.Types;
 
@@ -18,8 +20,8 @@ public class DeviceLogEventHandler(IGreenhouseDeviceService greenhouseDeviceServ
     {
         var dto = JsonSerializer.Deserialize<DeviceSensorDataDto>(args.PublishMessage.PayloadAsString,
             JsonDefaults.CaseInsensitive) 
-                  ?? throw new Exception("Could not deserialize into " + nameof(DeviceSensorDataDto) + " from " +
-                                      args.PublishMessage.PayloadAsString);
+                  ?? throw new SerializationException("Could not deserialize into " + nameof(DeviceSensorDataDto) + " from " +
+                                                      args.PublishMessage.PayloadAsString);
         var context = new ValidationContext(dto);
         Validator.ValidateObject(dto, context);
         greenhouseDeviceService.AddToDbAndBroadcast(dto);
