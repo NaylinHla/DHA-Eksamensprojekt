@@ -7,7 +7,7 @@ import {useNavigate} from "react-router";
 import EmailModal from "../../components/Modals/EmailModal.tsx";
 import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.tsx";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
-import {formatDateTimeForUserTZ} from "../../components";
+import {formatDateTimeForUserTZ, useLogout} from "../../components";
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
@@ -28,7 +28,9 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
 
-    const navigate = useNavigate();;
+    const navigate = useNavigate();
+    
+    const { logout } = useLogout();
 
     // ------
     useEffect(() => {
@@ -68,7 +70,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             toast.success("Account deleted – goodbye!");
             localStorage.removeItem("jwt");
             setJwt("");
-            navigate("/auth", { replace: true });
+            logout();
         } catch (e: any) {
             toast.error(e.message ?? "Failed");
         } finally {
