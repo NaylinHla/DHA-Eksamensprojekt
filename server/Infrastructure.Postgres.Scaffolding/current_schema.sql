@@ -8,7 +8,7 @@ END $EF$;
 
 
 CREATE TABLE meetyourplants."Plant" (
-    "PlantID" uuid NOT NULL,
+    "PlantId" uuid NOT NULL,
     "Planted" timestamp with time zone,
     "PlantName" text NOT NULL,
     "PlantType" text NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE meetyourplants."Plant" (
     "LastWatered" timestamp with time zone,
     "WaterEvery" integer,
     "IsDead" boolean NOT NULL,
-    CONSTRAINT "PK_Plant" PRIMARY KEY ("PlantID")
+    CONSTRAINT "PK_Plant" PRIMARY KEY ("PlantId")
 );
 
 
@@ -35,14 +35,14 @@ CREATE TABLE meetyourplants."User" (
 
 
 CREATE TABLE meetyourplants."Alert" (
-    "AlertID" uuid NOT NULL,
+    "AlertId" uuid NOT NULL,
     "AlertUserId" uuid NOT NULL,
     "AlertName" text NOT NULL,
     "AlertDesc" text NOT NULL,
     "AlertTime" timestamp with time zone NOT NULL,
     "AlertPlant" uuid,
-    CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertID"),
-    CONSTRAINT "FK_Alert_Plant_AlertPlant" FOREIGN KEY ("AlertPlant") REFERENCES meetyourplants."Plant" ("PlantID") ON DELETE SET NULL,
+    CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertId"),
+    CONSTRAINT "FK_Alert_Plant_AlertPlant" FOREIGN KEY ("AlertPlant") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE SET NULL,
     CONSTRAINT "FK_Alert_User_AlertUserId" FOREIGN KEY ("AlertUserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
 );
 
@@ -59,11 +59,11 @@ CREATE TABLE meetyourplants."UserDevice" (
 
 
 CREATE TABLE meetyourplants."UserPlant" (
-    "UserID" uuid NOT NULL,
-    "PlantID" uuid NOT NULL,
-    CONSTRAINT "PK_UserPlant" PRIMARY KEY ("UserID", "PlantID"),
-    CONSTRAINT "FK_UserPlant_Plant_PlantID" FOREIGN KEY ("PlantID") REFERENCES meetyourplants."Plant" ("PlantID") ON DELETE CASCADE,
-    CONSTRAINT "FK_UserPlant_User_UserID" FOREIGN KEY ("UserID") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+    "UserId" uuid NOT NULL,
+    "PlantId" uuid NOT NULL,
+    CONSTRAINT "PK_UserPlant" PRIMARY KEY ("UserId", "PlantId"),
+    CONSTRAINT "FK_UserPlant_Plant_PlantId" FOREIGN KEY ("PlantId") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE CASCADE,
+    CONSTRAINT "FK_UserPlant_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
 );
 
 
@@ -113,6 +113,6 @@ CREATE INDEX "IX_SensorHistory_DeviceId" ON meetyourplants."SensorHistory" ("Dev
 CREATE INDEX "IX_UserDevice_UserId" ON meetyourplants."UserDevice" ("UserId");
 
 
-CREATE INDEX "IX_UserPlant_PlantID" ON meetyourplants."UserPlant" ("PlantID");
+CREATE INDEX "IX_UserPlant_PlantId" ON meetyourplants."UserPlant" ("PlantId");
 
 

@@ -15,7 +15,7 @@ using Api.Rest.Controllers;
 namespace Startup.Tests.GreenhouseDeviceTests
 {
     [TestFixture]
-    public class GreenhouseDeviceControllerTest : WebApplicationFactory<Program>
+    public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
     {
         private HttpClient _client = null!;
         private User _testUser = null!;

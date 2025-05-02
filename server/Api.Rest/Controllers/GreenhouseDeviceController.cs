@@ -1,5 +1,4 @@
 using Application.Interfaces;
-using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.SensorHistory;
@@ -12,7 +11,6 @@ namespace Api.Rest.Controllers;
 [Route("api/[controller]")]
 public class GreenhouseDeviceController(
     IGreenhouseDeviceService greenhouseDeviceService,
-    IConnectionManager connectionManager,
     ISecurityService securityService) : ControllerBase
 {
     public const string GetSensorDataRoute = nameof(GetSensorDataByDeviceId);

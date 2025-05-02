@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Authentication;
+using Core.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,8 +22,10 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             UnauthorizedAccessException => StatusCodes.Status403Forbidden,
             FileNotFoundException => StatusCodes.Status404NotFound,
             KeyNotFoundException => StatusCodes.Status404NotFound,
+            NotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
+
 
         // Problem details structure
         var problemDetails = new ProblemDetails

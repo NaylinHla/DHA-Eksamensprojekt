@@ -3,6 +3,7 @@ using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos.SensorHistory;
 using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
+using Core.Domain.Exceptions;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,8 +23,8 @@ namespace Infrastructure.Postgres.Postgresql.Data
             var device = await ctx.UserDevices.FirstOrDefaultAsync(d => d.DeviceId == deviceId);
 
             if (device == null)
-                throw new FileNotFoundException("Device not found.");
-
+                throw new NotFoundException("Device not found");
+            
             return device.UserId;
         }
 
