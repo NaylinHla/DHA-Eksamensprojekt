@@ -96,7 +96,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     return (
         <main className="relative flex min-h-screen flex-col items-center justify-center bg-primary font-display text-base-100">
             {/* Header */}
-            <h1 className="absolute top-5 text-xl tracking-wider font-bold lg:text-3xl sm:text-3xl">
+            <h1 className="absolute top-5 text-xl tracking-wider font-bold lg:text-3xl sm:text-3xl text-white">
                 Greenhouse Application
             </h1>
 
@@ -109,7 +109,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 />
 
                 {/* AUTH COLUMN */}
-                <div className="relative flex w-full max-w-xs flex-col items-center text-center md:max-w-sm">
+                <div className="relative text-white flex w-full max-w-xs flex-col items-center text-center md:max-w-sm">
                     {/* Login / Register */}
                     <div
                         className={`flex flex-col items-center transition-transform duration-300 ${
@@ -123,7 +123,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         >
                             Login
                         </button>
-                        <span className="mt-1 h-px w-32 bg-base-100"/>
+                        <span className="mt-1 h-px w-32 bg-white"/>
                     </div>
 
                     <div
@@ -138,7 +138,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         >
                             Register
                         </button>
-                        <span className="mt-1 h-px w-32 bg-base-100" />
+                        <span className="mt-1 h-px w-32 bg-white" />
                     </div>
 
                     {/* Login Form */}
@@ -153,7 +153,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             name="email"
                             type="email"
                             placeholder="Email"
-                            className="input input-bordered input-sm w-full text-black"
+                            className="bg-white input input-bordered input-sm w-full text-black"
                             required
                         />
                         <label className="label py-0 text-white">Password</label>
@@ -161,11 +161,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             name="password"
                             placeholder="Password"
                             required
+                            className={"bg-white"}
                         />
-                        <button className="btn btn-neutral btn-sm w-full">Login</button>
-                        <button type="button" className="btn btn-link btn-xs w-full" onClick={reset}>
-                            Back
-                        </button>
+                        <button className="btn text-white border-white bg-transparent btn-sm w-full">Login</button>
                     </form>
 
                     {/* Register Form */}
@@ -181,7 +179,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 <input
                                     name="firstName"
                                     placeholder="First Name"
-                                    className="input input-bordered input-sm w-full text-black"
+                                    className="input input-bordered bg-white input-sm w-full text-black"
                                     required
                                 />
                             </div>
@@ -190,7 +188,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 <input
                                     name="lastName"
                                     placeholder="Last Name"
-                                    className="input input-bordered input-sm w-full text-black"
+                                    className="input input-bordered bg-white input-sm w-full text-black"
                                     required
                                 />
                             </div>
@@ -201,7 +199,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             name="email"
                             type="email"
                             placeholder="Email"
-                            className="input input-bordered input-sm w-full text-black"
+                            className="input input-bordered bg-white input-sm w-full text-black"
                             required
                         />
 
@@ -211,7 +209,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 <input
                                     name="birthday"
                                     type="date"
-                                    className="input input-bordered input-sm w-full text-black"
+                                    className="input input-bordered bg-white input-sm w-full text-black"
                                     required
                                 />
                             </div>
@@ -220,7 +218,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 <input
                                     name="country"
                                     placeholder="Country"
-                                    className="input input-bordered input-sm w-full text-black"
+                                    className="input input-bordered bg-white input-sm w-full text-black"
                                     required
                                 />
                             </div>
@@ -231,6 +229,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             name="password"
                             placeholder="Password"
                             required
+                            className="bg-white"
                         />
 
                         <label className="label py-0 text-white">Confirm password</label>
@@ -238,13 +237,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             name="confirmPassword"
                             placeholder="Password"
                             required
+                            className="bg-white"
                         />
 
                         <div className="flex gap-2 pt-1">
-                            <button type="button" className="btn btn-neutral btn-xs flex-1" onClick={reset}>
-                                Back
-                            </button>
-                            <button type="submit" className="btn btn-primary border-white btn-xs flex-1">
+                            <button type="submit" className="btn bg-transparent text-white border-white btn-xs flex-1">
                                 Register
                             </button>
                         </div>

@@ -531,18 +531,14 @@ export class UserClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    deleteUser(authorization: string | undefined, dto: DeleteUserDto): Promise<User> {
+    deleteUser(authorization: string | undefined): Promise<User> {
         let url_ = this.baseUrl + "/api/User/DeleteUser";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(dto);
-
         let options_: RequestInit = {
-            body: content_,
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
-                "Content-Type": "application/json",
                 "Accept": "application/json"
             }
         };
@@ -804,10 +800,6 @@ export interface ChangeSubscriptionDto {
 export interface ExampleBroadcastDto {
     eventType?: string;
     message?: string;
-}
-
-export interface DeleteUserDto {
-    email: string;
 }
 
 export interface PatchUserEmailDto {

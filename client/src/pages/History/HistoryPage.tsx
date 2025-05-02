@@ -155,8 +155,7 @@ export default function DeviceHistory() {
                 <h1 className="text-2xl font-bold">Overview:</h1>
 
                 {/* Current Status Box */}
-                {/* Current Status Box */}
-                <div className="border rounded p-4 shadow bg-white min-w-[260px] w-full sm:w-auto relative">
+                <div className="border rounded p-4 shadow bg-[boxcolor] min-w-[260px] w-full sm:w-auto relative">
                     <div className={loadingDevices || loadingData ? "invisible" : ""}>
                         {(() => {
                             const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
@@ -172,7 +171,7 @@ export default function DeviceHistory() {
                                 return (
                                     <>
                                         <h2 className="font-bold mb-3">Current Status</h2>
-                                        <p className="text-sm text-gray-500">No data available</p>
+                                        <p className="text-sm">No data available</p>
                                     </>
                                 );
                             }
