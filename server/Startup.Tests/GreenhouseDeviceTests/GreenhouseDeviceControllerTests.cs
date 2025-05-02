@@ -331,7 +331,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
         public async Task DeleteData_ShouldReturnOk()
         {
             var resp = await _client.DeleteAsync("api/GreenhouseDevice/DeleteData");
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound)); //Original OK change caused method disabled
         }
         
         [Test]
@@ -340,7 +340,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
             var client = CreateClient(); // no JWT
             var resp = await client.DeleteAsync("api/GreenhouseDevice/DeleteData");
 
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound)); ; //Original BadRequest change caused method disabled
         }
 
 

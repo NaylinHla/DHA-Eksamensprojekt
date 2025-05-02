@@ -104,7 +104,7 @@ public partial class MyDbContext : DbContext
 
             entity.ToTable("Plant");
 
-            entity.Property(e => e.PlantId).HasColumnName("PlantID");
+            entity.Property(e => e.PlantId).HasColumnName("PlantId");
             entity.Property(e => e.Planted).HasColumnName("Planted");
             entity.Property(e => e.PlantName).HasColumnName("PlantName");
             entity.Property(e => e.PlantType).HasColumnName("PlantType");
@@ -120,8 +120,8 @@ public partial class MyDbContext : DbContext
 
             entity.ToTable("UserPlant");
 
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-            entity.Property(e => e.PlantId).HasColumnName("PlantID");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.PlantId).HasColumnName("PlantId");
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.UserPlants)
@@ -140,7 +140,7 @@ public partial class MyDbContext : DbContext
 
             entity.ToTable("Alert");
 
-            entity.Property(e => e.AlertId).HasColumnName("AlertID");
+            entity.Property(e => e.AlertId).HasColumnName("AlertId");
             entity.Property(e => e.AlertUserId).HasColumnName("AlertUserId");
             entity.Property(e => e.AlertName).HasColumnName("AlertName");
             entity.Property(e => e.AlertDesc).HasColumnName("AlertDesc");
