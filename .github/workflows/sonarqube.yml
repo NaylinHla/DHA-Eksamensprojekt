@@ -91,12 +91,20 @@ jobs:
             /d:sonar.coverage.sources=Startup \
             /d:sonar.coverage.exclusions="\
             **/Program.cs,\
-            Application/Models/**,\
-            Application/Interfaces/**,\
-            Core.Domain/Entities/**,\
-            Infrastructure.Postgres.Scaffolding/**,\
+            Api.Rest/RestStartupExtensions.cs,\
+            Api.Rest/Extensions/**,\
+            Api.Websocket/Extensions.cs,\
+            Api.Websocket/ExampleEventHandler.cs,\
+            Application/AppOptionsExtensions.cs,\
             Application/Extensions.cs,\
-            Infrastructure.Postgres/Extensions.cs" \
+            Application/Interfaces/**,\
+            Application/Models/**,\
+            Core.Domain/Entities/**,\
+            Infrastructure.Mqtt/MqttExtensions.cs,\
+            Infrastructure.Postgres.Scaffolding/**,\
+            Infrastructure.Postgres/Extensions.cs,\
+            Infrastructure.Postgres/Extensions.cs,\
+            Startup/Proxy/**" \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 

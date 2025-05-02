@@ -9,7 +9,7 @@ export interface AlertCreate {
 }
 
 export interface AlertResponseDto {
-    alertID: string;
+    alertId: string;
     alertName: string;
     alertDesc: string;
     alertTime: string;

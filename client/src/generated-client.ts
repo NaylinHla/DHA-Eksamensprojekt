@@ -677,7 +677,7 @@ export class UserClient {
 }
 
 export interface Alert {
-    alertID?: string;
+    alertId?: string;
     alertUserId?: string;
     alertName?: string;
     alertDesc?: string;
@@ -722,14 +722,14 @@ export interface UserSettings {
 }
 
 export interface UserPlant {
-    userID?: string;
-    plantID?: string;
+    userId?: string;
+    plantId?: string;
     user?: User;
     plant?: Plant;
 }
 
 export interface Plant {
-    plantID?: string;
+    plantId?: string;
     planted?: Date | undefined;
     plantName?: string;
     plantType?: string;
@@ -763,7 +763,7 @@ export interface SensorHistory {
 }
 
 export interface AlertResponseDto {
-    alertID?: string;
+    alertId?: string;
     alertName?: string;
     alertDesc?: string;
     alertTime?: Date;
@@ -771,9 +771,10 @@ export interface AlertResponseDto {
 }
 
 export interface AlertCreate {
-    alertName: string;
-    alertDesc: string;
+    alertName?: string;
+    alertDesc?: string;
     alertPlant?: string | undefined;
+    alertUser?: string | undefined;
 }
 
 export interface AuthResponseDto {

@@ -20,20 +20,17 @@ namespace Application.Services;
 
 public class GreenhouseDeviceService : IGreenhouseDeviceService
 {
-    private readonly IOptionsMonitor<AppOptions> _optionsMonitor;
     private readonly ILogger<GreenhouseDeviceService> _logger;
     private readonly IServiceProvider _services;
     private readonly IMqttPublisher _mqttPublisher;
     private readonly IConnectionManager _connectionManager;
 
     public GreenhouseDeviceService(
-        IOptionsMonitor<AppOptions> optionsMonitor,
         ILogger<GreenhouseDeviceService> logger,
         IServiceProvider services,
         IMqttPublisher mqttPublisher,
         IConnectionManager connectionManager)
     {
-        _optionsMonitor = optionsMonitor;
         _logger = logger;
         _services = services;
         _mqttPublisher = mqttPublisher;

@@ -1,14 +1,12 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Application.Models.Dtos.RestDtos;
 
 public class AlertCreate
 {
-    [Required]
-    public string AlertName { get; set; }
+    public required string AlertName { get; set; }
 
-    [Required]
-    public string AlertDesc { get; set; }
+    public required string AlertDesc { get; set; }
 
     public Guid? AlertPlant { get; set; }
+    
+    public Guid? AlertUser { get; set; }
 }
