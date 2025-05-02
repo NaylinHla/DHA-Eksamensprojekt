@@ -9,8 +9,8 @@
     {
         public Guid DeviceId { get; set; }
         public Guid UserId { get; set; }
-        public string DeviceName { get; set; }
-        public string DeviceDescription { get; set; }
+        public required string DeviceName { get; set; }
+        public string DeviceDescription { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
     }
 }

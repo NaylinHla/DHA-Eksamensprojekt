@@ -724,7 +724,7 @@ export interface SensorHistory {
 }
 
 export interface AlertResponseDto {
-    alertID?: string;
+    alertId?: string;
     alertName?: string;
     alertDesc?: string;
     alertTime?: Date;
@@ -732,9 +732,10 @@ export interface AlertResponseDto {
 }
 
 export interface AlertCreate {
-    alertName: string;
-    alertDesc: string;
+    alertName?: string;
+    alertDesc?: string;
     alertPlant?: string | undefined;
+    alertUser?: string | undefined;
 }
 
 export interface AuthResponseDto {

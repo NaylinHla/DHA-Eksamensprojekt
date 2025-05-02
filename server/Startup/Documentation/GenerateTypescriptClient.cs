@@ -27,8 +27,9 @@ public static class GenerateTypescriptClient
 
         var generator = new TypeScriptClientGenerator(document, settings);
         var code = generator.GenerateFile();
-        var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
-        //var lines = code.Split(new[] { Environment.NewLine }, StringSplitOptions.None).ToList();
+
+        var linesArray = new[] {"\r\n", "\n" };
+        var lines = code.Split(linesArray, StringSplitOptions.None).ToList();
         var startIndex = lines.FindIndex(l => l.Contains("export interface BaseDto"));
         if (startIndex >= 0)
             lines.RemoveRange(startIndex, 4);
@@ -41,6 +42,6 @@ public static class GenerateTypescriptClient
 
         await File.WriteAllTextAsync(outputPath, modifiedCode);
         app.Services.GetRequiredService<ILogger<Program>>()
-            .LogInformation("TypeScript client generated at: " + outputPath);
+            .LogInformation("TypeScript client generated at: {outputPath} ", outputPath);
     }
 }

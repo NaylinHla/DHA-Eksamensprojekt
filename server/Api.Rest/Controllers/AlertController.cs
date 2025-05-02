@@ -51,7 +51,7 @@ public class AlertController : ControllerBase
 
         var response = new AlertResponseDto
         {
-            AlertID = alert.AlertId,
+            AlertId = alert.AlertId,
             AlertName = alert.AlertName,
             AlertDesc = alert.AlertDesc,
             AlertTime = alert.AlertTime,

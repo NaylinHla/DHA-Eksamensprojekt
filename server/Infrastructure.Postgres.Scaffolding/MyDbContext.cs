@@ -1,8 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System;
-using System.Linq;
 
 namespace Infrastructure.Postgres.Scaffolding;
 

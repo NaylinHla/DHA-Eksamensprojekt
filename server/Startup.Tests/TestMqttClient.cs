@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Application;
 using HiveMQtt.Client;
 
 namespace Startup.Tests;
@@ -27,15 +28,8 @@ public class TestMqttClient
         MqttClient = new HiveMQClient(options);
         MqttClient.OnMessageReceived += (_, args) =>
         {
-            var jsonSerializerOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-
             var jsonElement = JsonSerializer.Deserialize<JsonElement>(args.PublishMessage.PayloadAsString);
-            var stringRepresentation = JsonSerializer.Serialize(jsonElement, jsonSerializerOptions);
+            var stringRepresentation = JsonSerializer.Serialize(jsonElement, JsonDefaults.MqttSerialize);
             ReceivedMessages.Enqueue(stringRepresentation);
             Console.WriteLine($"Received message: {stringRepresentation}");
         };
