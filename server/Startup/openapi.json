@@ -445,7 +445,7 @@
       }
     },
     "/api/User/DeleteUser": {
-      "post": {
+      "delete": {
         "tags": [
           "User"
         ],
@@ -460,18 +460,6 @@
             "x-position": 1
           }
         ],
-        "requestBody": {
-          "x-name": "dto",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteUserDto"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
         "responses": {
           "200": {
             "description": "",
@@ -1092,20 +1080,6 @@
           },
           "message": {
             "type": "string"
-          }
-        }
-      },
-      "DeleteUserDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "email"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
           }
         }
       },

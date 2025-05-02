@@ -64,14 +64,16 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleDelete() {
         try {
             setSaving(true);
-            await userClient.deleteUser(jwt, { email: "" });
+            await userClient.deleteUser(jwt);
             toast.success("Account deleted – goodbye!");
             localStorage.removeItem("jwt");
             setJwt("");
-            navigate("/auth", {replace: true});
+            navigate("/auth", { replace: true });
         } catch (e: any) {
             toast.error(e.message ?? "Failed");
-        } finally { setSaving(false); }
+        } finally {
+            setSaving(false);
+        }
     }
 
     async function handlePasswordDto(dto: PasswordDto) {
