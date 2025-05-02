@@ -228,7 +228,7 @@ export class GreenhouseDeviceClient {
     }
 
     getSensorDataByDeviceId(deviceId: string | undefined, authorization: string | undefined): Promise<GetAllSensorHistoryByDeviceIdDto[]> {
-        let url_ = this.baseUrl + "/GetSensorDataByDeviceId?";
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/GetSensorDataByDeviceId?";
         if (deviceId === null)
             throw new Error("The parameter 'deviceId' cannot be null.");
         else if (deviceId !== undefined)
@@ -265,8 +265,42 @@ export class GreenhouseDeviceClient {
         return Promise.resolve<GetAllSensorHistoryByDeviceIdDto[]>(null as any);
     }
 
+    getRecentSensorDataForAllUserDevice(authorization: string | undefined): Promise<GetRecentSensorDataForAllUserDeviceDto> {
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/GetRecentSensorDataForAllUserDevice";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRecentSensorDataForAllUserDevice(_response);
+        });
+    }
+
+    protected processGetRecentSensorDataForAllUserDevice(response: Response): Promise<GetRecentSensorDataForAllUserDeviceDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GetRecentSensorDataForAllUserDeviceDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GetRecentSensorDataForAllUserDeviceDto>(null as any);
+    }
+
     getAllUserDevices(authorization: string | undefined): Promise<GetAllUserDeviceDto[]> {
-        let url_ = this.baseUrl + "/GetAllUserDevices";
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/GetAllUserDevices";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -300,7 +334,7 @@ export class GreenhouseDeviceClient {
     }
 
     adminChangesPreferences(dto: AdminChangesPreferencesDto, authorization: string | undefined): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/AdminChangesPreferences";
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/AdminChangesPreferences";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
@@ -343,7 +377,7 @@ export class GreenhouseDeviceClient {
     }
 
     deleteData(authorization: string | undefined): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/DeleteData";
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/DeleteData";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -767,6 +801,20 @@ export interface GetAllSensorHistoryByDeviceIdDto {
 }
 
 export interface SensorHistoryDto {
+    temperature?: number;
+    humidity?: number;
+    airPressure?: number;
+    airQuality?: number;
+    time?: Date;
+}
+
+export interface GetRecentSensorDataForAllUserDeviceDto {
+    sensorHistoryWithDeviceRecords?: SensorHistoryWithDeviceDto[];
+}
+
+export interface SensorHistoryWithDeviceDto {
+    deviceId?: string;
+    deviceName?: string;
     temperature?: number;
     humidity?: number;
     airPressure?: number;

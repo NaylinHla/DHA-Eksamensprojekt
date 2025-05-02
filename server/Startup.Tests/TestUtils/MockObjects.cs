@@ -9,7 +9,8 @@ public static class MockObjects
     {
         var userId = Guid.NewGuid();
         
-        return new User
+        // Create user instance
+        var user = new User
         {
             UserId = userId,
             Role = role ?? Constants.UserRole,
@@ -39,6 +40,44 @@ public static class MockObjects
             Alerts = new List<Alert>(), // Empty list
             UserDevices = new List<UserDevice>() // Empty list
         };
-        
+
+        // Create and add a test device for the user
+        var device = new UserDevice
+        {
+            DeviceId = Guid.NewGuid(),
+            UserId = userId,
+            DeviceName = "Test Device",
+            DeviceDescription = "Device for testing",
+            CreatedAt = DateTime.UtcNow,
+            SensorHistories = new List<SensorHistory>()
+        };
+
+        // Add sample sensor data to the device
+        device.SensorHistories.Add(new SensorHistory
+        {
+            SensorHistoryId = Guid.NewGuid(),
+            DeviceId = device.DeviceId,
+            Temperature = 24.5f,
+            Humidity = 60.2f,
+            AirPressure = 1010.3f,
+            AirQuality = 1,
+            Time = DateTime.UtcNow.AddMinutes(-10)
+        });
+
+        device.SensorHistories.Add(new SensorHistory
+        {
+            SensorHistoryId = Guid.NewGuid(),
+            DeviceId = device.DeviceId,
+            Temperature = 25.1,
+            Humidity = 59.8f,
+            AirPressure = 1011.2f,
+            AirQuality = 1,
+            Time = DateTime.UtcNow
+        });
+
+        // Add the device to the user's list of devices
+        user.UserDevices.Add(device);
+
+        return user;
     }
 }
