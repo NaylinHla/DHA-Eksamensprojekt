@@ -1,7 +1,9 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.MqttDtos.Response;
+using Application.Models.Dtos.RestDtos.SensorHistory;
 using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
+using Core.Domain.Exceptions;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +23,43 @@ namespace Infrastructure.Postgres.Postgresql.Data
             var device = await ctx.UserDevices.FirstOrDefaultAsync(d => d.DeviceId == deviceId);
 
             if (device == null)
-                throw new FileNotFoundException("Device not found.");
-
+                throw new NotFoundException("Device not found");
+            
             return device.UserId;
         }
-        
+
+        public async Task<List<SensorHistoryWithDeviceDto>> GetLatestSensorDataForUserDevicesAsync(Guid userId)
+        {
+            return await ctx.UserDevices
+                .Where(device => device.UserId == userId)
+                .Select(device => new SensorHistoryWithDeviceDto
+                {
+                    DeviceId = device.DeviceId,
+                    DeviceName = device.DeviceName,
+                    Temperature = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Temperature)
+                        .FirstOrDefault(),
+                    Humidity = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Humidity)
+                        .FirstOrDefault(),
+                    AirPressure = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.AirPressure)
+                        .FirstOrDefault(),
+                    AirQuality = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.AirQuality)
+                        .FirstOrDefault(),
+                    Time = device.SensorHistories
+                        .OrderByDescending(s => s.Time)
+                        .Select(s => s.Time)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+        }
+
         public async Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId)
         {
             var devices = await ctx.UserDevices
@@ -45,12 +79,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 AllUserDevice = devices
             };
         }
-
-        public List<GetAllSensorHistoryByDeviceIdDto> GetSensorHistoryByDeviceId(Guid deviceId)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId)
         {
             // Fetch device information

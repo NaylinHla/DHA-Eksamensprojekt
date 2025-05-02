@@ -9,6 +9,7 @@ import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
 import AuthScreen from "../pages/Auth/AuthScreen.tsx";
 import {NavBar} from "./index";
+import UserSettings from "../pages/UserSettings/UserSettings.tsx";
 
 export default function ApplicationRoutes() {
 
@@ -30,10 +31,10 @@ export default function ApplicationRoutes() {
         <Routes>
             <Route element={<HistoryPage/>} path={"/history"}/>
             <Route element={<DashboardPage/>} path={DashboardRoute}/>
-            <Route element={<Settings/>} path={SettingsRoute}/>
+            <Route element={<UserSettings/>} path={SettingsRoute}/>
             <Route element={<AlertPage/>} path={"/alerts"}></Route>
             <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
         </Routes>
-        {!isAuthScreen && <Dock/>}
+        {/*{!isAuthScreen && <Dock/>}*/}
     </>)
 }
