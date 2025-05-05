@@ -11,7 +11,7 @@ namespace Application.Interfaces;
 public interface IGreenhouseDeviceService
 {
     Task<List<GetAllSensorHistoryByDeviceIdDto>>
-        GetSensorHistoryByDeviceIdAndBroadcast(Guid deviceId, JwtClaims claims);
+        GetSensorHistoryByDeviceId(Guid deviceId, DateTime? from, DateTime? to, JwtClaims claims);
     Task<GetAllUserDeviceDto> GetAllUserDevice(JwtClaims claims);
     Task<GetRecentSensorDataForAllUserDeviceDto> GetRecentSensorDataForAllUserDevicesAsync(JwtClaims claims);
     Task AddToDbAndBroadcast(DeviceSensorDataDto? dto);

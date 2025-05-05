@@ -14,7 +14,7 @@ public class GreenhouseDeviceController(
     IGreenhouseDeviceService greenhouseDeviceService,
     ISecurityService securityService) : ControllerBase
 {
-    public const string GetSensorDataRoute = nameof(GetSensorDataByDeviceId);
+    public const string GetSensorDataRoute = nameof(GetAllSensorHistoryByDeviceAndTimePeriodIdDto);
     
     public const string GetAllUserDevicesRoute = nameof(GetAllUserDevices);
     
@@ -26,13 +26,15 @@ public class GreenhouseDeviceController(
 
     [HttpGet]
     [Route(GetSensorDataRoute)]
-    public async Task<ActionResult<IEnumerable<GetAllSensorHistoryByDeviceIdDto>>> GetSensorDataByDeviceId(
-        [FromQuery] Guid deviceId,
+    public async Task<ActionResult<List<GetAllSensorHistoryByDeviceIdDto>>> GetAllSensorHistoryByDeviceAndTimePeriodIdDto(
+        Guid deviceId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var data = await greenhouseDeviceService.GetSensorHistoryByDeviceIdAndBroadcast(deviceId, claims);
-        return Ok(data);
+        var result = await greenhouseDeviceService.GetSensorHistoryByDeviceId(deviceId, from, to, claims);
+        return Ok(result);
     }
     
     [HttpGet]

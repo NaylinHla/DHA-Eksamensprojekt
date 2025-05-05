@@ -176,12 +176,12 @@
         }
       }
     },
-    "/api/GreenhouseDevice/GetSensorDataByDeviceId": {
+    "/api/GreenhouseDevice/GetAllSensorHistoryByDeviceAndTimePeriodIdDto": {
       "get": {
         "tags": [
           "GreenhouseDevice"
         ],
-        "operationId": "GreenhouseDevice_GetSensorDataByDeviceId",
+        "operationId": "GreenhouseDevice_GetAllSensorHistoryByDeviceAndTimePeriodIdDto",
         "parameters": [
           {
             "name": "deviceId",
@@ -193,12 +193,32 @@
             "x-position": 1
           },
           {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 2
+            "x-position": 4
           }
         ],
         "responses": {

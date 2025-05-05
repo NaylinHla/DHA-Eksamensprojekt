@@ -80,7 +80,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
             };
         }
         
-        public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId)
+        public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId, DateTime? from = null, DateTime? to = null)
         {
             // Fetch device information
             var device = await ctx.UserDevices
@@ -89,10 +89,17 @@ namespace Infrastructure.Postgres.Postgresql.Data
             if (device == null)
                 throw new Exception("Device not found");
 
-            // Fetch sensor history records for the device
-            var sensorHistoryRecords = await ctx.SensorHistories
-                .Where(sh => sh.DeviceId == deviceId)
-                .OrderBy(sh => sh.Time) // if you want oldest first
+            var query = ctx.SensorHistories
+                .Where(sh => sh.DeviceId == deviceId);
+
+            if (from.HasValue)
+                query = query.Where(sh => sh.Time >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(sh => sh.Time <= to.Value);
+
+            var sensorHistoryRecords = await query
+                .OrderBy(sh => sh.Time)
                 .Select(sh => new SensorHistoryDto
                 {
                     Temperature = sh.Temperature,

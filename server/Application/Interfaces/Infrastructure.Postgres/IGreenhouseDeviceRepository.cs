@@ -11,7 +11,7 @@ namespace Application.Interfaces.Infrastructure.Postgres
         Task<Guid> GetDeviceOwnerUserId(Guid deviceId);
         Task<List<SensorHistoryWithDeviceDto>> GetLatestSensorDataForUserDevicesAsync(Guid userId);
         Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId);
-        Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId);
+        Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId, DateTime? from = null, DateTime? to = null);
         Task<SensorHistory> AddSensorHistory(SensorHistory sensorHistory);
         Task<User> GetUserByDeviceId(Guid deviceId);
         Task DeleteDataFromSpecificDevice(Guid deviceId);
