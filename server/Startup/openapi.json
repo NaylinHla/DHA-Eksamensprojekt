@@ -324,6 +324,46 @@
         }
       }
     },
+    "/api/GreenhouseDevice/DeleteDataFromSpecificDevice": {
+      "delete": {
+        "tags": [
+          "GreenhouseDevice"
+        ],
+        "operationId": "GreenhouseDevice_DeleteDataFromSpecificDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/Subscribe": {
       "post": {
         "tags": [

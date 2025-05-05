@@ -14,6 +14,6 @@ namespace Application.Interfaces.Infrastructure.Postgres
         Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId);
         Task<SensorHistory> AddSensorHistory(SensorHistory sensorHistory);
         Task<User> GetUserByDeviceId(Guid deviceId);
-        Task DeleteAllSensorHistoryData();
+        Task DeleteDataFromSpecificDevice(Guid deviceId);
     }
 }

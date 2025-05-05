@@ -16,5 +16,5 @@ public interface IGreenhouseDeviceService
     Task<GetRecentSensorDataForAllUserDeviceDto> GetRecentSensorDataForAllUserDevicesAsync(JwtClaims claims);
     Task AddToDbAndBroadcast(DeviceSensorDataDto? dto);
     Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims);
-    Task DeleteDataAndBroadcast(JwtClaims jwt);
+    Task DeleteDataFromSpecificDeviceAndBroadcast(Guid deviceId, JwtClaims jwt);
 }

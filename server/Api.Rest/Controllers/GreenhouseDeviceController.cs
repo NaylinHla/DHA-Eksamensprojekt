@@ -3,6 +3,7 @@ using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.SensorHistory;
 using Application.Models.Dtos.RestDtos.UserDevice;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -20,6 +21,8 @@ public class GreenhouseDeviceController(
     public const string GetRecentSensorDataForAllUserDeviceRoute = nameof(GetRecentSensorDataForAllUserDevice);
     
     public const string AdminChangesPreferencesRoute = nameof(AdminChangesPreferences);
+    
+    public const string DeleteDataRoute = nameof(DeleteDataFromSpecificDevice);
 
     [HttpGet]
     [Route(GetSensorDataRoute)]
@@ -65,17 +68,15 @@ public class GreenhouseDeviceController(
         await greenhouseDeviceService.UpdateDeviceFeed(dto, claims);
         return Ok();
     }
+    
+    [HttpDelete]
+    [Route(DeleteDataRoute)]
+    public async Task<ActionResult> DeleteDataFromSpecificDevice([FromQuery] Guid deviceId, [FromHeader] string authorization)
+    {
+        var claims = securityService.VerifyJwtOrThrow(authorization);
 
-    // public const string DeleteDataRoute = nameof(DeleteData);
+        await greenhouseDeviceService.DeleteDataFromSpecificDeviceAndBroadcast(deviceId, claims);
 
-    // [HttpDelete]
-    // [Route(DeleteDataRoute)]
-    // public async Task<ActionResult> DeleteData([FromHeader] string authorization)
-    // {
-    //     var jwt = securityService.VerifyJwtOrThrow(authorization);
-    //
-    //     await greenhouseDeviceService.DeleteDataAndBroadcast(jwt);
-    //
-    //     return Ok();
-    // }
+        return Ok();
+    }
 }

@@ -14,11 +14,13 @@ export default function NavBar() {
 
     const mobileDrop  = useDropdown();
     const profileDrop = useDropdown();
+    const myDeviceDrop = useDropdown();
     const { logout } = useLogout();
 
     useEffect(() => {
         mobileDrop.setOpen(false);
         profileDrop.setOpen(false);
+        myDeviceDrop.setOpen(false);
     }, [location.pathname]);
 
     const handleLogout = () => {
@@ -129,6 +131,15 @@ export default function NavBar() {
                                 className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                             >
                                 Profile
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/mydevice"
+                                onClick={() => myDeviceDrop.setOpen(false)}
+                                className="block px-4 py-2 text-green-600 hover:bg-gray-100"
+                            >
+                                My device
                             </Link>
                         </li>
                         <li>

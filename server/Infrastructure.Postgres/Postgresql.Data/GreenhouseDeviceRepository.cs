@@ -138,12 +138,15 @@ namespace Infrastructure.Postgres.Postgresql.Data
             }
             return device.User;
         }
-
-        // Delete all sensor history data
-        public async Task DeleteAllSensorHistoryData()
+        
+        // Delete all sensor history data from a specific device
+        public async Task DeleteDataFromSpecificDevice(Guid deviceId)
         {
-            var allSensorHistory = await ctx.SensorHistories.ToListAsync();
-            ctx.RemoveRange(allSensorHistory);
+            var deviceSensorHistory = await ctx.SensorHistories
+                .Where(sh => sh.DeviceId == deviceId)
+                .ToListAsync();
+
+            ctx.SensorHistories.RemoveRange(deviceSensorHistory);
             await ctx.SaveChangesAsync();
         }
     }
