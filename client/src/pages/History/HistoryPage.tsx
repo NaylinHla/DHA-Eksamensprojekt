@@ -16,13 +16,37 @@ import {
 } from "../import";
 import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
 
+type Point = { time: string; value: number };
+
+function downsampleAvg(points: Point[], maxTotalPoints: number): Point[] {
+    const n = points.length;
+    if (n <= maxTotalPoints) return points;
+    const bucketSize = Math.ceil(n / maxTotalPoints);
+    const down: Point[] = [];
+    for (let i = 0; i < n; i += bucketSize) {
+        const slice = points.slice(i, i + bucketSize);
+        const avg = slice.reduce((sum, p) => sum + p.value, 0) / slice.length;
+        down.push({ time: slice[0].time, value: avg });
+    }
+    return down;
+}
+
 export default function DeviceHistory() {
+    const todayDate = new Date();
+    const oneMonthAgoDate = new Date();
+    oneMonthAgoDate.setMonth(todayDate.getMonth() - 1);
+    const isoToday = todayDate.toISOString().slice(0, 10);
+    const isoOneMonthAgo = oneMonthAgoDate.toISOString().slice(0, 10);
+
     const [greenhouseSensorDataAtom, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [jwt] = useAtom(JwtAtom);
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
     const [loadingDevices, setLoadingDevices] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
+    const [rangeFrom, setRangeFrom] = useState<string>(isoOneMonthAgo);
+    const [rangeTo, setRangeTo] = useState<string>(isoToday);
+
     const prevId = useRef<string | null>(null);
     const {subscribe, unsubscribe} = useTopicManager();
 
@@ -71,28 +95,41 @@ export default function DeviceHistory() {
             .finally(() => setLoadingDevices(false));
     }, [jwt, selectedDeviceId, setSelectedDeviceId]);
 
-
-    // Fetch data for selected device once the device is selected
+    // --- Debounce range updates ---
     useEffect(() => {
         if (!jwt || !selectedDeviceId) return;
-        setLoadingData(true);
-        greenhouseDeviceClient.getSensorDataByDeviceId(selectedDeviceId, jwt)
-            .then(response => setGreenhouseSensorDataAtom(response))
-            .catch(() => toast.error("Failed to load sensor data", { id: "load-sensor-error" }))
-            .finally(() => setLoadingData(false));
-    }, [jwt, selectedDeviceId, setGreenhouseSensorDataAtom]);
+        const timeout = setTimeout(() => {
+            setLoadingData(true);
+            greenhouseDeviceClient
+                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(
+                    selectedDeviceId,
+                    new Date(rangeFrom),
+                    new Date(rangeTo),
+                    jwt
+                )
+                .then(res => setGreenhouseSensorDataAtom(res))
+                .catch(() => toast.error("Failed to load sensor data", { id: "load-sensor-error" }))
+                .finally(() => setLoadingData(false));
+        }, 300); // 300ms debounce
+        return () => clearTimeout(timeout);
+    }, [jwt, selectedDeviceId, rangeFrom, rangeTo]);
 
-    // Live updates
+    // --- WebSocket live update ---
     useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
+        if (rangeTo !== isoToday) return;
         const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
         if (!newLogs.length) return;
-        const unique = newLogs.filter(log => {
-            const t = log.time ? new Date(log.time).getTime() : NaN;
-            return !isNaN(t) && !greenhouseSensorDataAtom.some(dev =>
-                dev.sensorHistoryRecords?.some(old => new Date(old.time!).getTime() === t)
-            );
-        });
+
+        const existing = new Set(
+            greenhouseSensorDataAtom.flatMap(d =>
+                d.sensorHistoryRecords?.map(r => new Date(r.time!).getTime()) ?? []
+            )
+        );
+        const unique = newLogs.filter(log =>
+            !existing.has(new Date(log.time!).getTime())
+        );
         if (!unique.length) return;
+
         setGreenhouseSensorDataAtom(prev =>
             prev.map(dev =>
                 dev.deviceId === selectedDeviceId
@@ -112,17 +149,31 @@ export default function DeviceHistory() {
     const chartDataByKey = useMemo(() => {
         const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
         const recs = deviceData?.sensorHistoryRecords || [];
-        const format = (key: keyof SensorHistoryDto) =>
-            recs.map(e => ({time: formatDateTimeForUserTZ(e.time), value: e[key] ?? NaN}));
-        return {
-            temperature: format("temperature"),
-            humidity: format("humidity"),
-            airPressure: format("airPressure"),
-            airQuality: format("airQuality"),
-        };
-    }, [greenhouseSensorDataAtom, selectedDeviceId]);
 
-    const renderChart = (data: any[], label: string) => (
+        type NumericKey = Exclude<keyof SensorHistoryDto, "time">;
+        const format = (key: NumericKey) =>
+            recs.map(e => ({
+                time: formatDateTimeForUserTZ(e.time),
+                value: e[key] ?? NaN
+            }));
+
+        const from = new Date(rangeFrom);
+        const to = new Date(rangeTo);
+        const days = Math.max((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24), 1);
+        const maxPoints = Math.min(Math.ceil(days * 50), 1000);
+
+        return {
+            temperature: downsampleAvg(format("temperature"), maxPoints),
+            humidity: downsampleAvg(format("humidity"), maxPoints),
+            airPressure: downsampleAvg(format("airPressure"), maxPoints),
+            airQuality: downsampleAvg(format("airQuality"), maxPoints)
+        };
+    }, [greenhouseSensorDataAtom, selectedDeviceId, rangeFrom, rangeTo]);
+
+
+    const graphReady = Object.values(chartDataByKey).some(series => series.length > 0);
+
+    const renderChart = useMemo(() => (data: Point[], label: string) => (
         <div className="mb-10 px-2">
             <h2 className="text-xl font-semibold mb-2">{label}</h2>
             <ResponsiveContainer width="100%" height={400}>
@@ -144,13 +195,24 @@ export default function DeviceHistory() {
                 </LineChart>
             </ResponsiveContainer>
         </div>
-    );
+    ), []);
 
     return (
         <div>
             {/* Top Bar + Status Box */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
                 <h1 className="text-2xl font-bold">Overview:</h1>
+
+                <div className="flex gap-2">
+                    <label>From:
+                        <input type="date" value={rangeFrom} onChange={e => setRangeFrom(e.target.value)}
+                               className="border ml-1 p-1 rounded"/>
+                    </label>
+                    <label>To:
+                        <input type="date" value={rangeTo} onChange={e => setRangeTo(e.target.value)}
+                               className="border ml-1 p-1 rounded"/>
+                    </label>
+                </div>
 
                 {/* Current Status Box */}
                 <div className="border rounded p-4 shadow bg-[boxcolor] min-w-[260px] w-full sm:w-auto relative">
@@ -245,7 +307,7 @@ export default function DeviceHistory() {
             </div>
 
             {/* Chart loader or charts underneath top bar */}
-            {loadingData
+                {(!graphReady || loadingData)
                 ? <Spinner/>
                 : (
                     <>
