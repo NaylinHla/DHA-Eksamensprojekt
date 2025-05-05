@@ -132,6 +132,10 @@ namespace Infrastructure.Postgres.Postgresql.Data
             
             if (device == null)
                 throw new NotFoundException("Device not found");
+            if (device.User == null)
+            {
+                throw new NotFoundException("Device User not found"); 
+            }
             return device.User;
         }
 

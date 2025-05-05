@@ -27,7 +27,7 @@ public class Program
         await app.RunAsync();
     }
 
-    public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
@@ -61,7 +61,7 @@ public class Program
         services.AddSingleton<IProxyConfig, ProxyConfig>();
     }
 
-    public static async Task ConfigureMiddleware(WebApplication app)
+    private static async Task ConfigureMiddleware(WebApplication app)
     {
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
