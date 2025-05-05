@@ -11,5 +11,5 @@ public class UserSettings
     public bool SecretMode { get; set; }
     public required string WaitTime { get; set; }
 
-    public User User { get; set; } = null!;
+    public User? User { get; set; }
 }

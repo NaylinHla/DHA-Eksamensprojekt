@@ -8,5 +8,5 @@ public class Weather
     public required string City { get; set; }
     public required string Country { get; set; }
 
-    public User User { get; set; } = null!;
+    public User? User { get; set; }
 }

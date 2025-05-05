@@ -14,8 +14,9 @@ public class User
     public DateTime? Birthday { get; set; }
     public required string Country { get; set; }
     public string Role { get; set; } = null!;
-    public Weather Weather { get; set; }
-    public UserSettings UserSettings { get; set; }
+    
+    public Weather? Weather { get; set; }
+    public UserSettings? UserSettings { get; set; }
     public ICollection<UserPlant> UserPlants { get; set; } = new List<UserPlant>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
     public ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
