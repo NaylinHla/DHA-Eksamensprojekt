@@ -1,3 +1,4 @@
+using Core.Domain.Exceptions;
 using Fleck;
 using WebSocketBoilerplate;
 
@@ -30,6 +31,6 @@ public class ExampleEventHandler : BaseEventHandler<ExampleClientDto>
         //when sending response to the Typescript client using sendRequest, remember to attach requestId like below: (not for broadcasts)
         socket.SendDto(new ExampleServerResponse { SomethingTheServerSends = "hi you", requestId = dto.requestId });
 
-        throw new Exception("This will be caught by the global exception handler and returned to the client");
+        throw new NotFoundException("This will be caught by the global exception handler and returned to the client");
     }
 }

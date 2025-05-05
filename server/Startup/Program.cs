@@ -65,7 +65,8 @@ public class Program
     {
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
-        logger.LogInformation(JsonSerializer.Serialize(appOptions));
+        var serializedAppOptions = JsonSerializer.Serialize(appOptions);
+        logger.LogInformation("Serialized AppOptions: {serializedAppOptions}", serializedAppOptions);
         
         using (var scope = app.Services.CreateScope())
         {
