@@ -1,9 +1,7 @@
 using Application.Interfaces;
-using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Api.Rest.Extensions;
 
 namespace Api.Rest.Controllers;
 
@@ -60,5 +58,4 @@ public class AlertController : ControllerBase
 
         return Ok(response);
     }
-
 }

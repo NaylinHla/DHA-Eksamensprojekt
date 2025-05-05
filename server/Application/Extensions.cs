@@ -13,6 +13,7 @@ public static class Extensions
         services.AddScoped<IWebsocketSubscriptionService, WebsocketSubscriptionService>();
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPlantService, PlantService>();
         return services;
     }
 }
