@@ -588,10 +588,20 @@
             "nullable": true
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
           },
           "plant": {
-            "$ref": "#/components/schemas/Plant"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Plant"
+              }
+            ]
           }
         }
       },
@@ -630,10 +640,20 @@
             "type": "string"
           },
           "weather": {
-            "$ref": "#/components/schemas/Weather"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Weather"
+              }
+            ]
           },
           "userSettings": {
-            "$ref": "#/components/schemas/UserSettings"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSettings"
+              }
+            ]
           },
           "userPlants": {
             "type": "array",
@@ -670,7 +690,12 @@
             "type": "string"
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
           }
         }
       },
@@ -698,7 +723,12 @@
             "type": "string"
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
           }
         }
       },
@@ -715,10 +745,20 @@
             "format": "guid"
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
           },
           "plant": {
-            "$ref": "#/components/schemas/Plant"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Plant"
+              }
+            ]
           }
         }
       },
@@ -794,7 +834,12 @@
             "format": "date-time"
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
           },
           "sensorHistories": {
             "type": "array",
@@ -837,7 +882,12 @@
             "format": "date-time"
           },
           "userDevice": {
-            "$ref": "#/components/schemas/UserDevice"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserDevice"
+              }
+            ]
           }
         }
       },
@@ -1089,13 +1139,16 @@
         "additionalProperties": false,
         "properties": {
           "deviceId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "unit": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "interval": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },

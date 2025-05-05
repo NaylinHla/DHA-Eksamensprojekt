@@ -8,7 +8,7 @@
         public required string DeviceDescription { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        public User User { get; set; }
+        public User? User { get; set; }
         public ICollection<SensorHistory> SensorHistories { get; set; } = new List<SensorHistory>();
     }
 }

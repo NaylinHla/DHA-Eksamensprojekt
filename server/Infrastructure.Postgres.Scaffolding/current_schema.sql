@@ -42,7 +42,6 @@ CREATE TABLE meetyourplants."Alert" (
     "AlertTime" timestamp with time zone NOT NULL,
     "AlertPlant" uuid,
     CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertId"),
-
     CONSTRAINT "FK_Alert_Plant_AlertPlant" FOREIGN KEY ("AlertPlant") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE SET NULL,
     CONSTRAINT "FK_Alert_User_AlertUserId" FOREIGN KEY ("AlertUserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
 );

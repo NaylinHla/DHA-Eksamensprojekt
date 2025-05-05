@@ -12,5 +12,5 @@ public class SensorHistory
     public int AirQuality { get; set; }
     public DateTime Time { get; set; }
     
-    public UserDevice UserDevice { get; set; }
+    public UserDevice? UserDevice { get; set; }
 }
