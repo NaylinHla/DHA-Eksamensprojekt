@@ -9,6 +9,6 @@ public class Alert
     public required DateTime AlertTime { get; set; }
     public Guid? AlertPlant { get; set; }
 
-    public User User { get; set; }
-    public Plant Plant { get; set; }
+    public User? User { get; set; }
+    public Plant? Plant { get; set; }
 }
