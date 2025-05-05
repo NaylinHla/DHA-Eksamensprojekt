@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {
     CategoryScale,
     Chart as ChartJS,
@@ -13,11 +13,11 @@ import {Line} from "react-chartjs-2";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
 import {
-    formatDateTimeForUserTZ,
+    formatDateTimeForUserTZ, GetRecentSensorDataForAllUserDeviceDto,
     GreenhouseSensorDataAtom,
     JwtAtom,
     SelectedDeviceIdAtom,
-    SensorHistoryDto,
+    SensorHistoryDto, SensorHistoryWithDeviceDto,
     StringConstants,
     UserDevice,
     useThrottle,
@@ -41,6 +41,7 @@ export default function HistoryPage() {
 
     // atoms & state
     const [greenhouseData, setGreenhouseData] = useAtom(GreenhouseSensorDataAtom);
+    const [latestSensorData, setLatestSensorData] = useState<Record<string, SensorHistoryWithDeviceDto>>({});
     const [jwt] = useAtom(JwtAtom);
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
@@ -73,12 +74,6 @@ export default function HistoryPage() {
 
         chart.data.labels.push(point.time);
         chart.data.datasets[0].data.push(point.value);
-
-        // Only update new point, no animation
-        chart.update({
-            duration: 0,
-            lazy: true,
-        });
     }
 
     const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
@@ -107,15 +102,36 @@ export default function HistoryPage() {
     }, 1000);
 
     useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
-        const todayDate = new Date();
-        todayDate.setHours(0, 0, 0, 0); // Normalize time
-        const rangeToDate = new Date(rangeToRef.current);
-        rangeToDate.setHours(23, 59, 59, 999);
+        const logs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
+        const deviceId = dto.logs?.[0]?.deviceId;
 
-        if (todayDate > rangeToDate) return;
+        if (!logs.length || !deviceId) return;
 
-        const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
-        if (!newLogs.length) return;
+        // Update the latestSensorData for this device
+        const latestLog = logs[logs.length - 1];
+        setLatestSensorData(prev => ({
+            ...prev,
+            [deviceId]: {
+                deviceId,
+                temperature: latestLog.temperature,
+                humidity: latestLog.humidity,
+                airPressure: latestLog.airPressure,
+                airQuality: latestLog.airQuality,
+                time: latestLog.time,
+            },
+        }));
+
+        // Only update chart if logs are in date range
+        const from = new Date(rangeFromRef.current);
+        const to = new Date(rangeToRef.current);
+        to.setHours(23, 59, 59, 999);
+
+        const inRange = logs.filter(log => {
+            const time = new Date(log.time!);
+            return time >= from && time <= to;
+        });
+
+        if (!inRange.length) return;
 
         const existing = new Set(
             greenhouseData.flatMap((d) =>
@@ -123,16 +139,7 @@ export default function HistoryPage() {
             )
         );
 
-        const unique = newLogs
-            .filter((l) => !existing.has(new Date(l.time!).getTime()))
-            .filter((l) => {
-                const logDate = new Date(l.time!);
-                const from = new Date(rangeFromRef.current);
-                const to = new Date(rangeToRef.current);
-                to.setHours(23, 59, 59, 999);
-                return logDate >= from && logDate <= to;
-            });
-
+        const unique = inRange.filter((l) => !existing.has(new Date(l.time!).getTime()));
         if (unique.length) throttledAppend(unique);
     });
 
@@ -184,6 +191,24 @@ export default function HistoryPage() {
         }, 300); // 300ms debounce
         return () => clearTimeout(timer);
     }, [jwt, selectedDeviceId, rangeFrom, rangeTo]);
+
+    // load recent data
+    useEffect(() => {
+        if (!jwt) return;
+
+        greenhouseDeviceClient
+            .getRecentSensorDataForAllUserDevice(jwt)
+            .then((res: GetRecentSensorDataForAllUserDeviceDto) => {
+                const records = res.sensorHistoryWithDeviceRecords || [];
+                const snapshot = records.reduce((acc, curr) => {
+                    if (curr.deviceId) acc[curr.deviceId] = curr;
+                    return acc;
+                }, {} as Record<string, SensorHistoryWithDeviceDto>);
+
+                setLatestSensorData(snapshot);
+            })
+            .catch(() => toast.error("Failed to load recent sensor data", { id: "load-sensor-error" }));
+    }, [jwt, selectedDeviceId]);
 
     function downSampleRecords<T>(arr: T[], maxPoints = 500): T[] {
         const n = arr.length;
@@ -300,12 +325,41 @@ export default function HistoryPage() {
             </div>
         ) : <div className="text-gray-500">No {label} data</div>;
 
+    //Make sure the range is set logical
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, isFromDate: boolean) => {
+        const newDate = e.target.value;
+
+        if (isFromDate) {
+            if (new Date(newDate) > new Date(rangeTo)) {
+                toast.error("From date cannot be after To date", { id: "date-range-error" });
+                return;
+            }
+            setRangeFrom(newDate);
+        } else {
+            if (new Date(newDate) < new Date(rangeFrom)) {
+                toast.error("To date cannot be before From date", { id: "date-range-error" });
+                return;
+            }
+            setRangeTo(newDate);
+        }
+    };
+
     //No data for selected date range
     const isEmpty =
         series.temperature.length === 0 &&
         series.humidity.length === 0 &&
         series.airPressure.length === 0 &&
         series.airQuality.length === 0;
+
+    //Show unit in the current data box
+    const unitMap: Record<string, string> = {
+        temperature: "°C",
+        humidity: "%",
+        airPressure: "hPa",
+        airQuality: "ppm",
+    }
+
+    const fields: (keyof SensorHistoryWithDeviceDto)[] = ["temperature", "humidity", "airPressure", "airQuality"];
 
     return (
         <div>
@@ -316,23 +370,44 @@ export default function HistoryPage() {
 
                 <div className="flex gap-2">
                     <label>From:
-                        <input type="date" value={rangeFrom} onChange={e => setRangeFrom(e.target.value)}
-                               className="border ml-1 p-1 rounded"/>
+                        <input
+                            type="date"
+                            value={rangeFrom}
+                            onChange={(e) => handleDateChange(e, true)}
+                            className="border ml-1 p-1 rounded"
+                        />
                     </label>
                     <label>To:
-                        <input type="date" value={rangeTo} onChange={e => setRangeTo(e.target.value)}
-                               className="border ml-1 p-1 rounded"/>
+                        <input
+                            type="date"
+                            value={rangeTo}
+                            onChange={(e) => handleDateChange(e, false)}
+                            className="border ml-1 p-1 rounded"
+                        />
                     </label>
                 </div>
-
                 {/* Current Status Box */}
                 <div
-                    className="border rounded p-4 shadow min-w-[260px] flex flex-col justify-between flex-grow sm:max-w-[300px]">
+                    className="border rounded p-4 shadow min-w-[260px] flex flex-col justify-between flex-grow sm:max-w-[355px] h-[114px]">
+                    {loadingDevices || loadingData ? (
+                        Spinner
+                    ) : (() => {
+                        const latest = latestSensorData[selectedDeviceId!];
+                        if (!latest) return <p className="text-center justify-center">No data available</p>;
 
-                    {loadingDevices || loadingData ? Spinner : (() => {
-                        const recs = greenhouseData.find((d) => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
-                        const latest = recs.reduce((a, b) => new Date(b.time!).getTime() > new Date(a.time!).getTime() ? b : a, recs[0]);
-                        if (!latest) return <p>No data available</p>;
+                        // Check if any sensor field has 0.00 or invalid values (could be considered as no data)
+                        const isNoData = fields.some(
+                            (field) => latest[field] === 0.00 || latest[field] == null
+                        );
+
+                        if (isNoData) {
+                            return (
+                                <div className="flex justify-center items-center h-full">
+                                    <p className="text-center">No data available</p>
+                                </div>
+                            );
+                        }
+
                         return (
                             <>
                                 <div className="flex justify-between mb-2">
@@ -344,7 +419,7 @@ export default function HistoryPage() {
                                     {(["temperature", "humidity", "airPressure", "airQuality"] as const).map((field) => (
                                         <div key={field} className="flex justify-between">
                                             <span className="capitalize font-medium">{field}:</span>
-                                            <span>{(latest as Record<typeof field, number>)[field]?.toFixed(2)}</span>
+                                            <span>{(latest as any)[field]?.toFixed(2)} {unitMap[field]}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -355,17 +430,17 @@ export default function HistoryPage() {
 
                 {/* Device selector */}
                 <div
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:w-auto justify-leg w-full min-w-[200px]">
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:w-auto w-full min-w-[200px]">
 
                     <label className="font-medium">Select Device:</label>
                     <select
-                        className="border rounded p-2"
+                        className="border rounded p-2 min-w-[120px]"
                         value={selectedDeviceId || ""}
                         onChange={(e) => setSelectedDeviceId(e.target.value)}
                         disabled={loadingDevices}
                     >
                         {devices.length === 0 ? (
-                            <option>No device found</option>
+                            <option>No devices</option>
                         ) : (
                             devices.map(d => (
                                 <option key={d.deviceId} value={d.deviceId}>
