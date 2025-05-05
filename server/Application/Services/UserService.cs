@@ -75,9 +75,6 @@ public class UserService : IUserService
         var newSalt = _securityService.GenerateSalt();
         var newHash = _securityService.HashPassword(request.NewPassword + newSalt);
 
-        if (_userRepository.HashExists(newHash))
-            throw new ArgumentException("Adgangskoden er allerede i brug.");
-
         user.Salt = newSalt;
         user.Hash = newHash;
         _userRepository.UpdateUser(user);
