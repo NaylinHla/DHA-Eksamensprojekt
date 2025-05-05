@@ -1,9 +1,18 @@
 import {useEffect, useMemo, useRef, useState} from "react";
-import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
+import {
+    CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    Legend as ChartLegend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Tooltip as ChartTooltip,
+} from "chart.js";
+import {Line} from "react-chartjs-2";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
 import {
-    AdminHasDeletedData,
     formatDateTimeForUserTZ,
     GreenhouseSensorDataAtom,
     JwtAtom,
@@ -11,196 +20,298 @@ import {
     SensorHistoryDto,
     StringConstants,
     UserDevice,
+    useThrottle,
     useTopicManager,
     useWebSocketMessage,
 } from "../import";
 import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
 
-type Point = { time: string; value: number };
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
-function downsampleAvg(points: Point[], maxTotalPoints: number): Point[] {
-    const n = points.length;
-    if (n <= maxTotalPoints) return points;
-    const bucketSize = Math.ceil(n / maxTotalPoints);
-    const down: Point[] = [];
-    for (let i = 0; i < n; i += bucketSize) {
-        const slice = points.slice(i, i + bucketSize);
-        const avg = slice.reduce((sum, p) => sum + p.value, 0) / slice.length;
-        down.push({ time: slice[0].time, value: avg });
-    }
-    return down;
-}
+type Point = { time: string; value: number; [key: string]: number | string };
 
-export default function DeviceHistory() {
-    const todayDate = new Date();
-    const oneMonthAgoDate = new Date();
-    oneMonthAgoDate.setMonth(todayDate.getMonth() - 1);
-    const isoToday = todayDate.toISOString().slice(0, 10);
-    const isoOneMonthAgo = oneMonthAgoDate.toISOString().slice(0, 10);
 
-    const [greenhouseSensorDataAtom, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
+export default function HistoryPage() {
+    // dates
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(today.getMonth() - 1);
+    const isoToday = today.toISOString().slice(0, 10);
+    const isoMonthAgo = monthAgo.toISOString().slice(0, 10);
+
+    // atoms & state
+    const [greenhouseData, setGreenhouseData] = useAtom(GreenhouseSensorDataAtom);
     const [jwt] = useAtom(JwtAtom);
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useAtom(SelectedDeviceIdAtom);
     const [loadingDevices, setLoadingDevices] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
-    const [rangeFrom, setRangeFrom] = useState<string>(isoOneMonthAgo);
-    const [rangeTo, setRangeTo] = useState<string>(isoToday);
+    const [rangeFrom, setRangeFrom] = useState(isoMonthAgo);
+    const [rangeTo, setRangeTo] = useState(isoToday);
 
-    const prevId = useRef<string | null>(null);
+    const chartRefs = {
+        temperature: useRef<any>(null),
+        humidity: useRef<any>(null),
+        airPressure: useRef<any>(null),
+        airQuality: useRef<any>(null),
+    };
+
     const {subscribe, unsubscribe} = useTopicManager();
+    const prevTopic = useRef<string | null>(null);
 
-    const Spinner = () => (
-        <div className="flex justify-center items-center h-32">
-            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"
-                        fill="none"/>
-                <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-            </svg>
-            <span className="text-gray-500">Loading…</span>
-        </div>
-    );
+    const rangeFromRef = useRef(rangeFrom);
+    const rangeToRef = useRef(rangeTo);
 
-    // WebSocket subscriptions
+    useEffect(() => {
+        rangeFromRef.current = rangeFrom;
+        rangeToRef.current = rangeTo;
+    }, [rangeFrom, rangeTo]);
+
+    function appendPointToChart(type: keyof typeof chartRefs, point: Point) {
+        const chart = chartRefs[type].current;
+        if (!chart) return;
+
+        chart.data.labels.push(point.time);
+        chart.data.datasets[0].data.push(point.value);
+
+        // Only update new point, no animation
+        chart.update({
+            duration: 0,
+            lazy: true,
+        });
+    }
+
+    const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
+        if (logs.length === 0) return;
+
+        setGreenhouseData((prev) => {
+            return prev.map((d) =>
+                d.deviceId === selectedDeviceId
+                    ? {
+                        ...d,
+                        sensorHistoryRecords: [...(d.sensorHistoryRecords || []), ...logs]
+                    }
+                    : d
+            );
+        });
+
+        logs.forEach((r) => {
+            const t = formatDateTimeForUserTZ(r.time);
+            if (!t) return;
+
+            appendPointToChart("temperature", { time: t, value: Number(r.temperature) || 0 });
+            appendPointToChart("humidity", { time: t, value: Number(r.humidity) || 0 });
+            appendPointToChart("airPressure", { time: t, value: Number(r.airPressure) || 0 });
+            appendPointToChart("airQuality", { time: t, value: Number(r.airQuality) || 0 });
+        });
+    }, 1000);
+
+    useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0); // Normalize time
+        const rangeToDate = new Date(rangeToRef.current);
+        rangeToDate.setHours(23, 59, 59, 999);
+
+        if (todayDate > rangeToDate) return;
+
+        const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
+        if (!newLogs.length) return;
+
+        const existing = new Set(
+            greenhouseData.flatMap((d) =>
+                d.sensorHistoryRecords?.map((r) => new Date(r.time!).getTime()) || []
+            )
+        );
+
+        const unique = newLogs
+            .filter((l) => !existing.has(new Date(l.time!).getTime()))
+            .filter((l) => {
+                const logDate = new Date(l.time!);
+                const from = new Date(rangeFromRef.current);
+                const to = new Date(rangeToRef.current);
+                to.setHours(23, 59, 59, 999);
+                return logDate >= from && logDate <= to;
+            });
+
+        if (unique.length) throttledAppend(unique);
+    });
+
+    // subscribe to topic changes
     useEffect(() => {
         if (!selectedDeviceId) return;
         const topic = `GreenhouseSensorData/${selectedDeviceId}`;
         // Unsubscribe from the previous device if it's different from the new one
-        if (prevId.current && prevId.current !== selectedDeviceId) {
-            unsubscribe(`GreenhouseSensorData/${prevId.current}`).then();
+        if (prevTopic.current && prevTopic.current !== selectedDeviceId) {
+            unsubscribe(`GreenhouseSensorData/${prevTopic.current}`).then();
         }
         subscribe(topic).then();
-        prevId.current = selectedDeviceId;
-
-        return () => {
-            unsubscribe(topic).then();
-        };
-    }, [selectedDeviceId, subscribe, unsubscribe]);
-
+        prevTopic.current = selectedDeviceId;
+        return () => void unsubscribe(topic);
+    }, [selectedDeviceId]);
 
     // Fetch devices
     useEffect(() => {
         if (!jwt) return;
         setLoadingDevices(true);
-        greenhouseDeviceClient.getAllUserDevices(jwt).then((res: any) => {
-            const list = res.allUserDevice || [];
-            setDevices(list);
-            if (!selectedDeviceId && list.length) {
-                setSelectedDeviceId(list[0].deviceId!); // If no device is selected, pick the first one
-                setLoadingData(true);
-            }
-        })
-            .catch(() => toast.error("Failed to load devices", { id: "load-devices-error" }))
+        greenhouseDeviceClient
+            .getAllUserDevices(jwt)
+            .then((res: any) => {
+                const list = res.allUserDevice || [];
+                setDevices(list);
+                if (!selectedDeviceId && list.length) setSelectedDeviceId(list[0].deviceId!);
+            })
+            .catch(() => toast.error("Failed to load devices", {id: "load-devices-error"}))
             .finally(() => setLoadingDevices(false));
-    }, [jwt, selectedDeviceId, setSelectedDeviceId]);
+    }, [jwt]);
 
-    // --- Debounce range updates ---
+    // load history data
     useEffect(() => {
         if (!jwt || !selectedDeviceId) return;
-        const timeout = setTimeout(() => {
-            setLoadingData(true);
+        setLoadingData(true);
+
+        const timer = setTimeout(() => {
+            const startDate = new Date(rangeFrom);
+            const endDate = new Date(rangeTo);
+            endDate.setHours(23, 59, 59, 999);
+
             greenhouseDeviceClient
-                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(
-                    selectedDeviceId,
-                    new Date(rangeFrom),
-                    new Date(rangeTo),
-                    jwt
-                )
-                .then(res => setGreenhouseSensorDataAtom(res))
-                .catch(() => toast.error("Failed to load sensor data", { id: "load-sensor-error" }))
+                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, startDate, endDate, jwt)
+                .then((data) => {
+                    setGreenhouseData(data);
+                })
+                .catch(() => toast.error("Failed to load sensor data", {id: "load-sensor-error"}))
                 .finally(() => setLoadingData(false));
         }, 300); // 300ms debounce
-        return () => clearTimeout(timeout);
+        return () => clearTimeout(timer);
     }, [jwt, selectedDeviceId, rangeFrom, rangeTo]);
 
-    // --- WebSocket live update ---
-    useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
-        if (rangeTo !== isoToday) return;
-        const newLogs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
-        if (!newLogs.length) return;
+    function downSampleRecords<T>(arr: T[], maxPoints = 500): T[] {
+        const n = arr.length;
+        if (n <= maxPoints) return arr;
+        const step = Math.floor(n / maxPoints);
+        const res: T[] = [];
+        for (let i = 0; i < n; i += step) res.push(arr[i]);
+        return res;
+    }
 
-        const existing = new Set(
-            greenhouseSensorDataAtom.flatMap(d =>
-                d.sensorHistoryRecords?.map(r => new Date(r.time!).getTime()) ?? []
-            )
-        );
-        const unique = newLogs.filter(log =>
-            !existing.has(new Date(log.time!).getTime())
-        );
-        if (!unique.length) return;
+    // sync, down sampled series with timing logs
+    const series = useMemo(() => {
+        const recs = greenhouseData.find(d => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
+        if (!recs.length) return {temperature: [], humidity: [], airPressure: [], airQuality: []};
 
-        setGreenhouseSensorDataAtom(prev =>
-            prev.map(dev =>
-                dev.deviceId === selectedDeviceId
-                    ? {...dev, sensorHistoryRecords: [...(dev.sensorHistoryRecords || []), ...unique]}
-                    : dev
-            )
-        );
-    });
+        // 1) Deduplicate consecutive identical records
+        const unique: SensorHistoryDto[] = [];
+        let prev: Partial<SensorHistoryDto> = {};
+        for (const r of recs) {
+            if (
+                r.time === prev.time &&
+                r.temperature === prev.temperature &&
+                r.humidity === prev.humidity &&
+                r.airPressure === prev.airPressure &&
+                r.airQuality === prev.airQuality
+            ) continue;
+            unique.push(r);
+            prev = r;
+        }
 
-    // Deleted data broadcast
-    useWebSocketMessage(StringConstants.AdminHasDeletedData, (_: AdminHasDeletedData) => {
-        toast("Someone has deleted everything.", { id: "admin-deleted-data" });
-        setGreenhouseSensorDataAtom([]);
-    });
+        // 2) Down sample those unique records
+        const sampledRecs = downSampleRecords(unique, 500);
 
-    // Prepare chart data
-    const chartDataByKey = useMemo(() => {
-        const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
-        const recs = deviceData?.sensorHistoryRecords || [];
+        // 3) Build each metric series
+        const temperatureSeries: Point[] = [];
+        const humiditySeries: Point[] = [];
+        const airPressureSeries: Point[] = [];
+        const airQualitySeries: Point[] = [];
 
-        type NumericKey = Exclude<keyof SensorHistoryDto, "time">;
-        const format = (key: NumericKey) =>
-            recs.map(e => ({
-                time: formatDateTimeForUserTZ(e.time),
-                value: e[key] ?? NaN
-            }));
-
-        const from = new Date(rangeFrom);
-        const to = new Date(rangeTo);
-        const days = Math.max((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24), 1);
-        const maxPoints = Math.min(Math.ceil(days * 50), 1000);
+        sampledRecs.forEach(r => {
+            const t = formatDateTimeForUserTZ(r.time);
+            if (!t) return;
+            temperatureSeries.push({time: t, value: Number(r.temperature) || 0});
+            humiditySeries.push({time: t, value: Number(r.humidity) || 0});
+            airPressureSeries.push({time: t, value: Number(r.airPressure) || 0});
+            airQualitySeries.push({time: t, value: Number(r.airQuality) || 0});
+        });
 
         return {
-            temperature: downsampleAvg(format("temperature"), maxPoints),
-            humidity: downsampleAvg(format("humidity"), maxPoints),
-            airPressure: downsampleAvg(format("airPressure"), maxPoints),
-            airQuality: downsampleAvg(format("airQuality"), maxPoints)
+            temperature: temperatureSeries,
+            humidity: humiditySeries,
+            airPressure: airPressureSeries,
+            airQuality: airQualitySeries,
         };
-    }, [greenhouseSensorDataAtom, selectedDeviceId, rangeFrom, rangeTo]);
+    }, [greenhouseData, selectedDeviceId, rangeFrom, rangeTo]);
 
-
-    const graphReady = Object.values(chartDataByKey).some(series => series.length > 0);
-
-    const renderChart = useMemo(() => (data: Point[], label: string) => (
-        <div className="mb-10 px-2">
-            <h2 className="text-xl font-semibold mb-2">{label}</h2>
-            <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3"/>
-                    <XAxis dataKey="time"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Legend/>
-                    <Line
-                        type="monotone"
-                        dataKey="value"
-                        name={label}
-                        stroke="var(--color-primary)"
-                        dot={false}
-                        isAnimationActive={false}
-                        animationDuration={500}
-                    />
-                </LineChart>
-            </ResponsiveContainer>
+    const Spinner = (
+        <div className="flex justify-center items-center h-32">
+            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"
+                        fill="none"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            </svg>
+            <span className="text-gray-500">Loading…</span>
         </div>
-    ), []);
+    );
+
+    // Function to get the CSS variable value
+    const getCSSVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name);
+    const primaryColor = getCSSVar('--color-primary');
+    const primaryHoverColor = getCSSVar('--color-primaryhover');
+
+    const Chart = ({data, label, chartRef}: { data: Point[]; label: string; chartRef: any }) =>
+        data.length ? (
+            <div className="mb-10 px-2">
+                <h2 className="text-xl font-semibold mb-2">{label}</h2>
+                <Line
+                    ref={chartRef}
+                    data={{
+                        labels: data.map((point) => point.time),
+                        datasets: [
+                            {
+                                label,
+                                data: data.map((point) => point.value),
+                                fill: true,
+                                backgroundColor: primaryColor,
+                                borderColor: primaryHoverColor,
+                                tension: 0.4,
+                                pointRadius: 0,
+                            },
+                        ],
+                    }}
+                    options={{
+                        responsive: true,
+                        animation: false,
+                        plugins: {
+                            legend: {display: true},
+                            tooltip: {mode: "index", intersect: false},
+                        },
+                        interaction: {
+                            mode: "nearest" as const,
+                            axis: "x" as const,
+                            intersect: false,
+                        },
+                        scales: {
+                            x: {
+                                title: {display: true, text: "Time"},
+                                ticks: {maxTicksLimit: 10, autoSkip: true},
+                            },
+                            y: {title: {display: true, text: label}},
+                        },
+                    }}
+                />
+            </div>
+        ) : <div className="text-gray-500">No {label} data</div>;
+
+    //No data for selected date range
+    const isEmpty =
+        series.temperature.length === 0 &&
+        series.humidity.length === 0 &&
+        series.airPressure.length === 0 &&
+        series.airQuality.length === 0;
 
     return (
         <div>
-            {/* Top Bar + Status Box */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            {/* Filters */}
+            <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">
+
                 <h1 className="text-2xl font-bold">Overview:</h1>
 
                 <div className="flex gap-2">
@@ -215,81 +326,42 @@ export default function DeviceHistory() {
                 </div>
 
                 {/* Current Status Box */}
-                <div className="border rounded p-4 shadow bg-[boxcolor] min-w-[260px] w-full sm:w-auto relative">
-                    <div className={loadingDevices || loadingData ? "invisible" : ""}>
-                        {(() => {
-                            const deviceData = greenhouseSensorDataAtom.find(r => r.deviceId === selectedDeviceId);
-                            const latest = deviceData?.sensorHistoryRecords
-                                ?.sort((a, b) =>
-                                    new Date(b.time ?? 0).getTime() - new Date(a.time ?? 0).getTime()
-                                )[0];
+                <div
+                    className="border rounded p-4 shadow min-w-[260px] flex flex-col justify-between flex-grow sm:max-w-[300px]">
 
-                            const formatNumber = (value: number | null | undefined) =>
-                                value != null ? value.toFixed(2) : "N/A";
-
-                            if (!latest) {
-                                return (
-                                    <>
-                                        <h2 className="font-bold mb-3">Current Status</h2>
-                                        <p className="text-sm">No data available</p>
-                                    </>
-                                );
-                            }
-
-                            return (
-                                <>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h2 className="font-bold">Current Status</h2>
-                                        <span className="text-xs text-gray-500">
-                                          {formatDateTimeForUserTZ(latest.time)}
-                                        </span>
-                                    </div>
-                                    <div className="text-sm space-y-2">
-                                        <div className="grid grid-cols-2 gap-x-4">
-                                            <div className="flex justify-between">
-                                                <span className="font-medium w-24">Temperature:</span>
-                                                <span>{formatNumber(latest.temperature)} °C</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="font-medium w-24">Humidity:</span>
-                                                <span>{formatNumber(latest.humidity)} %</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="font-medium w-24">Air Pressure:</span>
-                                                <span>{formatNumber(latest.airPressure)} hPa</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="font-medium w-24">Air Quality:</span>
-                                                <span>{formatNumber(latest.airQuality)} ppm</span>
-                                            </div>
+                    {loadingDevices || loadingData ? Spinner : (() => {
+                        const recs = greenhouseData.find((d) => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
+                        const latest = recs.reduce((a, b) => new Date(b.time!).getTime() > new Date(a.time!).getTime() ? b : a, recs[0]);
+                        if (!latest) return <p>No data available</p>;
+                        return (
+                            <>
+                                <div className="flex justify-between mb-2">
+                                    <h2 className="font-bold">Current Status</h2>
+                                    <span
+                                        className="text-xs text-gray-500">{formatDateTimeForUserTZ(latest.time)}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    {(["temperature", "humidity", "airPressure", "airQuality"] as const).map((field) => (
+                                        <div key={field} className="flex justify-between">
+                                            <span className="capitalize font-medium">{field}:</span>
+                                            <span>{(latest as Record<typeof field, number>)[field]?.toFixed(2)}</span>
                                         </div>
-                                    </div>
-                                </>
-                            );
-                        })()}
-                    </div>
-
-                    {/* Spinner overlay */}
-                    {(loadingDevices || loadingData) && (
-                        <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-80 rounded">
-                            <div className="flex flex-col items-center">
-                                <svg className="animate-spin h-6 w-6 text-gray-500 mb-2" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                </svg>
-                                <span className="text-sm text-gray-500">Loading...</span>
-                            </div>
-                        </div>
-                    )}
+                                    ))}
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
 
                 {/* Device selector */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:w-auto justify-leg w-full min-w-[200px]">
+
                     <label className="font-medium">Select Device:</label>
                     <select
                         className="border rounded p-2"
-                        value={selectedDeviceId||""}
-                        onChange={e => { setSelectedDeviceId(e.target.value); setLoadingData(true); }}
+                        value={selectedDeviceId || ""}
+                        onChange={(e) => setSelectedDeviceId(e.target.value)}
                         disabled={loadingDevices}
                     >
                         {devices.length === 0 ? (
@@ -306,19 +378,18 @@ export default function DeviceHistory() {
 
             </div>
 
-            {/* Chart loader or charts underneath top bar */}
-                {(!graphReady || loadingData)
-                ? <Spinner/>
-                : (
-                    <>
-                        {renderChart(chartDataByKey.temperature, "Temperature")}
-                        {renderChart(chartDataByKey.humidity, "Humidity")}
-                        {renderChart(chartDataByKey.airPressure, "Air Pressure")}
-                        {renderChart(chartDataByKey.airQuality, "Air Quality")}
-                    </>
-                )
-            }
-
+            {loadingData ? Spinner : isEmpty ? (
+                <div className="p-8 text-center text-gray-500">
+                    No data available for the selected date range.
+                </div>
+            ) : (
+                <>
+                    <Chart data={series.temperature} label="Temperature" chartRef={chartRefs.temperature}/>
+                    <Chart data={series.humidity} label="Humidity" chartRef={chartRefs.humidity}/>
+                    <Chart data={series.airPressure} label="Air Pressure" chartRef={chartRefs.airPressure}/>
+                    <Chart data={series.airQuality} label="Air Quality" chartRef={chartRefs.airQuality}/>
+                </>
+            )}
         </div>
     );
 }
