@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Infrastructure.Postgres.Scaffolding;
 
@@ -17,11 +18,33 @@ public partial class MyDbContext : DbContext
     public virtual DbSet<UserPlant> UserPlants { get; set; }
     public virtual DbSet<Alert> Alerts { get; set; }
     public virtual DbSet<SensorHistory> SensorHistories { get; set; }
-    public virtual DbSet<Devicelog> Devicelogs { get; set; }
+    public virtual DbSet<UserDevice> UserDevices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("botanica");
+        // Ensure all DateTime values are stored with UTC kind
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        var nullableUtcConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime)))
+            {
+                property.SetValueConverter(utcConverter);
+            }
+
+            foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime?)))
+            {
+                property.SetValueConverter(nullableUtcConverter);
+            }
+        }
+
+        modelBuilder.HasDefaultSchema("meetyourplants");
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -77,11 +100,11 @@ public partial class MyDbContext : DbContext
 
         modelBuilder.Entity<Plant>(entity =>
         {
-            entity.HasKey(e => e.PlantID);
+            entity.HasKey(e => e.PlantId);
 
             entity.ToTable("Plant");
 
-            entity.Property(e => e.PlantID).HasColumnName("PlantID");
+            entity.Property(e => e.PlantId).HasColumnName("PlantId");
             entity.Property(e => e.Planted).HasColumnName("Planted");
             entity.Property(e => e.PlantName).HasColumnName("PlantName");
             entity.Property(e => e.PlantType).HasColumnName("PlantType");
@@ -93,31 +116,31 @@ public partial class MyDbContext : DbContext
 
         modelBuilder.Entity<UserPlant>(entity =>
         {
-            entity.HasKey(e => new { e.UserID, e.PlantID });
+            entity.HasKey(e => new { e.UserId, e.PlantId });
 
             entity.ToTable("UserPlant");
 
-            entity.Property(e => e.UserID).HasColumnName("UserID");
-            entity.Property(e => e.PlantID).HasColumnName("PlantID");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.PlantId).HasColumnName("PlantId");
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.UserPlants)
-                .HasForeignKey(e => e.UserID)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.Plant)
                 .WithMany(p => p.UserPlants)
-                .HasForeignKey(e => e.PlantID)
+                .HasForeignKey(e => e.PlantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Alert>(entity =>
         {
-            entity.HasKey(e => e.AlertID);
+            entity.HasKey(e => e.AlertId);
 
             entity.ToTable("Alert");
 
-            entity.Property(e => e.AlertID).HasColumnName("AlertID");
+            entity.Property(e => e.AlertId).HasColumnName("AlertId");
             entity.Property(e => e.AlertUserId).HasColumnName("AlertUserId");
             entity.Property(e => e.AlertName).HasColumnName("AlertName");
             entity.Property(e => e.AlertDesc).HasColumnName("AlertDesc");
@@ -137,35 +160,45 @@ public partial class MyDbContext : DbContext
 
         modelBuilder.Entity<SensorHistory>(entity =>
         {
-            entity.HasKey(e => new { e.HistoryId, e.Time });
+            entity.HasKey(e => e.SensorHistoryId);
 
             entity.ToTable("SensorHistory");
-
-            entity.Property(e => e.HistoryId).HasColumnName("HistoryId");
+            
+            entity.Property(e => e.SensorHistoryId).HasColumnName("SensorHistoryId");
             entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
             entity.Property(e => e.Temperature).HasColumnName("Temperature");
             entity.Property(e => e.Humidity).HasColumnName("Humidity");
             entity.Property(e => e.AirPressure).HasColumnName("AirPressure");
             entity.Property(e => e.AirQuality).HasColumnName("AirQuality");
             entity.Property(e => e.Time).HasColumnName("Time");
-
-            entity.HasOne(e => e.User)
-                .WithMany(u => u.SensorHistories)
-                .HasForeignKey(e => e.HistoryId)
+            
+            entity.HasOne(e => e.UserDevice)
+                .WithMany(ud => ud.SensorHistories)
+                .HasForeignKey(e => e.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-        
-        modelBuilder.Entity<Devicelog>(entity =>
+
+        modelBuilder.Entity<UserDevice>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("devicelog_pkey");
+            entity.HasKey(e => e.DeviceId);
 
-            entity.ToTable("devicelog", "weatherstation");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Deviceid).HasColumnName("deviceid");
-            entity.Property(e => e.Timestamp).HasColumnName("timestamp");
-            entity.Property(e => e.Unit).HasColumnName("unit");
-            entity.Property(e => e.Value).HasColumnName("value");
+            entity.ToTable("UserDevice");
+            
+            entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.DeviceName).HasColumnName("DeviceName");
+            entity.Property(e => e.DeviceDescription).HasColumnName("DeviceDescription");
+            entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
+            
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.UserDevices)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasMany(e => e.SensorHistories)
+                .WithOne(sh => sh.UserDevice)
+                .HasForeignKey(sh => sh.DeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

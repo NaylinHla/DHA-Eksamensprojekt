@@ -1,16 +1,14 @@
-using System;
-
 namespace Core.Domain.Entities;
 
 public class Alert
 {
-    public Guid AlertID { get; set; } = null!;
-    public Guid AlertUserId { get; set; }
-    public string AlertName { get; set; } = null!;
-    public string AlertDesc { get; set; } = null!;
-    public DateTime AlertTime { get; set; } = null!;
-    public Guid? AlertPlant { get; set; } = null!;
+    public required Guid AlertId { get; set; }
+    public required Guid AlertUserId { get; set; }
+    public required string AlertName { get; set; }
+    public required string AlertDesc { get; set; }
+    public required DateTime AlertTime { get; set; }
+    public Guid? AlertPlant { get; set; }
 
-    public User User { get; set; }
-    public Plant Plant { get; set; }
+    public User? User { get; set; }
+    public Plant? Plant { get; set; }
 }

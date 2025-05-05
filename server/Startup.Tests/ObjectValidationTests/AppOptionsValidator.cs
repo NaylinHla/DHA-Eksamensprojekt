@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Application.Models;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -17,7 +16,7 @@ public class AppOptionsValidator
         var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
-                builder.ConfigureServices(services => { services.DefaultTestConfig(); });
+                builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
             });
 
         _httpClient = factory.CreateClient();

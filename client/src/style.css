@@ -1,5 +1,55 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
-@plugin "daisyui" {
-    themes: light --default, dark --prefersdark, cupcake;
+html { transition: background-color .25s ease, color .25s ease; }
+
+
+@plugin "daisyui/theme" {
+    name:"light";
+    default: true;
+
+    --font-display: "Satoshi", "sans-serif";
+    --color-primary: oklch(0.635 0.169 151.4);
+    --color-primaryhover: oklch(0.595 0.157 151.762);
+    --color-background: oklch(0.92 0.015 102.471);
+    --color-neutral: oklch(0.313 0 89.876);
+    --color-boxcolor: oklch(1 0 89.876);
+
+    --color-textprimary: oklch(0 0 0);
+    --color-textsecondary: oklch(1 0 89.876);
+}
+
+
+@plugin "daisyui/theme" {
+    name:"dark";
+    --font-display:"Satoshi","sans-serif";
+
+    --color-primary:        oklch(0.635 0.169 151.4);
+    --color-primaryhover:   oklch(0.7   0.18  151.4);
+    --color-background:     oklch(0.18  0.02  270);
+    --color-neutral:      oklch(0.92  0     89.876);
+    --color-boxcolor:       oklch(0.22  0.01  275);
+    --color-textprimary:    oklch(0.98  0     89.876);
+    --color-textsecondary:  oklch(0     0     0);
+}
+
+
+/* Updated btn-neutral */
+@layer components {
+    .btn-neutral {
+        @apply bg-transparent border-2 shadow-none px-4 py-2;
+        --n-content: var(--color-textprimary);
+
+        color: var(--n-content) !important;
+        border-color: var(--n-content);
+    }
+
+    .btn-neutral:hover {
+        background-color: color-mix(in srgb, var(--n-content) 10%, transparent 90%);
+    }
+
+    .btn-neutral:focus-visible {
+        @apply outline-none ring-2 ring-offset-2;
+        --tw-ring-color: var(--n-content);
+    }
 }

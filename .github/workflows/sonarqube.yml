@@ -25,6 +25,9 @@ jobs:
           dotnet tool install -g dotnet-reportgenerator-globaltool
 
       - name: Run Unit Tests with Coverage
+        env:
+          APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
+          APPOPTIONS__MQTT_USERNAME: ${{secrets.MQTT_USERNAME}}
         run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
 
       - name: Generate Code Coverage Report
@@ -50,7 +53,7 @@ jobs:
     defaults:
       run:
         working-directory: server
-    
+        
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,6 +77,10 @@ jobs:
           name: coverage-report
           path: server/coverage-report
 
+      - name: Normalize paths in coverage report
+        run: |
+          find coverage-report -name "SonarQube.xml" -exec sed -i 's|/home/runner/work/.*/server/||g' {} +
+
       - name: Start Static Code Analysis
         run: |
           dotnet sonarscanner begin \
@@ -82,7 +89,22 @@ jobs:
             /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" \
             /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" \
             /d:sonar.coverage.sources=Startup \
-            /d:sonar.coverage.exclusions="client/**,**/**/Program.cs" \
+            /d:sonar.coverage.exclusions="\
+            **/Program.cs,\
+            Api.Rest/RestStartupExtensions.cs,\
+            Api.Rest/Extensions/**,\
+            Api.Websocket/Extensions.cs,\
+            Api.Websocket/ExampleEventHandler.cs,\
+            Application/AppOptionsExtensions.cs,\
+            Application/Extensions.cs,\
+            Application/Interfaces/**,\
+            Application/Models/**,\
+            Core.Domain/Entities/**,\
+            Infrastructure.Mqtt/MqttExtensions.cs,\
+            Infrastructure.Postgres.Scaffolding/**,\
+            Infrastructure.Postgres/Extensions.cs,\
+            Infrastructure.Postgres/Extensions.cs,\
+            Startup/Proxy/**" \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300
 

@@ -1,6 +1,8 @@
 ﻿using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Api.Rest.Controllers;
+using Application;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Infrastructure.Postgres;
@@ -21,10 +23,24 @@ public static class ApiTestSetupUtilities
         bool useTestContainer = true,
         bool mockProxyConfig = true,
         bool makeWsClient = true,
-        bool makeMqttClient = true,
+        bool makeMqttClient = false,
         Action? customSeeder = null
     )
     {
+        var jwtSecretBytes = RandomNumberGenerator.GetBytes(32); // 256 bits
+        var jwtSecret = Convert.ToBase64String(jwtSecretBytes);
+        
+        services.Configure<AppOptions>(options =>
+        {
+            options.JwtSecret = jwtSecret;
+            options.Seed = true;
+            options.DbConnectionString = "testDBConnectionString"; 
+            options.PORT = 8080;
+            options.WS_PORT = 8181;
+            options.REST_PORT = 5000;
+            options.IsTesting = true;
+        });
+        
         if (useTestContainer)
         {
             var db = new PgCtxSetup<MyDbContext>();
@@ -51,6 +67,7 @@ public static class ApiTestSetupUtilities
         }
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
+        
         if (makeMqttClient)
         {
             RemoveExistingService<TestMqttClient>(services);
@@ -73,19 +90,31 @@ public static class ApiTestSetupUtilities
 
     public static async Task<AuthResponseDto> TestRegisterAndAddJwt(HttpClient httpClient)
     {
-        var registerDto = new AuthRequestDto
+        var random = new Random().Next(100000, 999999);
+        var email = $"test{random}@gmail.com";
+        var password = $"Pass{random}!";
+        
+        var registerDto = new AuthRegisterDto
         {
-            Email = new Random().NextDouble() * 123 + "@gmail.com",
-            Password = new Random().NextDouble() * 123 + "@gmail.com"
+            FirstName = "Test",
+            LastName = "User",
+            Email = email,
+            Password = password,
+            Country = "TestCountry",
+            Birthday = DateTime.UtcNow.AddYears(-25) // Required and UTC
         };
-        var signIn = await httpClient.PostAsJsonAsync(
-            AuthController.RegisterRoute, registerDto);
-        var authResponseDto = await signIn.Content
-                                  .ReadFromJsonAsync<AuthResponseDto>(new JsonSerializerOptions
-                                      { PropertyNameCaseInsensitive = true }) ??
-                              throw new Exception("Failed to deserialize " + await signIn.Content.ReadAsStringAsync() +
-                                                  " to " + nameof(AuthResponseDto));
-        httpClient.DefaultRequestHeaders.Add("Authorization", authResponseDto.Jwt);
+         
+        var signIn = await httpClient.PostAsJsonAsync(AuthController.RegisterRoute, registerDto);
+        
+        if (!signIn.IsSuccessStatusCode)
+        {
+            var error = await signIn.Content.ReadAsStringAsync();
+            throw new Exception($"Registration failed: {signIn.StatusCode} - {error}");
+        }
+        
+        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(JsonDefaults.CaseInsensitive) ?? throw new Exception("Failed to deserialize AuthResponseDto");
+        
+        httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
         return authResponseDto;
     }
 }

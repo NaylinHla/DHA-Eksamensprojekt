@@ -33,11 +33,11 @@ public class WsOnlyTests
     private IServiceProvider _scopedServiceProvider;
 
 
-    /*[Test]
+    [Test]
     public async Task WhenConnectingToApi_ServerAddsWsConnection_CanBeRetrievedById()
     {
         var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
         var testWsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
         _ = (IWebSocketConnection)connectionManager.GetSocketFromClientId(testWsClient.WsClientId);
-    }#1#
+    }
 }*/

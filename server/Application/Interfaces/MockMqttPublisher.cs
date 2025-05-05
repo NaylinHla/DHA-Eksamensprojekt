@@ -7,7 +7,7 @@ public class MockMqttPublisher(ILogger<MockMqttPublisher> logger) : IMqttPublish
 {
     public Task Publish(object dto, string topic)
     {
-        logger.LogWarning($"Mock publish to topic {topic}: {dto}");
+        logger.LogWarning("Mock publish to topic {Topic}: {Dto}", topic, dto);
         return Task.CompletedTask;
     }
 }

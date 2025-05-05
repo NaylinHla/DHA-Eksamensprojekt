@@ -47,5 +47,5 @@ public class SubscriptionController(
 public class ExampleBroadcastDto
 {
     public string eventType { get; set; } = nameof(ExampleBroadcastDto);
-    public string Message { get; set; }
+    public required string Message { get; set; }
 }

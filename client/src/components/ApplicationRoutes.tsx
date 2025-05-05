@@ -1,23 +1,21 @@
-import {Route, Routes, useNavigate} from "react-router";
-import AdminDashboard from "./Dashboard.tsx";
-import useInitializeData from "../hooks/useInitializeData.tsx";
+import {Route, Routes, useLocation, useNavigate} from "react-router";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
-import useSubscribeToTopics from "../hooks/useSubscribeToTopics.tsx";
 import Settings from "./Settings.tsx";
 import Dock from "./Dock.tsx";
-import SignIn from "./SignIn.tsx";
+import {AlertPage, DashboardPage, HistoryPage, NotFoundPage} from "../pages"
 import {useEffect} from "react";
 import {useAtom} from "jotai";
-import {JwtAtom} from "../atoms.ts";
+import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
-import WebsocketConnectionIndicator from "./WebsocketConnectionIndicator.tsx";
+import AuthScreen from "../pages/Auth/AuthScreen.tsx";
+import {NavBar} from "./index";
+import UserSettings from "../pages/UserSettings/UserSettings.tsx";
 
 export default function ApplicationRoutes() {
-    
+
     const navigate = useNavigate();
+    const location = useLocation();
     const [jwt] = useAtom(JwtAtom);
-    useInitializeData();
-    useSubscribeToTopics();
 
     useEffect(() => {
         if (jwt == undefined || jwt.length < 1) {
@@ -25,18 +23,19 @@ export default function ApplicationRoutes() {
             toast("Please sign in to continue")
         }
     }, [])
-    
+
+    const isAuthScreen = location.pathname === SignInRoute
+
     return (<>
-        {/*the browser router is defined in main tsx so that i can use useNavigate anywhere*/}
-        <WebsocketConnectionIndicator />
+        {!isAuthScreen && <NavBar/>}
         <Routes>
-    
-            <Route element={<AdminDashboard/>} path={DashboardRoute}/>
-            <Route element={<Settings/>} path={SettingsRoute}/>
-            <Route element={<SignIn/>} path={SignInRoute}/>
-
+            <Route element={<HistoryPage/>} path={"/history"}/>
+            <Route element={<DashboardPage/>} path={DashboardRoute}/>
+            <Route element={<UserSettings/>} path={SettingsRoute}/>
+            <Route element={<AlertPage/>} path={"/alerts"}></Route>
+            <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
+            <Route path="/*" element={<NotFoundPage/>}/>
         </Routes>
-        <Dock/>
-
+        {/*{!isAuthScreen && <Dock/>}*/}
     </>)
 }
