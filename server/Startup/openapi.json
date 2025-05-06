@@ -384,6 +384,291 @@
         }
       }
     },
+    "/api/Plant/GetPlant": {
+      "get": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_GetPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/GetAllPlants": {
+      "get": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_GetAllPlants",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlantResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/CreatePlant": {
+      "post": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_CreatePlant",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantCreateDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/EditPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_EditPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantEditDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/MarkPlantAsDead": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_MarkPlantAsDead",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/WaterPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_WaterPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/WaterAllPlants": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_WaterAllPlants",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/Subscribe": {
       "post": {
         "tags": [
@@ -1208,6 +1493,129 @@
           },
           "interval": {
             "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PlantResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plantId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "plantName": {
+            "type": "string"
+          },
+          "plantType": {
+            "type": "string"
+          },
+          "plantNotes": {
+            "type": "string"
+          },
+          "planted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastWatered": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlantCreateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plantName",
+          "plantType"
+        ],
+        "properties": {
+          "plantName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantNotes": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          },
+          "planted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlantEditDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plantName",
+          "plantType"
+        ],
+        "properties": {
+          "plantName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantNotes": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          },
+          "planted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastWatered": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean",
             "nullable": true
           }
         }
