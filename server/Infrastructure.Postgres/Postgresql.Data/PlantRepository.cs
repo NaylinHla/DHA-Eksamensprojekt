@@ -14,8 +14,8 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
             .Select  (up => up.Plant!)
             .ToListAsync();
 
-    public Task<Plant?> GetPlantByIdAsync(Guid id) =>
-        ctx.Plants.FirstOrDefaultAsync(p => p.PlantId == id);
+    public Task<Plant?> GetPlantByIdAsync(Guid plantId) =>
+        ctx.Plants.FirstOrDefaultAsync(p => p.PlantId == plantId);
     
     public async Task<Plant> AddPlantAsync(Guid userId,Plant plant)
     {
@@ -27,17 +27,17 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     
     public Task SaveChangesAsync() => ctx.SaveChangesAsync();
 
-    public async Task<Plant> MarkPlantAsDeadAsync(Guid id)
+    public async Task<Plant> MarkPlantAsDeadAsync(Guid plantId)
     {
-        var plant = await GetPlantByIdAsync(id) ?? throw new KeyNotFoundException();
+        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
         plant.IsDead = true;
         await ctx.SaveChangesAsync();
         return plant;
     }
 
-    public async Task<Plant> WaterPlantAsync(Guid id)
+    public async Task<Plant> WaterPlantAsync(Guid plantId)
     {
-        var plant = await GetPlantByIdAsync(id) ?? throw new KeyNotFoundException();
+        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
         plant.LastWatered = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
         return plant;

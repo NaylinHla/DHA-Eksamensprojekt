@@ -8,7 +8,7 @@ namespace Application.Services;
 public class PlantService(IPlantRepository plantRepo) : IPlantService
 {
     
-    public Task<Plant?> GetPlantByIdAsync(Guid id) => plantRepo.GetPlantByIdAsync(id);
+    public Task<Plant?> GetPlantByIdAsync(Guid plantId) => plantRepo.GetPlantByIdAsync(plantId);
     
     public Task<List<Plant>> GetAllPlantsAsync(Guid userId) => plantRepo.GetAllPlantsAsync(userId);
     
@@ -44,7 +44,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         return plant;
     }
     
-    public Task<Plant> MarkPlantAsDeadAsync(Guid id) => plantRepo.MarkPlantAsDeadAsync(id);
-    public Task<Plant> WaterPlantAsync(Guid id) => plantRepo.WaterPlantAsync(id);
+    public Task<Plant> MarkPlantAsDeadAsync(Guid plantId) => plantRepo.MarkPlantAsDeadAsync(plantId);
+    public Task<Plant> WaterPlantAsync(Guid plantId) => plantRepo.WaterPlantAsync(plantId);
     public Task WaterAllPlantsAsync(Guid userId) => plantRepo.WaterAllPlantsAsync(userId);
 }
