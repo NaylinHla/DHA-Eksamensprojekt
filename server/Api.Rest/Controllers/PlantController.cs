@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Rest.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route(ControllerRoute)]
 public class PlantController(IPlantService plantService, ISecurityService securityService) : ControllerBase
 {
 
+    public const string ControllerRoute = "api/Plant/";
+    
     public const string GetPlantRoute = nameof(GetPlant);
     public const string GetPlantsRoute = nameof(GetAllPlants);
     public const string CreatePlantRoute = nameof(CreatePlant);
@@ -27,18 +29,18 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         securityService.VerifyJwtOrThrow(authorization);
         
         var plant = await plantService.GetPlantByIdAsync(plantId);
-        return Ok(ToResponseDto(plant));
+        return plant is null ? NotFound() : Ok(ToDto(plant));
     }
     
     [HttpGet]
     [Route(GetPlantsRoute)]
-    public async Task<ActionResult<Plant>> GetAllPlants(
+    public async Task<ActionResult<IEnumerable<PlantResponseDto>>> GetAllPlants(
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
 
         var plants = await plantService.GetAllPlantsAsync(Guid.Parse(claims.Id));
-        return Ok(plants.Select(ToResponseDto).ToList());
+        return Ok(plants.Select(ToDto));
     }
 
     [HttpPost]
@@ -48,24 +50,8 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        
-        var userId  = Guid.Parse(claims.Id);
-        
-        var plant = new Plant
-        {
-            PlantId     = Guid.NewGuid(),
-            PlantName   = dto.PlantName,
-            PlantType   = dto.PlantType,
-            PlantNotes  = dto.PlantNotes,
-            Planted     = dto.Planted,
-            LastWatered = null,
-            WaterEvery  = dto.WaterEvery,
-            IsDead      = dto.IsDead
-        };
-        
-        plant = await plantService.CreatePlantAsync(userId, plant);
-        
-        return CreatedAtAction(nameof(GetPlant), new { plantId = plant.PlantId }, ToResponseDto(plant));
+        var plant = await plantService.CreatePlantAsync(Guid.Parse(claims.Id), dto);
+        return CreatedAtAction(nameof(GetPlant), new { plantId = plant.PlantId }, ToDto(plant));
     }
 
     [HttpPatch]
@@ -76,17 +62,8 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         securityService.VerifyJwtOrThrow(authorization);
-        
-        var plant = await plantService.EditPlantAsync(new Plant
-        {
-            PlantId      = plantId,
-            PlantName    = dto.PlantName,
-            PlantType    = dto.PlantType,
-            PlantNotes   = dto.PlantNotes,
-            WaterEvery   = dto.WaterEvery
-        });
-        
-        return Ok(ToResponseDto(plant));
+        var updated = await plantService.EditPlantAsync(plantId, dto);
+        return Ok(ToDto(updated));
     }
 
     [HttpPatch]
@@ -107,7 +84,6 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         securityService.VerifyJwtOrThrow(authorization);
-
         await plantService.WaterPlantAsync(plantId);
         return Ok();
     }
@@ -118,13 +94,12 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
-
         await plantService.WaterAllPlantsAsync(Guid.Parse(claims.Id));
         return Ok();
     }
     
     
-    private static PlantResponseDto ToResponseDto(Plant p) => new()
+    private static PlantResponseDto ToDto(Plant p) => new()
     {
         PlantId      = p.PlantId,
         PlantName    = p.PlantName,

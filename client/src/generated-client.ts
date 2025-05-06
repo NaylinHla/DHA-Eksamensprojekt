@@ -425,7 +425,7 @@ export class PlantClient {
         return Promise.resolve<PlantResponseDto>(null as any);
     }
 
-    getAllPlants(authorization: string | undefined): Promise<Plant> {
+    getAllPlants(authorization: string | undefined): Promise<PlantResponseDto[]> {
         let url_ = this.baseUrl + "/api/Plant/GetAllPlants";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -442,13 +442,13 @@ export class PlantClient {
         });
     }
 
-    protected processGetAllPlants(response: Response): Promise<Plant> {
+    protected processGetAllPlants(response: Response): Promise<PlantResponseDto[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Plant;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PlantResponseDto[];
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -456,7 +456,7 @@ export class PlantClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<Plant>(null as any);
+        return Promise.resolve<PlantResponseDto[]>(null as any);
     }
 
     createPlant(dto: PlantCreateDto, authorization: string | undefined): Promise<PlantResponseDto> {
@@ -1092,10 +1092,10 @@ export interface AdminChangesPreferencesDto {
 
 export interface PlantResponseDto {
     plantId?: string;
-    planted?: Date | undefined;
     plantName?: string;
     plantType?: string;
     plantNotes?: string;
+    planted?: Date | undefined;
     lastWatered?: Date | undefined;
     waterEvery?: number | undefined;
     isDead?: boolean;
@@ -1104,17 +1104,20 @@ export interface PlantResponseDto {
 export interface PlantCreateDto {
     plantName: string;
     plantType: string;
-    plantNotes?: string;
-    planted?: Date;
-    waterEvery?: number;
+    plantNotes?: string | undefined;
+    planted?: Date | undefined;
+    waterEvery?: number | undefined;
     isDead?: boolean;
 }
 
 export interface PlantEditDto {
     plantName: string;
     plantType: string;
-    plantNotes?: string;
-    waterEvery?: number;
+    plantNotes?: string | undefined;
+    planted?: Date | undefined;
+    lastWatered?: Date | undefined;
+    waterEvery?: number | undefined;
+    isDead?: boolean | undefined;
 }
 
 export interface ChangeSubscriptionDto {
