@@ -177,12 +177,19 @@ export default function HistoryPage() {
         setLoadingData(true);
 
         const timer = setTimeout(() => {
-            const startDate = new Date(rangeFrom);
-            const endDate = new Date(rangeTo);
-            endDate.setHours(23, 59, 59, 999);
+            const [fromYear, fromMonth, fromDay] = rangeFrom.split("-").map(Number);
+            const [toYear, toMonth, toDay] = rangeTo.split("-").map(Number);
+
+            // Local time at 00:00
+            const localStart = new Date(fromYear, fromMonth - 1, fromDay, 0, 0, 0, 0);
+            const localEnd = new Date(toYear, toMonth - 1, toDay, 23, 59, 59, 999);
+
+            // Convert local time to UTC by using .toISOString() and building Date from that
+            const utcStart = new Date(localStart.toISOString()); // This is already UTC
+            const utcEnd = new Date(localEnd.toISOString());
 
             greenhouseDeviceClient
-                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, startDate, endDate, jwt)
+                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, utcStart, utcEnd, jwt)
                 .then((data) => {
                     setGreenhouseData(data);
                 })
