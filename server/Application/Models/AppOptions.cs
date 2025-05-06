@@ -15,4 +15,7 @@ public sealed class AppOptions
     public string MQTT_BROKER_HOST { get; set; } = null!;
     public string MQTT_USERNAME { get; set; } = null!;
     public bool IsTesting { get; set; }
+    
+    public string EMAIL_SENDER_USERNAME { get; set; } = null!;
+    public string EMAIL_SENDER_PASSWORD { get; set; } = null!;
 }

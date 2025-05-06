@@ -5,6 +5,7 @@ using Application;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.MQTT;
 using Application.Models;
+using Application.Services;
 using Infrastructure.MQTT;
 using Infrastructure.Postgres;
 using Infrastructure.Websocket;
@@ -34,6 +35,8 @@ public class Program
         services.RegisterApplicationServices();
 
         services.AddDataSourceAndRepositories();
+        
+        services.AddTransient<IEmailSender, EmailSenderService>();
 
         services.AddWebsocketInfrastructure();
 
