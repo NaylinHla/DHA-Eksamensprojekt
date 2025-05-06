@@ -50,22 +50,66 @@ public class EmailSenderService : IEmailSender
         }
     }
 
-    public Task AddEmailAsync(AddEmailDto dto)
+    public async Task AddEmailAsync(AddEmailDto dto)
     {
         if (!_emailListRepository.EmailExists(dto.Email))
         {
             _emailListRepository.Add(new EmailList { Email = dto.Email });
             _emailListRepository.Save();
-        }
 
-        return Task.CompletedTask; // No confirmation email sent
+            await SendConfirmationEmailAsync(dto.Email);
+        }
     }
 
-    public Task RemoveEmailAsync(RemoveEmailDto dto)
+    public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
         _emailListRepository.RemoveByEmail(dto.Email);
         _emailListRepository.Save();
 
-        return Task.CompletedTask; // No goodbye email sent
+        await SendGoodbyeEmailAsync(dto.Email);
+    }
+
+    private async Task SendConfirmationEmailAsync(string toEmail)
+    {
+        var client = new SmtpClient("smtp.mailersend.net", 2525)
+        {
+            EnableSsl = true,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(
+                _optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+                _optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
+            )
+        };
+
+        var mailMessage = new MailMessage(
+            from: "noreply@meetyourplants.site",
+            to: toEmail,
+            subject: "Welcome to Meet Your Plants!",
+            body: "Thank you for subscribing to our email list. We’re excited to share updates with you!"
+        );
+
+        await client.SendMailAsync(mailMessage);
+    }
+
+    private async Task SendGoodbyeEmailAsync(string toEmail)
+    {
+        var client = new SmtpClient("smtp.mailersend.net", 2525)
+        {
+            EnableSsl = true,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(
+                _optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+                _optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
+            )
+        };
+
+        var mailMessage = new MailMessage(
+            from: "noreply@meetyourplants.site",
+            to: toEmail,
+            subject: "Goodbye from Meet Your Plants",
+            body: "You've been unsubscribed from our email list. We're sad to see you go!"
+        );
+
+        await client.SendMailAsync(mailMessage);
     }
 }
