@@ -68,12 +68,34 @@ export default function HistoryPage() {
         rangeToRef.current = rangeTo;
     }, [rangeFrom, rangeTo]);
 
-    function appendPointToChart(type: keyof typeof chartRefs, point: Point) {
-        const chart = chartRefs[type].current;
+    function appendPointToChart(
+        chartRef: React.RefObject<ChartJS>,
+        point: { time: string; value: number },
+        maxPoints = 500
+    ) {
+        const chart = chartRef.current;
         if (!chart) return;
 
+        // Ensure arrays exist
+        if (!Array.isArray(chart.data.labels)) {
+            chart.data.labels = [];
+        }
+        if (!Array.isArray(chart.data.datasets[0].data)) {
+            chart.data.datasets[0].data = [];
+        }
+
+        // 1) Append new
         chart.data.labels.push(point.time);
         chart.data.datasets[0].data.push(point.value);
+
+        // 2) Pop oldest if over limit
+        if (chart.data.labels.length > maxPoints) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
+
+        // 3) Redraw instantly
+        chart.update('none');
     }
 
     const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
@@ -90,14 +112,14 @@ export default function HistoryPage() {
             );
         });
 
-        logs.forEach((r) => {
+        logs.forEach(r => {
             const t = formatDateTimeForUserTZ(r.time);
             if (!t) return;
 
-            appendPointToChart("temperature", { time: t, value: Number(r.temperature) || 0 });
-            appendPointToChart("humidity", { time: t, value: Number(r.humidity) || 0 });
-            appendPointToChart("airPressure", { time: t, value: Number(r.airPressure) || 0 });
-            appendPointToChart("airQuality", { time: t, value: Number(r.airQuality) || 0 });
+            appendPointToChart(chartRefs.temperature,  { time: t, value: Number(r.temperature) });
+            appendPointToChart(chartRefs.humidity,     { time: t, value: Number(r.humidity)    });
+            appendPointToChart(chartRefs.airPressure,  { time: t, value: Number(r.airPressure) });
+            appendPointToChart(chartRefs.airQuality,   { time: t, value: Number(r.airQuality)  });
         });
     }, 1000);
 
