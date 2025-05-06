@@ -44,9 +44,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         if (!wrapper) return;
 
         if (mode === "register" && register) {
-            wrapper.style.height = register.offsetHeight + "px";
+            wrapper.style.height = "7rem";
         } else if (mode === "login") {
-            wrapper.style.height = "15rem";
+            wrapper.style.height = "7rem";
         } else {
             wrapper.style.height = "5rem";
         }
@@ -61,7 +61,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             setRegisterErrors({});
         }
     }, [mode]);
-    
+
     const lift = {
         idle: "translate-y-0",
         login: "-translate-y-10",

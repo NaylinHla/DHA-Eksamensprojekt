@@ -1,0 +1,1 @@
+//Page where the user will be able to see an overview of their plants and add new ones
