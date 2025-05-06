@@ -88,8 +88,10 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
         await _connectionManager.BroadcastToTopic(StringConstants.GreenhouseSensorData + "/" + dto.DeviceId, broadcast);
     }
 
-    public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAndBroadcast(
+    public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceId(
         Guid deviceId,
+        DateTime? from,
+        DateTime? to,
         JwtClaims claims)
     {
         // This call can use the injected repository safely, 
@@ -102,7 +104,7 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
         if (deviceOwnerId != Guid.Parse(claims.Id))
             throw new UnauthorizedAccessException("You do not own this device.");
 
-        return await repo.GetSensorHistoryByDeviceIdAsync(deviceId);
+        return await repo.GetSensorHistoryByDeviceIdAsync(deviceId, from, to);
     }
     
     public async Task<GetAllUserDeviceDto> GetAllUserDevice(JwtClaims claims)
@@ -135,12 +137,17 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
         return Task.CompletedTask;
     }
 
-    public async Task DeleteDataAndBroadcast(JwtClaims jwt)
+    public async Task DeleteDataFromSpecificDeviceAndBroadcast(Guid deviceId, JwtClaims claims)
     {
-        using var scope = _services.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
+        var repo = _services.CreateScope()
+            .ServiceProvider
+            .GetRequiredService<IGreenhouseDeviceRepository>();
 
-        await repo.DeleteAllSensorHistoryData();
+        var deviceOwnerId = await repo.GetDeviceOwnerUserId(deviceId);
+        if (deviceOwnerId != Guid.Parse(claims.Id))
+            throw new UnauthorizedAccessException("You do not own this device.");
+        
+        await repo.DeleteDataFromSpecificDevice(deviceId);
         await _connectionManager.BroadcastToTopic(
             StringConstants.Dashboard,
             new AdminHasDeletedData()

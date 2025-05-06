@@ -9,7 +9,7 @@ public static class MockObjects
     {
         var userId = Guid.NewGuid();
         
-        // Create user instance
+        // Create a user instance
         var user = new User
         {
             UserId = userId,

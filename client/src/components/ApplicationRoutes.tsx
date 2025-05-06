@@ -8,7 +8,7 @@ import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
 import AuthScreen from "../pages/Auth/AuthScreen.tsx";
-import {NavBar} from "./index";
+import {NavBar, Footer} from "./index";
 import UserSettings from "../pages/UserSettings/UserSettings.tsx";
 
 export default function ApplicationRoutes() {
@@ -26,16 +26,20 @@ export default function ApplicationRoutes() {
 
     const isAuthScreen = location.pathname === SignInRoute
 
-    return (<>
-        {!isAuthScreen && <NavBar/>}
-        <Routes>
-            <Route element={<HistoryPage/>} path={"/history"}/>
-            <Route element={<DashboardPage/>} path={DashboardRoute}/>
-            <Route element={<UserSettings/>} path={SettingsRoute}/>
-            <Route element={<AlertPage/>} path={"/alerts"}></Route>
-            <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
-            <Route path="/*" element={<NotFoundPage/>}/>
-        </Routes>
-        {/*{!isAuthScreen && <Dock/>}*/}
-    </>)
+    return (
+        <>
+            {!isAuthScreen && <NavBar/>}
+            <div className="min-h-screen">
+                <Routes>
+                    <Route element={<HistoryPage/>} path={"/history"}/>
+                    <Route element={<DashboardPage/>} path={DashboardRoute}/>
+                    <Route element={<UserSettings/>} path={SettingsRoute}/>
+                    <Route element={<AlertPage/>} path={"/alerts"}></Route>
+                    <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
+                    <Route path="/*" element={<NotFoundPage/>}/>
+                </Routes>
+            </div>
+            <Footer/>
+        </>
+    );
 }

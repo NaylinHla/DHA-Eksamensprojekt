@@ -8,6 +8,7 @@ import {
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
 import {JwtAtom, useAtom} from "../../components/import";
 import toast from "react-hot-toast";
+import countries from "./countries.json";
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -302,16 +303,21 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 />
                                 {requiredHint(registerErrors.birthday)}
                             </div>
-
-                            <div className="flex-1">
+                            
+                            <div className="flex-1 relative overflow-visible">
                                 <label className="label py-0 text-white">Country</label>
-                                <input
+                                <select
                                     name="country"
-                                    placeholder="Country"
-                                    className={`input input-bordered bg-white input-sm w-full text-black ${
-                                        registerErrors.country && errorClass
-                                    }`}
-                                />
+                                    className="select select-bordered bg-white select-sm w-full text-black"
+                                    required
+                                >
+                                    <option value="">Select country</option>
+                                    {countries.map((country) => (
+                                        <option key={country} value={country}>
+                                            {registerErrors.country && errorClass}
+                                        </option>
+                                    ))}
+                                </select>
                                 {requiredHint(registerErrors.country)}
                             </div>
                         </div>

@@ -328,19 +328,32 @@ namespace Startup.Tests.GreenhouseDeviceTests
         // -------------------- DELETE: DeleteData --------------------
 
         [Test]
-        public async Task DeleteData_ShouldReturnOk()
+        public async Task DeleteDataFromSpecificDevice_ShouldReturnOk()
         {
-            var resp = await _client.DeleteAsync("api/GreenhouseDevice/DeleteData");
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound)); //Original OK change caused method disabled
-        }
-        
-        [Test]
-        public async Task DeleteData_ShouldReturnBadRequest_WhenNoJwtProvided()
-        {
-            var client = CreateClient(); // no JWT
-            var resp = await client.DeleteAsync("api/GreenhouseDevice/DeleteData");
+            // Arrange: get deviceId from the user seeded in Setup
+            var deviceId = _testUser.UserDevices.First().DeviceId;
 
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound)); ; //Original BadRequest change caused method disabled
+            var response = await _client.DeleteAsync(
+                $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={deviceId}"
+            );
+
+            // Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
+
+        [Test]
+        public async Task DeleteDataFromSpecificDevice_ShouldReturnBadRequest_WhenNoJwtProvided()
+        {
+            // Arrange: create a new unauthenticated client
+            var deviceId = _testUser.UserDevices.First().DeviceId;
+            var client = CreateClient(); // no JWT
+
+            var response = await client.DeleteAsync(
+                $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={deviceId}"
+            );
+
+            // Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
 
