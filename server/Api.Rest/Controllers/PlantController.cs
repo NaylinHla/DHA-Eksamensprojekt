@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Rest.Controllers;
 
 [ApiController]
-[Route(ControllerRoute)]
+[Route("api/[controller]")]
 public class PlantController(IPlantService plantService, ISecurityService securityService) : ControllerBase
 {
-
-    public const string ControllerRoute = "api/Plant/";
+    
+    
     
     public const string GetPlantRoute = nameof(GetPlant);
     public const string GetPlantsRoute = nameof(GetAllPlants);
@@ -35,11 +35,12 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     [HttpGet]
     [Route(GetPlantsRoute)]
     public async Task<ActionResult<IEnumerable<PlantResponseDto>>> GetAllPlants(
+        Guid userId,
         [FromHeader] string authorization)
     {
-        var claims = securityService.VerifyJwtOrThrow(authorization);
+        securityService.VerifyJwtOrThrow(authorization);
 
-        var plants = await plantService.GetAllPlantsAsync(Guid.Parse(claims.Id));
+        var plants = await plantService.GetAllPlantsAsync(userId);
         return Ok(plants.Select(ToDto));
     }
 

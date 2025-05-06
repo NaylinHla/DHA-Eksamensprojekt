@@ -425,8 +425,12 @@ export class PlantClient {
         return Promise.resolve<PlantResponseDto>(null as any);
     }
 
-    getAllPlants(authorization: string | undefined): Promise<PlantResponseDto[]> {
-        let url_ = this.baseUrl + "/api/Plant/GetAllPlants";
+    getAllPlants(userId: string | undefined, authorization: string | undefined): Promise<PlantResponseDto[]> {
+        let url_ = this.baseUrl + "/api/Plant/GetAllPlants?";
+        if (userId === null)
+            throw new Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {

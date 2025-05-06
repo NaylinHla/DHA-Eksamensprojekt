@@ -9,7 +9,7 @@ public sealed class PlantCreateDto
     [Required] [MaxLength(100)]
     public string PlantType { get; init; } = null!;
     [MaxLength(1_000)]
-    public string? PlantNotes { get; init; } = null!;
+    public string? PlantNotes { get; init; }
     
     public required DateTime? Planted { get; init; } = DateTime.UtcNow.Date;
     [Range(1, 365)]
