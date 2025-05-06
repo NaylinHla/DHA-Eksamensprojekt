@@ -644,8 +644,8 @@ export interface Alert {
     alertDesc?: string;
     alertTime?: Date;
     alertPlant?: string | undefined;
-    user?: User;
-    plant?: Plant;
+    user?: User | undefined;
+    plant?: Plant | undefined;
 }
 
 export interface User {
@@ -658,8 +658,8 @@ export interface User {
     birthday?: Date | undefined;
     country?: string;
     role?: string;
-    weather?: Weather;
-    userSettings?: UserSettings;
+    weather?: Weather | undefined;
+    userSettings?: UserSettings | undefined;
     userPlants?: UserPlant[];
     alerts?: Alert[];
     userDevices?: UserDevice[];
@@ -669,7 +669,7 @@ export interface Weather {
     userId?: string;
     city?: string;
     country?: string;
-    user?: User;
+    user?: User | undefined;
 }
 
 export interface UserSettings {
@@ -679,14 +679,14 @@ export interface UserSettings {
     confirmDialog?: boolean;
     secretMode?: boolean;
     waitTime?: string;
-    user?: User;
+    user?: User | undefined;
 }
 
 export interface UserPlant {
     userId?: string;
     plantId?: string;
-    user?: User;
-    plant?: Plant;
+    user?: User | undefined;
+    plant?: Plant | undefined;
 }
 
 export interface Plant {
@@ -708,7 +708,7 @@ export interface UserDevice {
     deviceName?: string;
     deviceDescription?: string;
     createdAt?: Date;
-    user?: User;
+    user?: User | undefined;
     sensorHistories?: SensorHistory[];
 }
 
@@ -720,7 +720,7 @@ export interface SensorHistory {
     airPressure?: number;
     airQuality?: number;
     time?: Date;
-    userDevice?: UserDevice;
+    userDevice?: UserDevice | undefined;
 }
 
 export interface AlertResponseDto {
@@ -797,9 +797,9 @@ export interface UserDevice2 {
 }
 
 export interface AdminChangesPreferencesDto {
-    deviceId?: string;
-    unit?: string;
-    interval?: string;
+    deviceId?: string | undefined;
+    unit?: string | undefined;
+    interval?: string | undefined;
 }
 
 export interface ChangeSubscriptionDto {

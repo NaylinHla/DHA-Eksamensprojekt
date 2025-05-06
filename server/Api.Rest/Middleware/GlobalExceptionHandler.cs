@@ -14,7 +14,8 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         CancellationToken cancellationToken)
     {
         var exceptionMessage = exception.Message;
-        logger.LogInformation("Exception: {exception} with this message: {exceptionMessage}", exception, exceptionMessage);
+        logger.LogInformation("Exception: {ExceptionType} with this message: {ExceptionMessage}", 
+            exception.GetType().Name, exceptionMessage);
 
         var status = exception switch
         {
