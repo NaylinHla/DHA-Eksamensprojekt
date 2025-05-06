@@ -29,14 +29,16 @@ export default function ApplicationRoutes() {
     return (
         <>
             {!isAuthScreen && <NavBar/>}
-            <Routes>
-                <Route element={<HistoryPage/>} path={"/history"}/>
-                <Route element={<DashboardPage/>} path={DashboardRoute}/>
-                <Route element={<UserSettings/>} path={SettingsRoute}/>
-                <Route element={<AlertPage/>} path={"/alerts"}></Route>
-                <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
-                <Route path="/*" element={<NotFoundPage/>}/>
-            </Routes>
+            <div className="min-h-screen">
+                <Routes>
+                    <Route element={<HistoryPage/>} path={"/history"}/>
+                    <Route element={<DashboardPage/>} path={DashboardRoute}/>
+                    <Route element={<UserSettings/>} path={SettingsRoute}/>
+                    <Route element={<AlertPage/>} path={"/alerts"}></Route>
+                    <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
+                    <Route path="/*" element={<NotFoundPage/>}/>
+                </Routes>
+            </div>
             <Footer/>
         </>
     );

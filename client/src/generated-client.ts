@@ -227,12 +227,16 @@ export class GreenhouseDeviceClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getSensorDataByDeviceId(deviceId: string | undefined, authorization: string | undefined): Promise<GetAllSensorHistoryByDeviceIdDto[]> {
-        let url_ = this.baseUrl + "/api/GreenhouseDevice/GetSensorDataByDeviceId?";
+    getAllSensorHistoryByDeviceAndTimePeriodIdDto(deviceId: string | undefined, from: Date | null | undefined, to: Date | null | undefined, authorization: string | undefined): Promise<GetAllSensorHistoryByDeviceIdDto[]> {
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/GetAllSensorHistoryByDeviceAndTimePeriodIdDto?";
         if (deviceId === null)
             throw new Error("The parameter 'deviceId' cannot be null.");
         else if (deviceId !== undefined)
             url_ += "deviceId=" + encodeURIComponent("" + deviceId) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -244,11 +248,11 @@ export class GreenhouseDeviceClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetSensorDataByDeviceId(_response);
+            return this.processGetAllSensorHistoryByDeviceAndTimePeriodIdDto(_response);
         });
     }
 
-    protected processGetSensorDataByDeviceId(response: Response): Promise<GetAllSensorHistoryByDeviceIdDto[]> {
+    protected processGetAllSensorHistoryByDeviceAndTimePeriodIdDto(response: Response): Promise<GetAllSensorHistoryByDeviceIdDto[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -355,6 +359,49 @@ export class GreenhouseDeviceClient {
     }
 
     protected processAdminChangesPreferences(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    deleteDataFromSpecificDevice(deviceId: string | undefined, authorization: string | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/GreenhouseDevice/DeleteDataFromSpecificDevice?";
+        if (deviceId === null)
+            throw new Error("The parameter 'deviceId' cannot be null.");
+        else if (deviceId !== undefined)
+            url_ += "deviceId=" + encodeURIComponent("" + deviceId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteDataFromSpecificDevice(_response);
+        });
+    }
+
+    protected processDeleteDataFromSpecificDevice(response: Response): Promise<FileResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200 || status === 206) {
