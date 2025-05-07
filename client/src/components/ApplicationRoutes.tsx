@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import AuthScreen from "../pages/Auth/AuthScreen.tsx";
 import {NavBar, Footer} from "./index";
 import UserSettings from "../pages/UserSettings/UserSettings.tsx";
+import PlantsView from "../pages/PlantsView/PlantsView.tsx";
 
 export default function ApplicationRoutes() {
 
@@ -35,6 +36,7 @@ export default function ApplicationRoutes() {
                     <Route element={<DashboardPage/>} path={DashboardRoute}/>
                     <Route element={<UserSettings/>} path={SettingsRoute}/>
                     <Route element={<AlertPage/>} path={"/alerts"}></Route>
+                    <Route element={<PlantsView/>} path={"/plants"}></Route>
                     <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
                     <Route path="/*" element={<NotFoundPage/>}/>
                 </Routes>
