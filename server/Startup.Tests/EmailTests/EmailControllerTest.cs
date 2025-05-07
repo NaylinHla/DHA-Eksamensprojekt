@@ -16,11 +16,13 @@ public class EmailControllerTest
 {
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
-    private string _testEmail = "test@example.com";
+    private User _testUser = null!;
 
     [SetUp]
     public async Task Setup()
     {
+        _testUser = MockObjects.GetUser();
+        
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
@@ -34,7 +36,7 @@ public class EmailControllerTest
         
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-        db.EmailList.Add(new EmailList { Email = _testEmail });
+        db.EmailList.Add(new EmailList { Email = _testUser.Email });
         await db.SaveChangesAsync();
     }
 
@@ -56,7 +58,7 @@ public class EmailControllerTest
     [Test]
     public async Task UnsubscribeFromEmailList_ShouldReturnOk()
     {
-        var dto = new RemoveEmailDto { Email = _testEmail };
+        var dto = new RemoveEmailDto { Email = _testUser.Email };
         var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
@@ -67,7 +69,7 @@ public class EmailControllerTest
         // Get JWT token from backend (simulate manually)
         using var scope = _factory.Services.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtEmailTokenService>();
-        var token = jwtService.GenerateUnsubscribeToken(_testEmail);
+        var token = jwtService.GenerateUnsubscribeToken(_testUser.Email);
 
         var response = await _client.GetAsync($"/api/email/unsubscribe?token={token}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -84,7 +86,7 @@ public class EmailControllerTest
     [Test]
     public async Task SubscribeToEmailList_ShouldNotDuplicateEmail()
     {
-        var dto = new AddEmailDto { Email = _testEmail };
+        var dto = new AddEmailDto { Email = _testUser.Email };
         var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
