@@ -147,7 +147,7 @@ public class RestTriggeredTests
         //Act
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
         _ = await _httpClient.PostAsJsonAsync(
-            $"api/GreenhouseDevice/{UserDeviceController.AdminChangesPreferencesRoute}",
+            $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}",
             changePrefernecesDto);
         await Task.Delay(3000); // Hardcoded delay to account for network overhead to the edge device
 

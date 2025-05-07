@@ -12,6 +12,7 @@ using UserDevice = Core.Domain.Entities.UserDevice;
 using Api.Rest.Controllers;
 using Application.Models.Dtos.RestDtos.UserDevice.Request;
 using Application.Models.Dtos.RestDtos.UserDevice.Response;
+using Startup.Tests.GreenhouseDeviceTests;
 
 namespace Startup.Tests.UserDeviceTests
 {
@@ -37,7 +38,8 @@ namespace Startup.Tests.UserDeviceTests
             db.Users.Add(_testUser);
             await db.SaveChangesAsync();
 
-            var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
+            var loginResp =
+                await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
             loginResp.EnsureSuccessStatusCode();
             var loginDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
             _jwt = loginDto!.Jwt;
@@ -55,12 +57,61 @@ namespace Startup.Tests.UserDeviceTests
         [Test]
         public async Task GetUserDevice_InvalidId_ShouldReturnNotFound()
         {
-            var resp = await _client.GetAsync($"api/UserDevice/{UserDeviceController.GetUserDeviceRoute}?userDeviceId={Guid.NewGuid()}");
+            var resp = await _client.GetAsync(
+                $"api/UserDevice/{UserDeviceController.GetUserDeviceRoute}?userDeviceId={Guid.NewGuid()}");
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        }
+
+        [Test]
+        public async Task GetUserDevice_ShouldReturnDevice()
+        {
+            var resp = await _client.GetAsync(
+                $"api/UserDevice/{UserDeviceController.GetUserDeviceRoute}?userDeviceId={_deviceId}");
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+            var dto = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
+            Assert.Multiple(() =>
+            {
+                Assert.That(dto, Is.Not.Null);
+                Assert.That(dto!.DeviceId, Is.EqualTo(_deviceId));
+            });
         }
 
         // -------------------- GET: Get All User Devices --------------------
 
+
+        [Test]
+        public async Task GetAllUserDevices_ShouldReturnOk()
+        {
+            var resp = await _client.GetAsync($"api/UserDevice/{UserDeviceController.GetAllUserDevicesRoute}");
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
+
+        [Test]
+        public async Task GetAllUserDevices_ShouldReturnEmpty_WhenNoDevicesExist()
+        {
+            using (var scope = Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+                db.UserDevices.RemoveRange(db.UserDevices);
+                await db.SaveChangesAsync();
+            }
+
+            var response = await _client.GetAsync($"api/UserDevice/{UserDeviceController.GetAllUserDevicesRoute}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+            var contentObject = await response.Content.ReadFromJsonAsync<List<UserDeviceResponseDto>>();
+            Assert.That(contentObject, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetAllUserDevices_ShouldReturnBadRequest_WhenNoJwtProvided()
+        {
+            var clientWithoutJwt = CreateClient();
+            var response =
+                await clientWithoutJwt.GetAsync($"api/UserDevice/{UserDeviceController.GetAllUserDevicesRoute}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        }
 
         // -------------------- POST: Create User Device --------------------
 
@@ -75,7 +126,8 @@ namespace Startup.Tests.UserDeviceTests
                 Created = DateTime.UtcNow
             };
 
-            var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}", dto);
+            var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}",
+                dto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
             var created = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
@@ -98,7 +150,8 @@ namespace Startup.Tests.UserDeviceTests
                 WaitTime = "450"
             };
 
-            var resp = await _client.PatchAsJsonAsync($"api/UserDevice/{UserDeviceController.EditUserDeviceRoute}?userDeviceId={_deviceId}", updateDto);
+            var resp = await _client.PatchAsJsonAsync(
+                $"api/UserDevice/{UserDeviceController.EditUserDeviceRoute}?userDeviceId={_deviceId}", updateDto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
             var updated = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
@@ -115,7 +168,8 @@ namespace Startup.Tests.UserDeviceTests
                 WaitTime = "100"
             };
 
-            var resp = await _client.PatchAsJsonAsync($"api/UserDevice/{UserDeviceController.EditUserDeviceRoute}?userDeviceId={Guid.NewGuid()}", updateDto);
+            var resp = await _client.PatchAsJsonAsync(
+                $"api/UserDevice/{UserDeviceController.EditUserDeviceRoute}?userDeviceId={Guid.NewGuid()}", updateDto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
@@ -149,7 +203,10 @@ namespace Startup.Tests.UserDeviceTests
             var resp = await _client.SendAsync(new HttpRequestMessage
             {
                 Method = HttpMethod.Delete,
-                RequestUri = new Uri($"api/UserDevice/{UserDeviceController.DeleteUserDeviceRoute}?userDeviceId={Guid.NewGuid()}", UriKind.Relative),
+                RequestUri =
+                    new Uri(
+                        $"api/UserDevice/{UserDeviceController.DeleteUserDeviceRoute}?userDeviceId={Guid.NewGuid()}",
+                        UriKind.Relative),
                 Content = JsonContent.Create(dto)
             });
 
@@ -163,7 +220,8 @@ namespace Startup.Tests.UserDeviceTests
         {
             var badDto = new { DeviceDescription = "Missing name and wait time" };
 
-            var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}", badDto);
+            var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}",
+                badDto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
@@ -197,7 +255,8 @@ namespace Startup.Tests.UserDeviceTests
                 Interval = "60"
             };
 
-            var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}", dto);
+            var resp = await _client.PostAsJsonAsync(
+                $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}", dto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
@@ -212,7 +271,8 @@ namespace Startup.Tests.UserDeviceTests
                 Interval = "60"
             };
 
-            var resp = await client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}", dto);
+            var resp = await client.PostAsJsonAsync(
+                $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}", dto);
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
     }

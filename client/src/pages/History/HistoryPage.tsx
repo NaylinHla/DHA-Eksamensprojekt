@@ -24,7 +24,7 @@ import {
     useTopicManager,
     useWebSocketMessage,
 } from "../import";
-import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
+import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
@@ -182,7 +182,7 @@ export default function HistoryPage() {
     useEffect(() => {
         if (!jwt) return;
         setLoadingDevices(true);
-        greenhouseDeviceClient
+        userDeviceClient
             .getAllUserDevices(jwt)
             .then((res: any) => {
                 const list = res.allUserDevice || [];

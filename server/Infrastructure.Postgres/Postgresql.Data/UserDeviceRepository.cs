@@ -51,25 +51,6 @@ public class UserDeviceRepository(MyDbContext ctx) : IUserDeviceRepository
         await ctx.SaveChangesAsync();
     }
 
-    public async Task SaveChangesAsync()
-    {
-        try
-        {
-            // Log the state before saving
-            Console.WriteLine("Attempting to save changes...");
-
-            // Save changes asynchronously
-            var changes = await ctx.SaveChangesAsync();
-
-            // Log the number of affected rows
-            Console.WriteLine($"Changes saved successfully. Number of affected rows: {changes}");
-        }
-        catch (Exception ex)
-        {
-            // Log any exceptions that might occur during saving
-            Console.WriteLine($"Error saving changes: {ex.Message}");
-            throw; // Rethrow the exception to propagate it
-        }
-    }
+    public Task SaveChangesAsync() => ctx.SaveChangesAsync();
 
 }
