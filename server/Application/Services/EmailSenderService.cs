@@ -14,13 +14,16 @@ public class EmailSenderService : IEmailSender
 {
     private readonly IOptionsMonitor<AppOptions> _optionsMonitor;
     private readonly IEmailListRepository _emailListRepository;
+    private readonly JwtEmailTokenService _jwtService;
 
     public EmailSenderService(
         IOptionsMonitor<AppOptions> optionsMonitor,
-        IEmailListRepository emailListRepository)
+        IEmailListRepository emailListRepository,
+        JwtEmailTokenService jwtService)
     {
         _optionsMonitor = optionsMonitor;
         _emailListRepository = emailListRepository;
+        _jwtService = jwtService;
     }
 
     public async Task SendEmailAsync(string subject, string message)
@@ -39,13 +42,25 @@ public class EmailSenderService : IEmailSender
 
         foreach (var email in emailList)
         {
-            var mailMessage = new MailMessage(
-                from: "noreply@meetyourplants.site",
-                to: email,
-                subject,
-                message
-            );
+            string token = _jwtService.GenerateUnsubscribeToken(email);
+            string unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
 
+            string htmlBody = $@"
+                <p>{message}</p>
+                <hr />
+                <p style='font-size:12px;color:#888;'>
+                    If you no longer wish to receive emails, click <a href='{unsubscribeUrl}'>unsubscribe</a>.
+                </p>";
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress("noreply@meetyourplants.site"),
+                Subject = subject,
+                Body = htmlBody,
+                IsBodyHtml = true
+            };
+
+            mailMessage.To.Add(email);
             await client.SendMailAsync(mailMessage);
         }
     }

@@ -33,18 +33,17 @@ public class Program
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
         services.RegisterApplicationServices();
-
         services.AddDataSourceAndRepositories();
-        
+
         services.AddTransient<IEmailSender, EmailSenderService>();
+        services.AddSingleton<JwtEmailTokenService>();
 
         services.AddWebsocketInfrastructure();
-
         services.RegisterWebsocketApiServices();
         services.RegisterRestApiServices();
-        
-        var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>(); // Direct binding 
-        
+
+        var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
+
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {
             services.RegisterMqttInfrastructure();
@@ -63,6 +62,7 @@ public class Program
 
         services.AddSingleton<IProxyConfig, ProxyConfig>();
     }
+
 
     private static async Task ConfigureMiddleware(WebApplication app)
     {
