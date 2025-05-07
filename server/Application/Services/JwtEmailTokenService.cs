@@ -6,6 +6,8 @@ using Application.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+namespace Application.Services;
+
 public class JwtEmailTokenService
 {
     private readonly string _secret;

@@ -18,5 +18,5 @@ public sealed class AppOptions
     
     public string EMAIL_SENDER_USERNAME { get; set; } = null!;
     public string EMAIL_SENDER_PASSWORD { get; set; } = null!;
-    public string JWT_EMAIL_SECRET { get; set; }
+    public string JWT_EMAIL_SECRET { get; set; } = null!;
 }

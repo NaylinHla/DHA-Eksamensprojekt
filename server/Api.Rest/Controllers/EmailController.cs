@@ -1,6 +1,10 @@
-﻿using Application.Models.Dtos.RestDtos.EmailList.Request;
+﻿using Application.Interfaces;
+using Application.Models.Dtos.RestDtos.EmailList.Request;
+using Application.Services;
 using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+
+namespace Api.Rest.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
