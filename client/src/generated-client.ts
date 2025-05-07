@@ -1476,6 +1476,7 @@ export interface SensorHistoryWithDeviceDto {
     deviceId?: string;
     deviceName?: string;
     deviceDesc?: string;
+    deviceWaitTime?: string;
     deviceCreateDateTime?: Date;
     temperature?: number;
     humidity?: number;

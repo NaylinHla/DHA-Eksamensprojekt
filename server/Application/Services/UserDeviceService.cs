@@ -69,12 +69,28 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
         await userDeviceRepo.DeleteUserDeviceAsync(deviceId);
     }
 
-    public Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims)
+    public async Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims)
     {
-        mqttPublisher.Publish(
+        if (string.IsNullOrEmpty(dto.DeviceId))
+        {
+            throw new ArgumentException("DeviceId is required.", nameof(dto.DeviceId));
+        }
+        var device = await userDeviceRepo.GetUserDeviceByIdAsync(Guid.Parse(dto.DeviceId));
+        if (device == null)
+            throw new NotFoundException("Device not found");
+        
+        if (device.UserId != Guid.Parse(claims.Id))
+            throw new UnauthorizedAccessException("You do not own this device.");
+        
+        await mqttPublisher.Publish(
             dto,
             $"{StringConstants.Device}/{dto.DeviceId}/{StringConstants.ChangePreferences}"
         );
-        return Task.CompletedTask;
+
+        // Update fields if they are not null
+        if (dto.Interval is not null)
+            device.WaitTime = dto.Interval;
+
+        await userDeviceRepo.SaveChangesAsync();
     }
 }

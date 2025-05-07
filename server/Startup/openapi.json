@@ -1750,6 +1750,9 @@
           "deviceDesc": {
             "type": "string"
           },
+          "deviceWaitTime": {
+            "type": "string"
+          },
           "deviceCreateDateTime": {
             "type": "string",
             "format": "date-time"

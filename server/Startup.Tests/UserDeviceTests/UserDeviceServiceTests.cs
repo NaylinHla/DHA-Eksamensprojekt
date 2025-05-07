@@ -1,6 +1,7 @@
 using Application.Interfaces.Infrastructure.MQTT;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
+using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.UserDevice.Request;
 using Application.Services;
 using Core.Domain.Entities;
@@ -95,5 +96,35 @@ public class UserDeviceServiceTests
 
         Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             await _service.DeleteUserDeviceAsync(deviceId, MockClaims(_userId)));
+    }
+    
+    [Test]
+    public void UpdateDeviceFeed_ShouldThrowUnauthorized_WhenDeviceNotOwned()
+    {
+        // Arrange
+        var deviceId = Guid.NewGuid();
+        var dto = new AdminChangesPreferencesDto
+        {
+            DeviceId = deviceId.ToString(),
+            Interval = "15"
+        };
+
+        var device = new UserDevice
+        {
+            DeviceId = deviceId,
+            UserId = _otherUserId,
+            DeviceName = "Test Device",
+            DeviceDescription = "Device Description",
+            WaitTime = "60",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _userDeviceRepoMock.Setup(r => r.GetUserDeviceByIdAsync(deviceId)).ReturnsAsync(device);
+
+        var claims = MockClaims(_userId);
+
+        // Act & Assert
+        Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            await _service.UpdateDeviceFeed(dto, claims));
     }
 }

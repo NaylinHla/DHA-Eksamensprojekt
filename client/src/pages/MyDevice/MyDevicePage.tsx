@@ -4,8 +4,9 @@ import {useAtom} from "jotai";
 import {Plus} from "lucide-react";
 import {AdminChangesPreferencesDto, JwtAtom, SensorHistoryWithDeviceDto} from "../../atoms";
 import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients";
-import {ConfirmModal, formatDateTimeForUserTZ, SearchBar, TitleTimeHeader} from "../import"; // Import the ConfirmModal
+import {ConfirmModal, formatDateTimeForUserTZ, SearchBar, TitleTimeHeader} from "../import";
 
+// Interval multipliers
 const intervalMultipliers = {
     Second: 1,
     Minute: 60,
@@ -14,6 +15,20 @@ const intervalMultipliers = {
     Week: 604800,
     Month: 2592000
 } as const;
+
+// Helper function to format device values (temperature, humidity, etc.)
+const formatDeviceValue = (
+    value: number | null | undefined,
+    unit: string,
+    threshold: number = 0,
+    defaultValue: string = "N/A"
+): string => {
+    if (value != null && value > threshold) {
+        return `${value} ${unit}`;
+    }
+    return defaultValue;
+};
+
 
 interface LocalPref extends AdminChangesPreferencesDto {
     intervalValue: number;
@@ -39,13 +54,47 @@ export default function MyDevicePage() {
 
                 const initial: Record<string, LocalPref> = {};
                 sensorData.forEach((d) => {
-                    if (d.deviceId) {
-                        initial[d.deviceId] = {
-                            deviceId: d.deviceId,
-                            intervalValue: 1,
-                            intervalUnit: "Minute"
-                        };
+                    // Convert the device wait time to a number, defaulting to 0 if it's invalid
+                    const waitTime = Number(d.deviceWaitTime) || 0;
+
+                    // Ensure that deviceId is valid before using it as a key
+                    if (!d.deviceId) {
+                        console.warn(`Device with missing or invalid deviceId found:`, d);
+                        return; // Skip this device if deviceId is invalid
                     }
+
+                    // Initialize the interval unit and value
+                    let intervalUnit: keyof typeof intervalMultipliers = "Second";
+                    let intervalValue = waitTime;
+
+                    // Determine the appropriate unit based on the wait time
+                    if (waitTime >= intervalMultipliers.Month && waitTime % intervalMultipliers.Month === 0) {
+                        intervalUnit = "Month";
+                        intervalValue = waitTime / intervalMultipliers.Month;
+                    } else if (waitTime >= intervalMultipliers.Week && waitTime % intervalMultipliers.Week === 0) {
+                        intervalUnit = "Week";
+                        intervalValue = waitTime / intervalMultipliers.Week;
+                    } else if (waitTime >= intervalMultipliers.Days && waitTime % intervalMultipliers.Days === 0) {
+                        intervalUnit = "Days";
+                        intervalValue = waitTime / intervalMultipliers.Days;
+                    } else if (waitTime >= intervalMultipliers.Hour && waitTime % intervalMultipliers.Hour === 0) {
+                        intervalUnit = "Hour";
+                        intervalValue = waitTime / intervalMultipliers.Hour;
+                    } else if (waitTime >= intervalMultipliers.Minute && waitTime % intervalMultipliers.Minute === 0) {
+                        intervalUnit = "Minute";
+                        intervalValue = waitTime / intervalMultipliers.Minute;
+                    } else {
+                        // If no higher unit fits exactly, keep it in seconds
+                        intervalUnit = "Second";
+                        intervalValue = waitTime; // Do not round or adjust
+                    }
+
+                    // Store the interval value and unit for the device
+                    initial[d.deviceId] = {
+                        deviceId: d.deviceId,
+                        intervalValue,
+                        intervalUnit
+                    };
                 });
                 setPreferences(initial);
             })
@@ -171,11 +220,13 @@ export default function MyDevicePage() {
                                     </div>
 
                                     <div className="text-sm space-y-1 mb-3">
-                                        <p>🌡 Temp: {device.temperature}°C</p>
-                                        <p>💧 Humidity: {device.humidity}%</p>
-                                        <p>🌬 Air Pressure: {device.airPressure} hPa</p>
-                                        <p>🧪 Air Quality: {device.airQuality} ppm</p>
-                                        <p>📅 {new Date(device.time ?? "").toLocaleString()}</p>
+                                        <p>🌡 Temp: {formatDeviceValue(device.temperature, "°C")}</p>
+                                        <p>💧 Humidity: {formatDeviceValue(device.humidity, "%")}</p>
+                                        <p>🌬 Air Pressure: {formatDeviceValue(device.airPressure, "hPa")}</p>
+                                        <p>🧪 Air Quality: {formatDeviceValue(device.airQuality, "ppm")}</p>
+                                        <p>📅{" "}{device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
+                                                ? new Date(device.time).toLocaleString() : "N/A"}
+                                        </p>
                                     </div>
 
                                     <label className="text-sm mb-1 font-medium">Update interval:</label>

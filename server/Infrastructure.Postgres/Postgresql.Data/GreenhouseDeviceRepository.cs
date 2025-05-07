@@ -39,6 +39,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
                     DeviceName = device.DeviceName,
                     DeviceCreateDateTime = device.CreatedAt,
                     DeviceDesc = device.DeviceDescription,
+                    DeviceWaitTime = device.WaitTime,
                     Temperature = device.SensorHistories
                         .OrderByDescending(s => s.Time)
                         .Select(s => s.Temperature)
