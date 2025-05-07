@@ -251,7 +251,6 @@ namespace Startup.Tests.UserDeviceTests
             var dto = new AdminChangesPreferencesDto
             {
                 DeviceId = deviceId,
-                Unit = "Celsius",
                 Interval = "60"
             };
 
@@ -267,7 +266,6 @@ namespace Startup.Tests.UserDeviceTests
             var dto = new AdminChangesPreferencesDto
             {
                 DeviceId = Guid.NewGuid().ToString(),
-                Unit = "Celsius",
                 Interval = "60"
             };
 

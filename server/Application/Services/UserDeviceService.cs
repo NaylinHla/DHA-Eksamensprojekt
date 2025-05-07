@@ -11,7 +11,7 @@ namespace Application.Services;
 
 public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublisher mqttPublisher) : IUserDeviceService
 {
-    public async Task<UserDevice> GetUserDeviceAsync(Guid deviceId, JwtClaims claims)
+    public async Task<UserDevice?> GetUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
                      ?? throw new NotFoundException("Device not found");

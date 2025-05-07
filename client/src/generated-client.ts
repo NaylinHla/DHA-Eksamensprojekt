@@ -1558,7 +1558,6 @@ export interface UserDeviceEditDto {
 
 export interface AdminChangesPreferencesDto {
     deviceId?: string | undefined;
-    unit?: string | undefined;
     interval?: string | undefined;
 }
 
@@ -1613,6 +1612,7 @@ export enum StringConstants {
     GreenhouseSensorData = "GreenhouseSensorData",
     Device = "Device",
     SensorData = "SensorData",
+    ChangeWaitTime = "ChangeWaitTime",
     ChangePreferences = "ChangePreferences",
 }
 

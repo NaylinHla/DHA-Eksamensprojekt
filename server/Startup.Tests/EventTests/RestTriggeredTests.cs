@@ -140,8 +140,7 @@ public class RestTriggeredTests
         var changePrefernecesDto = new AdminChangesPreferencesDto
         {
             DeviceId = testMqttClient.DeviceId,
-            Interval = "Minute",
-            Unit = "Celcius"
+            Interval = "60",
         };
 
         //Act

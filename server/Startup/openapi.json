@@ -2050,10 +2050,6 @@
             "type": "string",
             "nullable": true
           },
-          "unit": {
-            "type": "string",
-            "nullable": true
-          },
           "interval": {
             "type": "string",
             "nullable": true
@@ -2225,6 +2221,7 @@
           "GreenhouseSensorData",
           "Device",
           "SensorData",
+          "ChangeWaitTime",
           "ChangePreferences"
         ]
       }

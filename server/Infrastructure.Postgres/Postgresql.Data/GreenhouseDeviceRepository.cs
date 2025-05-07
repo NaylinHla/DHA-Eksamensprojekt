@@ -62,26 +62,6 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 })
                 .ToListAsync();
         }
-
-        public async Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId)
-        {
-            var devices = await ctx.UserDevices
-                .Where(device => device.UserId == userId)
-                .Select(device => new UserDevice
-                {
-                    DeviceId = device.DeviceId,
-                    UserId = device.UserId,
-                    DeviceName = device.DeviceName,
-                    DeviceDescription = device.DeviceDescription,
-                    CreatedAt = device.CreatedAt
-                })
-                .ToListAsync();
-
-            return new GetAllUserDeviceDto
-            {
-                AllUserDevice = devices
-            };
-        }
         
         public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId, DateTime? from = null, DateTime? to = null)
         {
@@ -90,7 +70,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
 
             if (device == null)
-                throw new Exception("Device not found");
+                throw new NotFoundException("Device not found");
 
             var query = ctx.SensorHistories
                 .Where(sh => sh.DeviceId == deviceId);

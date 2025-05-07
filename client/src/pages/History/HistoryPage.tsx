@@ -185,9 +185,9 @@ export default function HistoryPage() {
         userDeviceClient
             .getAllUserDevices(jwt)
             .then((res: any) => {
-                const list = res.allUserDevice || [];
+                const list = Array.isArray(res) ? res : [];
                 setDevices(list);
-                if (!selectedDeviceId && list.length) setSelectedDeviceId(list[0].deviceId!);
+                if (!selectedDeviceId && list.length) {setSelectedDeviceId(list[0].deviceId!);}
             })
             .catch(() => toast.error("Failed to load devices", {id: "load-devices-error"}))
             .finally(() => setLoadingDevices(false));
