@@ -74,3 +74,10 @@ CREATE TABLE IF NOT EXISTS meetyourplants."SensorHistory" (
                                                               "Time" TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS meetyourplants."EmailList"
+(
+    "Id" SERIAL PRIMARY KEY,
+    "Email" VARCHAR(255) UNIQUE NOT NULL
+);
+
+
