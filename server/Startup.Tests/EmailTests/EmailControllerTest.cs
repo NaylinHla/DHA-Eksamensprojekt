@@ -25,13 +25,12 @@ public class EmailControllerTest
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig(); // uses your extension method
+                    services.DefaultTestConfig();
                 });
             });
 
         _client = _factory.CreateClient();
-
-        // Seed test email if needed using repository directly
+        
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
         db.EmailList.Add(new EmailList { Email = _testEmail });
@@ -86,7 +85,7 @@ public class EmailControllerTest
     {
         var dto = new AddEmailDto { Email = _testEmail };
         var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK)); // should be idempotent
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
     
     [Test]
@@ -94,6 +93,6 @@ public class EmailControllerTest
     {
         var dto = new RemoveEmailDto { Email = "nonexistent@example.com" };
         var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK)); // graceful no-op
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 }
