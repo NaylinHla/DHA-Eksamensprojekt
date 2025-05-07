@@ -1,62 +1,110 @@
-import React, {useEffect, useMemo, useState} from "react";
-import PlantCard, {Plant} from "../../components/Modals/PlantCard.tsx";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
+import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
 import PlantsToolbar from "../../components/Modals/PlantToolbar.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
 import {formatDateTimeForUserTZ} from "../../components";
+import {JwtAtom, PlantClient, PlantResponseDto } from "../../atoms";
+import {useAtom} from "jotai";
 
+const plantClient = new PlantClient(
+    import.meta.env.VITE_API_URL ?? "http://localhost:5000"
+);
 
-const mockPlants: Plant[] = [
-    { id: "1", name: "Ficus", nextWaterInDays: 0 },
-    { id: "2", name: "Dracaena", nextWaterInDays: 3 },
-    { id: "3", name: "Tomato", nextWaterInDays: 5 },
-    { id: "4", name: "Bonsai", nextWaterInDays: 5 },
-    { id: "5", name: "Apple Tree", nextWaterInDays: 5 },
-    { id: "6", name: "Azalea", nextWaterInDays: 5 }
-];
+const toCard = (dto: PlantResponseDto): CardPlant => {
+    const days =
+        dto.waterEvery != null && dto.lastWatered
+            ? Math.max(
+                0,
+                dto.waterEvery -
+                Math.floor(
+                    (Date.now() - new Date(dto.lastWatered).getTime()) / 86_400_000
+                )
+            )
+            : 0;
+    return { id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days };
+};
+
+function userIdFromJwt(token: string): string | null {
+    try {
+        const { sub, Id } = JSON.parse(atob(token.split(".")[1]));
+        return (sub || Id) ?? null;
+    } catch { return null; }
+}
 
 const PlantsView: React.FC = () => {
-    const [plants, setPlants] = useState<Plant[]>(mockPlants);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentTime, setCurrentTime] = useState(new Date());
-
-    const filtered = useMemo(() => {
-        const t = searchTerm.trim().toLowerCase();
-        return t
-            ? plants.filter((p) => p.name.toLowerCase().includes(t))
-            : plants;
-    }, [plants, searchTerm]);
+    const [jwt] = useAtom(JwtAtom);
+    const [plants, setPlants] = useState<CardPlant[]>([]);
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [err, setErr] = useState<string | null>(null);
+    const [now, setNow] = useState(new Date());
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(interval);
+        const id = setInterval(() => setNow(new Date()), 1_000);
+        return () => clearInterval(id);
     }, []);
 
+    const fetchPlants = useCallback(async () => {
+        if (!jwt) return;
+        const uid = userIdFromJwt(jwt);
+        if (!uid) { setErr("Invalid token"); return; }
+
+        try {
+            setLoading(true);
+            const list = await plantClient.getAllPlants(uid, jwt); // <‑‑ raw JWT
+            setPlants(list.map(toCard));
+            setErr(null);
+        } catch (e: any) {
+            setErr(e.message ?? "Failed");
+        } finally {
+            setLoading(false);
+        }
+    }, [jwt]);
+
+    useEffect(() => { fetchPlants(); }, [fetchPlants]);
+
+    const waterAll = async () => {
+        try { await plantClient.waterAllPlants(jwt); await fetchPlants(); }
+        catch (e:any){ alert(e.message ?? "Failed"); }
+    };
+    const waterOne = async (id: string) => {
+        try { await plantClient.waterPlant(id, jwt); await fetchPlants(); }
+        catch (e:any){ alert(e.message ?? "Failed"); }
+    };
+
+    /* search filter */
+    const visible = useMemo(() => {
+        const t = search.trim().toLowerCase();
+        return t ? plants.filter(p => p.name.toLowerCase().includes(t)) : plants;
+    }, [plants, search]);
+
+    if (loading) return <p className="p-6">Loading…</p>;
+    if (err)     return <p className="p-6 text-error">{err}</p>;
+
     return (
-        <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
-            {/* Header */}
-            <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-[--color-primary]">Plants</h1>
+        <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
+
+            {/* header */}
+            <header className="w-full bg-background shadow px-6 py-4 flex justify-between">
+                <h1 className="text-2xl font-bold">Plants</h1>
                 <span className="text-sm text-gray-600">
-                    {formatDateTimeForUserTZ(currentTime)}
-                </span>
+          {formatDateTimeForUserTZ(now)}
+        </span>
             </header>
-            
+
+            {/* content */}
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <PlantsToolbar
-                    onSearch={setSearchTerm}
-                    onWaterAll={() => alert("💧  (hook up the backend here)")}
-                />
+                <PlantsToolbar onSearch={setSearch} onWaterAll={waterAll} />
 
-                {/* Card grid */}
                 <div className="grid gap-6 auto-rows-fr grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]">
-                    {filtered.map((plant) => (
-                        <PlantCard key={plant.id} plant={plant} />
+                    {visible.map(p => (
+                        <PlantCard
+                            key={p.id}
+                            plant={p}
+                            onWater={() => waterOne(p.id)}
+                        />
                     ))}
-
-                    {/* Add‑plant tile - Empty for now */}
-                    <AddPlantCard onClick={() => {}} />
+                    <AddPlantCard onClick={() => { /* TODO: open modal */ }} />
                 </div>
             </main>
         </div>

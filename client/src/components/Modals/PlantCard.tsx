@@ -2,18 +2,19 @@ import React from "react";
 import { Droplet, X } from "lucide-react";
 import PlantIcon from "../../assets/Favicon/Plant.svg?react";
 
-export interface Plant {
+export interface CardPlant {
     id: string;
     name: string;
     nextWaterInDays: number;
 }
 
 interface PlantCardProps {
-    plant: Plant;
-    onClick?: (plant: Plant) => void;
+    plant: CardPlant;
+    onWater?: () => void;
+    onClick?: (plant: CardPlant) => void;
 }
 
-const PlantCard: React.FC<PlantCardProps> = ({ plant, onClick }) => {
+const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick }) => {
     const dueText =
         plant.nextWaterInDays === 0
             ? "Today"
@@ -35,7 +36,8 @@ const PlantCard: React.FC<PlantCardProps> = ({ plant, onClick }) => {
             {/* Footer */}
             <div className="flex items-center justify-between text-sm mt-1">
                 <span className="font-medium truncate max-w-[60%]">{plant.name}</span>
-                <Droplet className="h-4 w-4 shrink-0 text-blue-500" />
+                <Droplet onClick={e => { e.stopPropagation(); onWater?.(); }}
+                         className="h-4 w-4 cursor-pointer text-blue-500"/>
             </div>
             <p className="text-xs text-muted-foreground mt-1">{dueText}</p>
         </button>
