@@ -24,6 +24,7 @@ public static class Extensions
         services.AddScoped<IGreenhouseDeviceRepository, GreenhouseDeviceRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IEmailListRepository, EmailListRepository>();
+        services.AddScoped<IPlantRepository, PlantRepository>();
         services.AddScoped<Seeder>();
 
         return services;
