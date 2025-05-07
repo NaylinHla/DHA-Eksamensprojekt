@@ -12,6 +12,8 @@ namespace Application.Models.Dtos.RestDtos.SensorHistory
         // Device information
         public Guid DeviceId { get; set; }
         public string DeviceName { get; set; } = string.Empty;
+        public string DeviceDesc { get; set; } = string.Empty;
+        public DateTime DeviceCreateDateTime { get; set; }
         
         // Sensor readings
         public double Temperature { get; set; }

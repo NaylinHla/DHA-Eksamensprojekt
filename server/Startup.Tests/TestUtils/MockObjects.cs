@@ -30,7 +30,6 @@ public static class MockObjects
             UserSettings = new UserSettings
             {
                 UserId = userId,
-                WaitTime = "10",
                 Celsius = true,
                 ConfirmDialog = false,
                 DarkTheme = false,
@@ -48,14 +47,9 @@ public static class MockObjects
             UserId = userId,
             DeviceName = "Test Device",
             DeviceDescription = "Device for testing",
+            WaitTime = "600",
             CreatedAt = DateTime.UtcNow,
             SensorHistories = new List<SensorHistory>()
-        };
-        
-        var emaillist = new EmailList
-        {
-            Email = user.Email,
-            Id = 1,
         };
 
         // Add sample sensor data to the device

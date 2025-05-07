@@ -9,7 +9,6 @@ public class UserSettings
     public bool DarkTheme { get; set; }
     public bool ConfirmDialog { get; set; }
     public bool SecretMode { get; set; }
-    public required string WaitTime { get; set; }
 
     public User? User { get; set; }
 }

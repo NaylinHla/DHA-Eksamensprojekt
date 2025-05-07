@@ -2,7 +2,7 @@ import {Route, Routes, useLocation, useNavigate} from "react-router";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
 import Settings from "./Settings.tsx";
 import Dock from "./Dock.tsx";
-import {AlertPage, DashboardPage, HistoryPage, NotFoundPage} from "../pages"
+import {AlertPage, DashboardPage, HistoryPage, MyDevicePage, NotFoundPage} from "../pages"
 import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
@@ -35,6 +35,7 @@ export default function ApplicationRoutes() {
                     <Route element={<DashboardPage/>} path={DashboardRoute}/>
                     <Route element={<UserSettings/>} path={SettingsRoute}/>
                     <Route element={<AlertPage/>} path={"/alerts"}></Route>
+                    <Route element={<MyDevicePage/>} path={"/myDevice"}/>
                     <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
                     <Route path="/*" element={<NotFoundPage/>}/>
                 </Routes>

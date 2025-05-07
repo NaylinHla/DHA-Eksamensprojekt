@@ -1,11 +1,12 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos.SensorHistory;
-using Application.Models.Dtos.RestDtos.UserDevice;
+using Application.Models.Dtos.RestDtos.UserDevice.Response;
 using Core.Domain.Entities;
 using Core.Domain.Exceptions;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
+using UserDevice = Application.Models.Dtos.RestDtos.UserDevice.Response.UserDevice;
 
 namespace Infrastructure.Postgres.Postgresql.Data
 {
@@ -36,6 +37,8 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 {
                     DeviceId = device.DeviceId,
                     DeviceName = device.DeviceName,
+                    DeviceCreateDateTime = device.CreatedAt,
+                    DeviceDesc = device.DeviceDescription,
                     Temperature = device.SensorHistories
                         .OrderByDescending(s => s.Time)
                         .Select(s => s.Temperature)
@@ -64,7 +67,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
         {
             var devices = await ctx.UserDevices
                 .Where(device => device.UserId == userId)
-                .Select(device => new Application.Models.Dtos.RestDtos.UserDevice.UserDevice
+                .Select(device => new UserDevice
                 {
                     DeviceId = device.DeviceId,
                     UserId = device.UserId,

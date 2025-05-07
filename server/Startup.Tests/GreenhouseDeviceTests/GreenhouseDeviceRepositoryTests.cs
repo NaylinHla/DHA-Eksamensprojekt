@@ -67,6 +67,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
                 DeviceName =    "Test",
                 DeviceDescription = "Test",
                 CreatedAt = DateTime.Now,
+                WaitTime = "600"
             };
             
             _context.Users.Add(user);
