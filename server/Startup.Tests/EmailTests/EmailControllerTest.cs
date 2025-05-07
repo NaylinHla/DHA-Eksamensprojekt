@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
+using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Mvc.Testing;
