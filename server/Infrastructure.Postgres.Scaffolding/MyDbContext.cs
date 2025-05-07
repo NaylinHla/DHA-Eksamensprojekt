@@ -1,6 +1,7 @@
 ﻿using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Linq;
 
 namespace Infrastructure.Postgres.Scaffolding;
 
@@ -19,6 +20,7 @@ public partial class MyDbContext : DbContext
     public virtual DbSet<Alert> Alerts { get; set; }
     public virtual DbSet<SensorHistory> SensorHistories { get; set; }
     public virtual DbSet<UserDevice> UserDevices { get; set; }
+    public virtual DbSet<EmailList> EmailList { get; set; } // ✅ added
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +201,16 @@ public partial class MyDbContext : DbContext
                 .WithOne(sh => sh.UserDevice)
                 .HasForeignKey(sh => sh.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailList>(entity => // ✅ Added EmailList
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToTable("EmailList");
+
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.Email).HasColumnName("Email").IsRequired();
         });
 
         OnModelCreatingPartial(modelBuilder);

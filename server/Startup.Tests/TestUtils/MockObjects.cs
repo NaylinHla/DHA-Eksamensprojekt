@@ -51,6 +51,12 @@ public static class MockObjects
             CreatedAt = DateTime.UtcNow,
             SensorHistories = new List<SensorHistory>()
         };
+        
+        var emaillist = new EmailList
+        {
+            Email = user.Email,
+            Id = 1,
+        };
 
         // Add sample sensor data to the device
         device.SensorHistories.Add(new SensorHistory
