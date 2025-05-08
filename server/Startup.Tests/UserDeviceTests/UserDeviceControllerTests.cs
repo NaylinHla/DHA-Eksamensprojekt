@@ -128,7 +128,7 @@ namespace Startup.Tests.UserDeviceTests
 
             var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}",
                 dto);
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
             var created = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
             Assert.Multiple(() =>

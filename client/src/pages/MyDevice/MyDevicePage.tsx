@@ -1,20 +1,18 @@
 import React, {useEffect, useMemo, useState} from "react";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
-import {Plus} from "lucide-react";
-import {AdminChangesPreferencesDto, JwtAtom, SensorHistoryWithDeviceDto} from "../../atoms";
+import {Pencil, Plus} from "lucide-react";
+import {AdminChangesPreferencesDto, JwtAtom, SensorHistoryWithDeviceDto, UserDevice} from "../../atoms";
 import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients";
-import {ConfirmModal, formatDateTimeForUserTZ, SearchBar, TitleTimeHeader} from "../import";
+import {
+    ConfirmModal,
+    formatDateTimeForUserTZ,
+    IntervalSelector,
+    SearchBar,
+    TitleTimeHeader,
+    UserDeviceModal
+} from "../import";
 
-// Interval multipliers
-const intervalMultipliers = {
-    Second: 1,
-    Minute: 60,
-    Hour: 3600,
-    Days: 86400,
-    Week: 604800,
-    Month: 2592000
-} as const;
 
 // Helper function to format device values (temperature, humidity, etc.)
 const formatDeviceValue = (
@@ -24,15 +22,15 @@ const formatDeviceValue = (
     defaultValue: string = "N/A"
 ): string => {
     if (value != null && value > threshold) {
-        return `${value} ${unit}`;
+        return `${value.toFixed(2)} ${unit}`;
     }
     return defaultValue;
 };
 
-
-interface LocalPref extends AdminChangesPreferencesDto {
-    intervalValue: number;
-    intervalUnit: keyof typeof intervalMultipliers;
+interface LocalPref {
+    deviceId: string;
+    /** raw seconds */
+    interval: number;
 }
 
 export default function MyDevicePage() {
@@ -42,63 +40,32 @@ export default function MyDevicePage() {
     const [descExpanded, setDescExpanded] = useState<Record<string, boolean>>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false); // State to control the modal
-    const [deviceToRemove, setDeviceToRemove] = useState<SensorHistoryWithDeviceDto | null>(null); // Store full device object
+    const [deviceToRemove, setDeviceToRemove] = useState<UserDevice | null>(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [selectedDevice, setSelectedDevice] = useState<{ deviceId: string } | null>(null);
 
     useEffect(() => {
         if (!jwt) return;
         greenhouseDeviceClient
             .getRecentSensorDataForAllUserDevice(jwt)
             .then((resp) => {
+                if (!resp) {
+                    setDeviceData([]);
+                    return;
+                }
+
                 const sensorData = resp.sensorHistoryWithDeviceRecords || [];
                 setDeviceData(sensorData);
 
                 const initial: Record<string, LocalPref> = {};
                 sensorData.forEach((d) => {
-                    // Convert the device wait time to a number, defaulting to 0 if it's invalid
-                    const waitTime = Number(d.deviceWaitTime) || 0;
-
-                    // Ensure that deviceId is valid before using it as a key
-                    if (!d.deviceId) {
-                        console.warn(`Device with missing or invalid deviceId found:`, d);
-                        return; // Skip this device if deviceId is invalid
-                    }
-
-                    // Initialize the interval unit and value
-                    let intervalUnit: keyof typeof intervalMultipliers = "Second";
-                    let intervalValue = waitTime;
-
-                    // Determine the appropriate unit based on the wait time
-                    if (waitTime >= intervalMultipliers.Month && waitTime % intervalMultipliers.Month === 0) {
-                        intervalUnit = "Month";
-                        intervalValue = waitTime / intervalMultipliers.Month;
-                    } else if (waitTime >= intervalMultipliers.Week && waitTime % intervalMultipliers.Week === 0) {
-                        intervalUnit = "Week";
-                        intervalValue = waitTime / intervalMultipliers.Week;
-                    } else if (waitTime >= intervalMultipliers.Days && waitTime % intervalMultipliers.Days === 0) {
-                        intervalUnit = "Days";
-                        intervalValue = waitTime / intervalMultipliers.Days;
-                    } else if (waitTime >= intervalMultipliers.Hour && waitTime % intervalMultipliers.Hour === 0) {
-                        intervalUnit = "Hour";
-                        intervalValue = waitTime / intervalMultipliers.Hour;
-                    } else if (waitTime >= intervalMultipliers.Minute && waitTime % intervalMultipliers.Minute === 0) {
-                        intervalUnit = "Minute";
-                        intervalValue = waitTime / intervalMultipliers.Minute;
-                    } else {
-                        // If no higher unit fits exactly, keep it in seconds
-                        intervalUnit = "Second";
-                        intervalValue = waitTime; // Do not round or adjust
-                    }
-
-                    // Store the interval value and unit for the device
-                    initial[d.deviceId] = {
-                        deviceId: d.deviceId,
-                        intervalValue,
-                        intervalUnit
-                    };
+                    const secs = Number(d.deviceWaitTime) || 0;
+                    if (!d.deviceId) return;
+                    initial[d.deviceId] = { deviceId: d.deviceId, interval: secs };
                 });
                 setPreferences(initial);
             })
-            .catch(() => toast.error("Failed to fetch device data"));
+            .catch(() => toast.error("Failed to fetch devices"));
     }, [jwt]);
 
     const filtered = useMemo(() => {
@@ -117,12 +84,29 @@ export default function MyDevicePage() {
     const confirmRemoveDevice = () => {
         if (deviceToRemove) {
             const deviceName = deviceToRemove.deviceName ?? "Unknown Device";
-            console.log(`Device ${deviceName} removed!`);
-            toast.success(`Device "${deviceName}" removed successfully!`);
-            setIsModalOpen(false);
-            //TODO Add your remove logic here (e.g., API call)
+            const id = deviceToRemove.deviceId;
+
+            userDeviceClient
+                .deleteUserDevice(id, jwt)
+                .then(() => {
+                    toast.success(`Device "${deviceName}" removed successfully!`);
+                    setDeviceData((prev) => prev.filter((d) => d.deviceId !== id)); // Remove from UI
+                    setPreferences((prev) => {
+                        const newPref = { ...prev };
+                        if (id) delete newPref[id];
+                        return newPref;
+                    });
+                })
+                .catch((e) => {
+                    toast.error(`Failed to remove device: ${e.message}`);
+                })
+                .finally(() => {
+                    setIsModalOpen(false);
+                    setDeviceToRemove(null);
+                });
         }
     };
+
 
     const cancelRemoveDevice = () => {
         setIsModalOpen(false);
@@ -142,32 +126,50 @@ export default function MyDevicePage() {
                     </div>
 
                     {/* Grid of device cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         {filtered.map((device) => {
                             const id = device.deviceId!;
                             const pref = preferences[id]!;
                             const expanded = descExpanded[id] || false;
 
                             return (
-                                <div
-                                    key={id}
-                                    className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow"
-                                >
-                                    {/* ✕ Remove button */}
-                                    <button
-                                        onClick={() => handleRemoveDevice(device)}  // Pass full device object
-                                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"
-                                    >
-                                        ✕
-                                    </button>
+                                <div key={id}
+                                    className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow cursor-pointer hover:shadow-lg">
 
-                                    <p className="font-semibold text-lg truncate mr-4 mb-1">
+                                    <div className="absolute top-2 right-2 flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedDevice({deviceId: id});
+                                                setEditModalOpen(true);
+                                            }}
+                                            className="text-gray-400 hover:text-blue-500 transition"
+                                            title="Edit device"
+                                        >
+                                            <Pencil size={18}/>
+                                        </button>
+
+                                        {/* ✕ Remove button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveDevice(device);
+                                            }}
+                                            className="text-gray-400 hover:text-red-500 transition text-lg leading-none"
+                                            title="Remove device"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+
+                                    <p className="font-semibold text-lg truncate mr-7 mb-1">
                                         {device.deviceName ?? id}
                                     </p>
 
-                                    {device.deviceDesc && (
-                                        <>
-                                            <p
+                                    {/* Description Section */}
+                                    <div className="flex flex-col flex-grow">
+                                        {device.deviceDesc ? (
+                                            <div
                                                 style={{
                                                     display: "-webkit-box",
                                                     WebkitBoxOrient: "vertical",
@@ -179,29 +181,36 @@ export default function MyDevicePage() {
                                                 className="text-sm text-muted-foreground mb-1"
                                             >
                                                 {device.deviceDesc}
-                                            </p>
-                                            {device.deviceDesc.length > 100 && (
-                                                <button
-                                                    className="text-xs text-primary mb-2 self-start"
-                                                    onClick={() =>
-                                                        setDescExpanded((prev) => ({
-                                                            ...prev,
-                                                            [id]: !prev[id]
-                                                        }))
-                                                    }
-                                                    style={{
-                                                        marginTop: "0.5rem", // Ensure there's space between the description and the button
-                                                    }}
-                                                >
-                                                    {expanded ? "Show less" : "Show more"}
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col justify-between h-full">
+                                                <p className="text-sm text-muted-foreground mb-1">No description</p>
+                                            </div>
+                                        )}
+
+                                        {/* Show more button */}
+                                        {device.deviceDesc && device.deviceDesc.length > 100 && (
+                                            <button
+                                                className="text-xs text-primary mb-2 self-start"
+                                                onClick={() =>
+                                                    setDescExpanded((prev) => ({
+                                                        ...prev,
+                                                        [id]: !prev[id]
+                                                    }))
+                                                }
+                                                style={{
+                                                    marginTop: "0.5rem", // Ensure there's space between the description and the button
+                                                }}
+                                            >
+                                                {expanded ? "Show less" : "Show more"}
+                                            </button>
+                                        )}
+                                    </div>
+
 
                                     {/* For devices without a "Show more" button, ensure their height matches. */}
                                     {!device.deviceDesc || device.deviceDesc.length <= 100 ? (
-                                        <div style={{ height: "4.5em" }}></div> // Fixed height for non-expanded descriptions
+                                        <div style={{height: "4.5em"}}></div> // Fixed height for non-expanded descriptions
                                     ) : null}
 
 
@@ -220,60 +229,35 @@ export default function MyDevicePage() {
                                     </div>
 
                                     <div className="text-sm space-y-1 mb-3">
-                                        <p>🌡 Temp: {formatDeviceValue(device.temperature, "°C")}</p>
-                                        <p>💧 Humidity: {formatDeviceValue(device.humidity, "%")}</p>
-                                        <p>🌬 Air Pressure: {formatDeviceValue(device.airPressure, "hPa")}</p>
-                                        <p>🧪 Air Quality: {formatDeviceValue(device.airQuality, "ppm")}</p>
-                                        <p>📅{" "}{device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
-                                                ? new Date(device.time).toLocaleString() : "N/A"}
+                                        <p>Temp: {formatDeviceValue(device.temperature, "°C")}</p>
+                                        <p>Humidity: {formatDeviceValue(device.humidity, "%")}</p>
+                                        <p>Air Pressure: {formatDeviceValue(device.airPressure, "hPa")}</p>
+                                        <p>Air Quality: {formatDeviceValue(device.airQuality, "ppm")}</p>
+                                        <p>When:{" "}{device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
+                                            ? new Date(device.time).toLocaleString() : "N/A"}
                                         </p>
                                     </div>
 
-                                    <label className="text-sm mb-1 font-medium">Update interval:</label>
-                                    <div className="flex gap-2 mb-3">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={pref.intervalValue}
-                                            onChange={(e) =>
-                                                setPreferences((prev) => ({
-                                                    ...prev,
-                                                    [id]: {
-                                                        ...prev[id],
-                                                        intervalValue: Math.max(1, parseInt(e.target.value, 10) || 1)
-                                                    }
+                                    {/* Interval Selector */}
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <IntervalSelector
+                                            totalSeconds={pref.interval}
+                                            onChange={(newSecs) =>
+                                                setPreferences((p) => ({
+                                                    ...p,
+                                                    [id]: {deviceId: id, interval: newSecs},
                                                 }))
                                             }
-                                            className="border rounded px-2 w-16 text-sm"
                                         />
-                                        <select
-                                            value={pref.intervalUnit}
-                                            onChange={(e) =>
-                                                setPreferences((prev) => ({
-                                                    ...prev,
-                                                    [id]: {
-                                                        ...prev[id],
-                                                        intervalUnit: e.target.value as LocalPref["intervalUnit"]
-                                                    }
-                                                }))
-                                            }
-                                            className="border rounded px-2 text-sm"
-                                        >
-                                            {Object.keys(intervalMultipliers).map((opt) => (
-                                                <option key={opt} value={opt}>
-                                                    {opt}
-                                                </option>
-                                            ))}
-                                        </select>
                                     </div>
 
+                                    {/* Change Preferences Button */}
                                     <button
                                         className="px-8 py-3 text-sm sm:text-base font-semibold btn btn-neutral bg-transparent btn-sm mt-auto"
                                         onClick={() => {
-                                            const seconds = pref.intervalValue * intervalMultipliers[pref.intervalUnit];
                                             const dto: AdminChangesPreferencesDto = {
                                                 deviceId: id,
-                                                interval: seconds.toString()
+                                                interval: String(pref.interval),
                                             };
                                             userDeviceClient
                                                 .adminChangesPreferences(dto, jwt)
@@ -290,7 +274,8 @@ export default function MyDevicePage() {
                         {/* Add device card */}
                         <button
                             onClick={() => {
-                                /* TODO: Add device logic */
+                                setSelectedDevice(null); // null = create new
+                                setEditModalOpen(true);
                             }}
                             className="flex items-center justify-center border-2 border-dashed border-muted rounded-xl h-[500px] bg-[var(--color-surface)] hover:border-muted/60 transition"
                         >
@@ -307,6 +292,31 @@ export default function MyDevicePage() {
                 subtitle={`Are you sure you want to remove the device?`}
                 onConfirm={confirmRemoveDevice}
                 onCancel={cancelRemoveDevice}
+            />
+
+            <UserDeviceModal
+                open={editModalOpen}
+                device={selectedDevice}
+                onClose={() => setEditModalOpen(false)}
+                onSaved={() => {
+                    greenhouseDeviceClient
+                        .getRecentSensorDataForAllUserDevice(jwt)
+                        .then((resp) => {
+                            const records = resp.sensorHistoryWithDeviceRecords || [];
+                            setDeviceData(records);
+
+                            const initialPref: Record<string, LocalPref> = {};
+                            records.forEach((d) => {
+                                const secs = Number(d.deviceWaitTime) || 0;
+                                if (!d.deviceId) return;
+                                initialPref[d.deviceId] = { deviceId: d.deviceId, interval: secs };
+                            });
+                            setPreferences(initialPref);
+
+                        })
+                        .catch(() => toast.error("Failed to refresh device list"));
+                    setEditModalOpen(false);
+                }}
             />
         </div>
     );

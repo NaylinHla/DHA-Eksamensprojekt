@@ -48,7 +48,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var userDevice = await userDeviceService.CreateUserDeviceAsync(dto, claims);
-        return CreatedAtAction(nameof(GetUserDevice), new { UserDevice = userDevice.DeviceId }, ToDto(userDevice));
+        return Ok(ToDto(userDevice));
     }
 
     [HttpPatch]
