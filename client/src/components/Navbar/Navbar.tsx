@@ -70,7 +70,7 @@ export default function NavBar() {
             </div>
 
             {/* Mobile hamburger */}
-            <div className="flex-none lg:hidden relative" ref={mobileDrop.ref}>
+            <div className="flex-none lg:hidden relative " ref={mobileDrop.ref}>
                 {/* toggle button */}
                 <button
                     onClick={() => mobileDrop.setOpen(!mobileDrop.open)}
@@ -83,10 +83,10 @@ export default function NavBar() {
                     </svg>
                 </button>
 
-                {/* dropdown list — identical classes as before */}
+                {/* dropdown list */}
                 {mobileDrop.open && (
-                    <ul /* single tidy panel — no “menu” class = no 3-box look */
-                        className="absolute right-0 mt-3 w-44 rounded-box bg-base-100
+                    <ul
+                        className="absolute right-0 mt-3 w-44 rounded-box bg-[var(--color-surface)]
                shadow divide-y divide-gray-200"
                     >
                         {links.map(({ to, label }) => (

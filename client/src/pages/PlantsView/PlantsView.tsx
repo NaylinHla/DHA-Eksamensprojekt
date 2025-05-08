@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from "react";
 import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
 import PlantsToolbar from "../../components/Modals/PlantToolbar.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
+import PlantModal from "../../components/Modals/PlantModal.tsx";
 import {formatDateTimeForUserTZ} from "../../components";
 import {JwtAtom, PlantClient, PlantResponseDto } from "../../atoms";
 import {useAtom} from "jotai";
@@ -21,7 +22,7 @@ const toCard = (dto: PlantResponseDto): CardPlant => {
                 )
             )
             : 0;
-    return { id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days };
+    return { id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days, isDead: !!dto.isDead };
 };
 
 function userIdFromJwt(token: string): string | null {
@@ -38,12 +39,16 @@ const PlantsView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
     const [now, setNow] = useState(new Date());
+    const [modalOpen, setModalOpen]   = useState(false);
+    const [selected, setSelected]     = useState<CardPlant | null>(null);
 
+    // Clock
     useEffect(() => {
         const id = setInterval(() => setNow(new Date()), 1_000);
         return () => clearInterval(id);
     }, []);
 
+    // Fetch plants
     const fetchPlants = useCallback(async () => {
         if (!jwt) return;
         const uid = userIdFromJwt(jwt);
@@ -63,6 +68,7 @@ const PlantsView: React.FC = () => {
 
     useEffect(() => { fetchPlants(); }, [fetchPlants]);
 
+    // Water Plants
     const waterAll = async () => {
         try { await plantClient.waterAllPlants(jwt); await fetchPlants(); }
         catch (e:any){ alert(e.message ?? "Failed"); }
@@ -72,7 +78,13 @@ const PlantsView: React.FC = () => {
         catch (e:any){ alert(e.message ?? "Failed"); }
     };
 
-    /* search filter */
+    
+    // Open helpers 
+    const openNew   = () => { setSelected(null);   setModalOpen(true); };
+    const openDetails  = (p: CardPlant) => { setSelected(p); setModalOpen(true); };
+    const closeMod  = () => setModalOpen(false);
+    
+    // Search filter
     const visible = useMemo(() => {
         const t = search.trim().toLowerCase();
         return t ? plants.filter(p => p.name.toLowerCase().includes(t)) : plants;
@@ -85,7 +97,7 @@ const PlantsView: React.FC = () => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
 
             {/* header */}
-            <header className="w-full bg-background shadow px-6 py-4 flex justify-between">
+            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between">
                 <h1 className="text-2xl font-bold">Plants</h1>
                 <span className="text-sm text-gray-600">
           {formatDateTimeForUserTZ(now)}
@@ -102,11 +114,20 @@ const PlantsView: React.FC = () => {
                             key={p.id}
                             plant={p}
                             onWater={() => waterOne(p.id)}
+                            onClick={openDetails}
+                            onRemoved={fetchPlants}
                         />
                     ))}
-                    <AddPlantCard onClick={() => { /* TODO: open modal */ }} />
+                    <AddPlantCard onClick={openNew} />
                 </div>
             </main>
+
+            <PlantModal
+                open={modalOpen}
+                plant={selected}
+                onClose={closeMod}
+                onSaved={fetchPlants}
+            />
         </div>
     );
 };

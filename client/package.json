@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "chart.js": "^4.4.9",
+    "date-fns": "^4.1.0",
     "jotai": "^2.12.2",
     "jotai-devtools": "^0.11.0",
     "lucide-react": "^0.503.0",

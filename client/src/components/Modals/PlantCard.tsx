@@ -1,32 +1,71 @@
-import React from "react";
+import React, {useState} from "react";
 import { Droplet, X } from "lucide-react";
 import PlantIcon from "../../assets/Favicon/Plant.svg?react";
+import {JwtAtom} from "../../atoms";
+import {useAtom} from "jotai";
+import toast from "react-hot-toast";
+import { PlantClient } from "../../atoms";
+import ConfirmModal from "./ConfirmModal.tsx";
+
+const plantClient = new PlantClient(
+    import.meta.env.VITE_API_URL ?? "http://localhost:5000"
+);
+
 
 export interface CardPlant {
     id: string;
     name: string;
     nextWaterInDays: number;
+    isDead: boolean;
 }
 
 interface PlantCardProps {
     plant: CardPlant;
     onWater?: () => void;
     onClick?: (plant: CardPlant) => void;
+    onRemoved?: () => void;
 }
 
-const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick }) => {
+const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick, onRemoved }) => {
+    const [jwt] = useAtom(JwtAtom);
+
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const openConfirm   = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setConfirmOpen(true);
+    };
+    const closeConfirm  = () => setConfirmOpen(false);
+
+    const confirmDelete = async () => {
+        try {
+            await plantClient.markPlantAsDead(plant.id, jwt);
+            toast.success("Plant removed 🌿");
+            onRemoved?.();
+        } catch (err: any) {
+            toast.error(err?.message ?? "Could not remove plant");
+        } finally {
+            closeConfirm();
+        }
+    };
+
+    if (plant.isDead) return null;
+    
     const dueText =
         plant.nextWaterInDays === 0
             ? "Today"
             : `In ${plant.nextWaterInDays} day${plant.nextWaterInDays > 1 ? "s" : ""}`;
 
     return (
+        <>
         <button
             onClick={() => onClick?.(plant)}
-            className="relative flex flex-col justify-between rounded-2xl bg-card bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow"
+            className="cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow"
         >
-            {/* Delete ‑ not wired yet */}
-            <X className="absolute right-2 top-2 h-4 w-4 text-muted-foreground" />
+            {/* Delete ‑*/}
+            <X
+                onClick={openConfirm}
+                className="absolute right-2 top-2 h-4 w-4 text-muted-foreground" 
+            />
 
             {/* placeholder image */}
             <div className="flex-1 flex items-center justify-center">
@@ -41,6 +80,16 @@ const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick }) => {
             </div>
             <p className="text-xs text-muted-foreground mt-1">{dueText}</p>
         </button>
+            <ConfirmModal
+                isOpen={confirmOpen}
+                title="Remove plant?"
+                subtitle={`“${plant.name}” will be moved to dead plants`}
+                confirmVariant="error"
+                onConfirm={confirmDelete}
+                onCancel={closeConfirm}
+            />
+        </>
+        
     );
 };
 
