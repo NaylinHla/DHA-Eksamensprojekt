@@ -28,6 +28,9 @@ jobs:
         env:
           APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
           APPOPTIONS__MQTT_USERNAME: ${{secrets.MQTT_USERNAME}}
+          APPOPTIONS__EMAIL_SENDER_USERNAME: ${{secrets.EMAIL_SENDER_USERNAME}}
+          APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{secrets.EMAIL_SENDER_PASSWORD}}
+          APPOPTIONS__JWT_EMAIL_SECRET: ${{secrets.JWT_EMAIL_SECRET}}
         run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
 
       - name: Generate Code Coverage Report
