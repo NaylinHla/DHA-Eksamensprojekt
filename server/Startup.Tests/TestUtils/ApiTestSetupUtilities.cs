@@ -1,13 +1,9 @@
 ﻿using System.Net.Http.Json;
 using System.Security.Cryptography;
-using System.Text.Json;
 using Api.Rest.Controllers;
 using Application;
-using Application.Interfaces;
-using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
-using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Infrastructure.Postgres;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;

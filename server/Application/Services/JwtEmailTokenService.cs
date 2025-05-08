@@ -1,5 +1,4 @@
-﻿using System;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Application.Models;
@@ -8,14 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Application.Services;
 
-public class JwtEmailTokenService
+public class JwtEmailTokenService(IOptions<AppOptions> options)
 {
-    private readonly string _secret;
-
-    public JwtEmailTokenService(IOptions<AppOptions> options)
-    {
-        _secret = options.Value.JWT_EMAIL_SECRET;
-    }
+    private readonly string _secret = options.Value.JWT_EMAIL_SECRET;
 
     public string GenerateUnsubscribeToken(string email)
     {
@@ -23,9 +17,9 @@ public class JwtEmailTokenService
         var key = Encoding.ASCII.GetBytes(_secret);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[] {
+            Subject = new ClaimsIdentity([
                 new Claim(ClaimTypes.Email, email)
-            }),
+            ]),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
