@@ -1,14 +1,12 @@
 import {Route, Routes, useLocation, useNavigate} from "react-router";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
-import Settings from "./Settings.tsx";
-import Dock from "./Dock.tsx";
 import {AlertPage, DashboardPage, HistoryPage, NotFoundPage} from "../pages"
 import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {JwtAtom} from "./import";
 import toast from "react-hot-toast";
 import AuthScreen from "../pages/Auth/AuthScreen.tsx";
-import {NavBar, Footer} from "./index";
+import {Footer, NavBar} from "./index";
 import UserSettings from "../pages/UserSettings/UserSettings.tsx";
 
 export default function ApplicationRoutes() {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { formatDateTimeForUserTZ } from "../import";
 
-const Dashboard = () => {
+const DashboardPage = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -74,4 +74,4 @@ const Dashboard = () => {
     )
 };
 
-export default Dashboard;
+export default DashboardPage;
