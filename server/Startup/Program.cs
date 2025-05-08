@@ -94,7 +94,6 @@ public class Program
 
         app.MapGet("Acceptance", () => "Accepted");
 
-        // === Added Swagger and OpenAPI serving ===
         app.UseOpenApi(conf => { conf.Path = "openapi/v1.json"; });
 
         var document = await app.Services.GetRequiredService<IOpenApiDocumentGenerator>().GenerateAsync("v1");
