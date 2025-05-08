@@ -1,11 +1,11 @@
 import React, {useCallback, useEffect, useMemo, useState} from "react";
 import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
-import PlantsToolbar from "../../components/Modals/PlantToolbar.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
 import PlantModal from "../../components/Modals/PlantModal.tsx";
 import {formatDateTimeForUserTZ} from "../../components";
 import {JwtAtom, PlantClient, PlantResponseDto } from "../../atoms";
 import {useAtom} from "jotai";
+import PlantToolbar from "../../components/Modals/PlantToolbar.tsx";
 
 const plantClient = new PlantClient(
     import.meta.env.VITE_API_URL ?? "http://localhost:5000"
@@ -41,6 +41,7 @@ const PlantsView: React.FC = () => {
     const [now, setNow] = useState(new Date());
     const [modalOpen, setModalOpen]   = useState(false);
     const [selected, setSelected]     = useState<CardPlant | null>(null);
+    const [showDead, setShowDead] = useState(false);
 
     // Clock
     useEffect(() => {
@@ -87,8 +88,11 @@ const PlantsView: React.FC = () => {
     // Search filter
     const visible = useMemo(() => {
         const t = search.trim().toLowerCase();
-        return t ? plants.filter(p => p.name.toLowerCase().includes(t)) : plants;
-    }, [plants, search]);
+
+        return plants
+            .filter((p) => (showDead ? true : !p.isDead))
+            .filter((p) => (t ? p.name.toLowerCase().includes(t) : true));
+    }, [plants, search, showDead]);
 
     if (loading) return <p className="p-6">Loading…</p>;
     if (err)     return <p className="p-6 text-error">{err}</p>;
@@ -106,7 +110,12 @@ const PlantsView: React.FC = () => {
 
             {/* content */}
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <PlantsToolbar onSearch={setSearch} onWaterAll={waterAll} />
+                <PlantToolbar 
+                    onSearch={setSearch} 
+                    onWaterAll={waterAll}
+                    showDead={showDead}
+                    onToggleDead={() => setShowDead((d) => !d)}
+                />
 
                 <div className="grid gap-6 auto-rows-fr grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]">
                     {visible.map(p => (
@@ -116,6 +125,7 @@ const PlantsView: React.FC = () => {
                             onWater={() => waterOne(p.id)}
                             onClick={openDetails}
                             onRemoved={fetchPlants}
+                            showDead={showDead}
                         />
                     ))}
                     <AddPlantCard onClick={openNew} />

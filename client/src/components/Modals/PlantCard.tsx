@@ -24,9 +24,10 @@ interface PlantCardProps {
     onWater?: () => void;
     onClick?: (plant: CardPlant) => void;
     onRemoved?: () => void;
+    showDead?: boolean;
 }
 
-const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick, onRemoved }) => {
+const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick, onRemoved, showDead = false, }) => {
     const [jwt] = useAtom(JwtAtom);
 
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -48,8 +49,9 @@ const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick, onRemove
         }
     };
 
-    if (plant.isDead) return null;
-    
+    if (plant.isDead && !showDead) return null;
+    const deadStyle = plant.isDead ? "opacity-50" : "";
+
     const dueText =
         plant.nextWaterInDays === 0
             ? "Today"
@@ -59,7 +61,7 @@ const PlantCard: React.FC<PlantCardProps> = ({ plant, onWater, onClick, onRemove
         <>
         <button
             onClick={() => onClick?.(plant)}
-            className="cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow"
+            className={`cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow ${deadStyle}`}
         >
             {/* Delete ‑*/}
             <X

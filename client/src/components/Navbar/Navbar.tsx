@@ -110,7 +110,7 @@ export default function NavBar() {
                     onClick={() => profileDrop.setOpen(!profileDrop.open)}
                     className="btn btn-ghost btn-circle avatar placeholder"
                 >
-                    <div className="bg-white text-green-600 rounded-full w-10">
+                    <div className="bg-[var(--color-surface)] text-green-600 rounded-full w-10">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-full h-full p-1" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -121,7 +121,7 @@ export default function NavBar() {
 
                 {profileDrop.open && (
                     <ul
-                        className="absolute right-0 mt-3 w-44 rounded-box bg-base-100
+                        className="absolute right-0 mt-3 w-44 rounded-box bg-[var(--color-surface)]
                shadow divide-y divide-gray-200"
                     >
                         <li>
@@ -130,7 +130,7 @@ export default function NavBar() {
                                 onClick={() => profileDrop.setOpen(false)}
                                 className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                             >
-                                Profile
+                                Settings
                             </Link>
                         </li>
                         <li>
