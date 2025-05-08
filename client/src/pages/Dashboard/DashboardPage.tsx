@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { formatDateTimeForUserTZ } from "../import";
 
 const DashboardPage = () => {
+
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -15,7 +16,8 @@ const DashboardPage = () => {
         <div
             className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display overflow-hidden">
             {/* Header */}
-            <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
+            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
+
                 <h1 className="text-2xl font-bold text-[--color-primary]">Dashboard</h1>
                 <span className="text-sm text-gray-600">
                     {formatDateTimeForUserTZ(currentTime)}
@@ -73,5 +75,6 @@ const DashboardPage = () => {
         </div>
     )
 };
+
 
 export default DashboardPage;

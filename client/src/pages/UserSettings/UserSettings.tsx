@@ -112,7 +112,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
             {/* Header */}
-            <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
+            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Profile</h1>
                 <span className="text-sm text-gray-600">
                     {formatDateTimeForUserTZ(currentTime)}
@@ -128,9 +128,14 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <h2 className="text-xl font-semibold">Settings</h2>
 
                     <div className="flex flex-col gap-3">
-                        <button onClick={()=>setOpenPassword(true)}   className="btn btn-neutral bg-transparent btn-sm">Change password</button>
-                        <button onClick={()=>setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">Change e-mail</button>
-                        <button onClick={()=>setOpenDelete(true)} className="btn btn-error  btn-sm flex items-center gap-1">
+                        <button onClick={() => setOpenEmail(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change e-mail
+                        </button>
+                        <button onClick={() => setOpenPassword(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change password
+                        </button>
+                        <button onClick={() => setOpenDelete(true)}
+                                className="btn btn-error  btn-sm flex items-center gap-1">
                             <Trash2 size={14}/> Delete my account
                         </button>
                     </div>
