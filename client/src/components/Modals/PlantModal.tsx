@@ -175,9 +175,6 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
             <Fragment>
                 <Pill className="flex justify-between items-center">
                     <span>{full.plantName}</span>
-                    <button onClick={() => setEditing(true)}>
-                        <Pencil size={16} />
-                    </button>
                 </Pill>
 
                 {full.plantType && <Pill>Plant Type: {full.plantType}</Pill>}

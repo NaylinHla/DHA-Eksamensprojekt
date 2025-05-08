@@ -128,9 +128,14 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <h2 className="text-xl font-semibold">Settings</h2>
 
                     <div className="flex flex-col gap-3">
-                        <button onClick={()=>setOpenPassword(true)}   className="btn btn-neutral bg-transparent btn-sm">Change password</button>
-                        <button onClick={()=>setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">Change e-mail</button>
-                        <button onClick={()=>setOpenDelete(true)} className="btn btn-error  btn-sm flex items-center gap-1">
+                        <button onClick={() => setOpenEmail(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change e-mail
+                        </button>
+                        <button onClick={() => setOpenPassword(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change password
+                        </button>
+                        <button onClick={() => setOpenDelete(true)}
+                                className="btn btn-error  btn-sm flex items-center gap-1">
                             <Trash2 size={14}/> Delete my account
                         </button>
                     </div>
