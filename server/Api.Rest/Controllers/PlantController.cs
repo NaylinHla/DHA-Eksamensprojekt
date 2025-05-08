@@ -52,7 +52,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var plant = await plantService.CreatePlantAsync(Guid.Parse(claims.Id), dto);
-        return CreatedAtAction(nameof(GetPlant), new { plantId = plant.PlantId }, ToDto(plant));
+        return Ok(ToDto(plant));
     }
 
     [HttpPatch]
