@@ -49,7 +49,7 @@ const emptyCreate: PlantCreateDto = {
 
 const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
     const [jwt] = useAtom(JwtAtom);
-    const [isEditing, setEditing] = useState(plant === null)
+    const [isEditing, setEditing] = useState(false);
     
     // Form State
     const [data, setData] = useState<PlantEditDto>(emptyCreate);
@@ -73,6 +73,12 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
         };
         run();
     }, [open, plant, jwt]);
+
+    useEffect(() => {
+        if (open) {
+            setEditing(plant === null); 
+        }
+    }, [open, plant]);
 
     // Reset state when off modal
     useEffect(() => {
