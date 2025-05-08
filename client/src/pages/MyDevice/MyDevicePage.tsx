@@ -132,7 +132,7 @@ export default function MyDevicePage() {
         <div
             className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
             {/* Header */}
-            <TitleTimeHeader/>
+            <TitleTimeHeader title="My Device" />
 
             <main className="flex-1 overflow-y-auto px-6 py-4">
                 <div className="flex flex-col p-6">
