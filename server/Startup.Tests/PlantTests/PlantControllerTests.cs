@@ -71,7 +71,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PostAsJsonAsync($"api/Plant/{PlantController.CreatePlantRoute}", createDto);
 
         //assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         var dto = await resp.Content.ReadFromJsonAsync<PlantResponseDto>();
         Assert.Multiple(() =>
