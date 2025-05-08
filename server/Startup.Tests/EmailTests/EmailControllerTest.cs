@@ -28,7 +28,7 @@ public class EmailControllerTest
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig(makeEmailService: true);
+                    services.DefaultTestConfig();
                 });
             });
 

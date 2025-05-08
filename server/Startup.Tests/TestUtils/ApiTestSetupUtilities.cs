@@ -27,7 +27,6 @@ public static class ApiTestSetupUtilities
         bool mockProxyConfig = true,
         bool makeWsClient = true,
         bool makeMqttClient = false,
-        bool makeEmailService = false,
         Action? customSeeder = null
     )
     {
@@ -72,14 +71,6 @@ public static class ApiTestSetupUtilities
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
         
-        if (makeEmailService)
-        {
-            RemoveExistingService<IEmailSender>(services);
-            var mock = new Mock<IEmailSender>();
-            mock.Setup(s => s.AddEmailAsync(It.IsAny<AddEmailDto>()))
-                .Returns(Task.CompletedTask);
-            services.AddSingleton(mock.Object);
-        }
         
         if (makeMqttClient)
         {
