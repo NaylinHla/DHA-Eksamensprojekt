@@ -3,8 +3,11 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Api.Rest.Controllers;
 using Application;
+using Application.Interfaces;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
+using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Infrastructure.Postgres;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +27,7 @@ public static class ApiTestSetupUtilities
         bool mockProxyConfig = true,
         bool makeWsClient = true,
         bool makeMqttClient = false,
+        bool makeEmailService = false,
         Action? customSeeder = null
     )
     {
@@ -68,6 +72,15 @@ public static class ApiTestSetupUtilities
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
         
+        if (makeEmailService)
+        {
+            RemoveExistingService<IEmailSender>(services);
+            var mock = new Mock<IEmailSender>();
+            mock.Setup(s => s.AddEmailAsync(It.IsAny<AddEmailDto>()))
+                .Returns(Task.CompletedTask);
+            services.AddSingleton(mock.Object);
+        }
+        
         if (makeMqttClient)
         {
             RemoveExistingService<TestMqttClient>(services);
@@ -77,7 +90,7 @@ public static class ApiTestSetupUtilities
                 return new TestMqttClient(options.MQTT_BROKER_HOST, options.MQTT_USERNAME);
             });
         }
-
+        
         return services;
     }
 
