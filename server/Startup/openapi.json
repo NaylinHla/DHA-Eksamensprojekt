@@ -2005,7 +2005,7 @@
           "deviceName": {
             "type": "string",
             "maxLength": 50,
-            "minLength": 1
+            "minLength": 2
           },
           "deviceDescription": {
             "type": "string",
@@ -2019,7 +2019,6 @@
           },
           "waitTime": {
             "type": "string",
-            "maxLength": 50,
             "nullable": true
           }
         }
@@ -2031,6 +2030,7 @@
           "deviceName": {
             "type": "string",
             "maxLength": 50,
+            "minLength": 2,
             "nullable": true
           },
           "deviceDescription": {
@@ -2040,7 +2040,6 @@
           },
           "waitTime": {
             "type": "string",
-            "maxLength": 50,
             "nullable": true
           }
         }
