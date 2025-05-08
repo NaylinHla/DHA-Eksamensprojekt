@@ -5,6 +5,7 @@ using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using HiveMQtt.MQTT5.Types;
+using Infrastructure.Postgres.Scaffolding;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,9 +127,27 @@ public class RestTriggeredTests
     [Test]
     public async Task WhenAdminChangesDevicePreferencesFromWebDashboard_MqttClientPublishesToEdgeDevice()
     {
+        // Seed test user and device
+        var testUser = MockObjects.GetUser();
+        using (var scope = _scopedServiceProvider.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            db.Users.Add(testUser);
+            await db.SaveChangesAsync();
+        }
+
+        // Login and set JWT
+        var loginResp = await _httpClient.PostAsJsonAsync("/api/auth/login", new { testUser.Email, Password = "pass" });
+        loginResp.EnsureSuccessStatusCode();
+        var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", authDto!.Jwt);
+        
+        // Use the seeded device ID
+        var seededDeviceId = testUser.UserDevices.First().DeviceId;
+        
         //Arrange MQTT client to perform publish on REST trigger
         var testMqttClient = _scopedServiceProvider.GetService<TestMqttClient>();
-        var topic = StringConstants.Device + "/" + testMqttClient.DeviceId + "/" + StringConstants.ChangePreferences;
+        var topic = StringConstants.Device + "/" + seededDeviceId + "/" + StringConstants.ChangePreferences;
         await testMqttClient.MqttClient.SubscribeAsync(topic, QualityOfService.ExactlyOnceDelivery);
 
         //Arrange WS client
@@ -139,12 +158,11 @@ public class RestTriggeredTests
         //Rest DTO
         var changePrefernecesDto = new AdminChangesPreferencesDto
         {
-            DeviceId = testMqttClient.DeviceId,
+            DeviceId = seededDeviceId.ToString(),
             Interval = "60",
         };
 
         //Act
-        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
         _ = await _httpClient.PostAsJsonAsync(
             $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}",
             changePrefernecesDto);
