@@ -3,13 +3,11 @@ import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
 import PlantModal from "../../components/Modals/PlantModal.tsx";
 import {formatDateTimeForUserTZ} from "../../components";
-import {JwtAtom, PlantClient, PlantResponseDto } from "../../atoms";
+import {JwtAtom, PlantResponseDto } from "../../atoms";
 import {useAtom} from "jotai";
 import PlantToolbar from "../../components/Modals/PlantToolbar.tsx";
+import {plantClient} from "../../apiControllerClients.ts";
 
-const plantClient = new PlantClient(
-    import.meta.env.VITE_API_URL ?? "http://localhost:5000"
-);
 
 const toCard = (dto: PlantResponseDto): CardPlant => {
     const days =
