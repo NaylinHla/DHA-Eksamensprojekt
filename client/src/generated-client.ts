@@ -689,12 +689,8 @@ export class PlantClient {
         return Promise.resolve<PlantResponseDto[]>(null as any);
     }
 
-    createPlant(userId: string | undefined, dto: PlantCreateDto, authorization: string | undefined): Promise<PlantResponseDto> {
-        let url_ = this.baseUrl + "/api/Plant/CreatePlant?";
-        if (userId === null)
-            throw new Error("The parameter 'userId' cannot be null.");
-        else if (userId !== undefined)
-            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+    createPlant(dto: PlantCreateDto, authorization: string | undefined): Promise<PlantResponseDto> {
+        let url_ = this.baseUrl + "/api/Plant/CreatePlant";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
