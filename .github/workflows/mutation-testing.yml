@@ -18,27 +18,40 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Cache NuGet & dotnet‑tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.dotnet/tools
+            ~/.dotnet/toolresolver
+          key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
+
       - name: Install required tools
         run: |
           dotnet tool install -g dotnet-stryker
 
-      - name: Generate Stryker Config
+      - name: Generate stryker-config.json
         run: |
-          cat <<EOF > stryker-config.json
+          cat > stryker-config.json <<'JSON'
           {
-            "stryker-config": {
-              "thresholds": {
-                "break": 80
-              },
-              "coverage-analysis": "perTest"
-            }
+            "$schema": "https://stryker-mutator.io/stryker-schema.json",
+            "solution": "../fullstack2025.slnx",
+            "mutate": [ "!**/Startup/**" ],
+            "coverage-analysis": "perTest",
+            "thresholds": {
+              "break": 80
+            },
+            "concurrency": "auto",
+            "max-test-run-time": 120
           }
-          EOF
+          JSON
         working-directory: server/Startup.Tests
 
       - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker
-        working-directory: server/Startup.Tests
+        run: dotnet stryker --reporter "html"
+        env:
+          DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
 
       - name: Upload Stryker Report
@@ -46,5 +59,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stryker-report
-          path: server/Startup.Tests/StrykerOutput
+          path: StrykerOutput/**/reports/mutation-report.html
   
