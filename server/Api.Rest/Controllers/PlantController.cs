@@ -19,6 +19,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     public const string PlantIsDeadRoute = nameof(MarkPlantAsDead);
     public const string WaterPlantRoute = nameof(WaterPlant);
     public const string WaterAllPlantsRoute = nameof(WaterAllPlants);
+    public const string DeletePlantRoute = nameof(DeletePlant);
     
     [HttpGet]
     [Route(GetPlantRoute)]
@@ -38,9 +39,12 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid userId,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-
-        var plants = await plantService.GetAllPlantsAsync(userId);
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        
+        if (userId != Guid.Parse(claims.Id))
+            throw new UnauthorizedAccessException("Your JWT token does not belong to your account.");
+        
+        var plants = await plantService.GetAllPlantsAsync(Guid.Parse(claims.Id));
         return Ok(plants.Select(ToDto));
     }
 
@@ -55,15 +59,27 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         return Ok(ToDto(plant));
     }
 
+    [HttpDelete]
+    [Route(DeletePlantRoute)]
+    public async Task<ActionResult<PlantResponseDto>> DeletePlant(
+        Guid plantId,
+        [FromHeader] string authorization)
+    {
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        await plantService.DeletePlantAsync(plantId, claims);
+        return Ok();
+    }
+    
     [HttpPatch]
     [Route(EditPlantRoute)]
     public async Task<ActionResult<PlantEditDto>> EditPlant(
+        Guid userId,
         Guid plantId,
         [FromBody] PlantEditDto dto,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        var updated = await plantService.EditPlantAsync(plantId, dto);
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var updated = await plantService.EditPlantAsync(plantId, dto, claims);
         return Ok(ToDto(updated));
     }
 

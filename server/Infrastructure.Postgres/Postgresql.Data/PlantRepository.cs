@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;
+using Core.Domain.Exceptions;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,28 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
         ctx.UserPlants.Add(new UserPlant { UserId = userId, PlantId = plant.PlantId });
         await ctx.SaveChangesAsync();
         return plant;
+    }
+    
+    public async Task<Guid> GetPlantOwnerUserId(Guid plantId)
+    {
+        var plant = await ctx.UserPlants.FirstOrDefaultAsync(d => d.PlantId == plantId);
+
+        if (plant == null)
+            throw new NotFoundException("Plant not found");
+            
+        return plant.UserId;
+    }
+
+    public async Task DeletePlantAsync(Guid plantId)
+    {
+        var links = await ctx.UserPlants.Where(up => up.PlantId == plantId)
+            .ToListAsync();
+        ctx.UserPlants.RemoveRange(links);
+        
+        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
+        ctx.Plants.Remove(plant);
+        
+        await ctx.SaveChangesAsync();
     }
     
     public Task SaveChangesAsync() => ctx.SaveChangesAsync();

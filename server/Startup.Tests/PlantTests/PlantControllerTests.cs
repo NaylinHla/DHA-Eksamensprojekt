@@ -29,7 +29,6 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         var seedDb = seedScope.ServiceProvider.GetRequiredService<MyDbContext>();
         seedDb.Users.Add(_testUser);
         await seedDb.SaveChangesAsync();
-        
         // Login to get JWT
         var loginResp = await _client.PostAsJsonAsync(
             "/api/auth/login",
@@ -82,6 +81,35 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             Assert.That(dto.PlantNotes,    Is.EqualTo(createDto.PlantNotes));
             Assert.That(dto.PlantId,       Is.Not.EqualTo(Guid.Empty));
         });
+    }
+    
+    [Test]
+    public async Task DeletePlant_ReturnsOk()
+    {
+        // arrange – create a plant first
+        var create = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName   = "Rosemary",
+                PlantType   = "Herb",
+                PlantNotes  = "",
+                Planted     = DateTime.UtcNow.Date
+            });
+
+        create.EnsureSuccessStatusCode();
+        var id = (await create.Content
+            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+        
+        var markAsDead = await _client.PatchAsync(
+            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
+        markAsDead.EnsureSuccessStatusCode();
+
+        //act
+        var resp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
+
+        //assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
     
     [Test]
