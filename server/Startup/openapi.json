@@ -635,12 +635,12 @@
         }
       }
     },
-    "/api/Plant/EditPlant": {
-      "patch": {
+    "/api/Plant/DeletePlant": {
+      "delete": {
         "tags": [
           "Plant"
         ],
-        "operationId": "Plant_EditPlant",
+        "operationId": "Plant_DeletePlant",
         "parameters": [
           {
             "name": "plantId",
@@ -657,7 +657,55 @@
             "schema": {
               "type": "string"
             },
-            "x-position": 3
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/EditPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_EditPlant",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 4
           }
         ],
         "requestBody": {
@@ -670,7 +718,7 @@
             }
           },
           "required": true,
-          "x-position": 2
+          "x-position": 3
         },
         "responses": {
           "200": {
