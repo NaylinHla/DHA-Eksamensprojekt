@@ -16,6 +16,7 @@ public sealed class AppOptions
     public string MQTT_USERNAME { get; set; } = null!;
     public bool IsTesting { get; set; }
     
+    public bool EnableEmailSending { get; set; } = true;
     public string EMAIL_SENDER_USERNAME { get; set; } = null!;
     public string EMAIL_SENDER_PASSWORD { get; set; } = null!;
     public string JWT_EMAIL_SECRET { get; set; } = null!;

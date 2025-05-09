@@ -15,6 +15,7 @@ public class EmailSenderService : IEmailSender
     private readonly IOptionsMonitor<AppOptions> _optionsMonitor;
     private readonly IEmailListRepository _emailListRepository;
     private readonly JwtEmailTokenService _jwtService;
+    private bool ShouldSendEmails => _optionsMonitor.CurrentValue.EnableEmailSending;
 
     public EmailSenderService(
         IOptionsMonitor<AppOptions> optionsMonitor,
@@ -28,6 +29,8 @@ public class EmailSenderService : IEmailSender
 
     public async Task SendEmailAsync(string subject, string message)
     {
+        if (!ShouldSendEmails) return;
+
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
