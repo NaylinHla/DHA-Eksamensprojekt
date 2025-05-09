@@ -6,10 +6,10 @@ import {
     Chart as ChartJS, LineElement, LinearScale, PointElement, CategoryScale
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { iconFromCode, cToF } from "../components/utils/weather/weather.ts";
-import { formatDateTimeForUserTZ } from "../components";
-import {CityHit, WXResp} from "../types/WeatherTypes.ts";
-import {cssVar} from "../components/utils/Theme/theme.ts";
+import { iconFromCode, cToF } from "../../components/utils/weather/weather.ts";
+import { formatDateTimeForUserTZ } from "../../components";
+import {CityHit, WXResp} from "../../types/WeatherTypes.ts";
+import {cssVar} from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, LinearScale, PointElement, CategoryScale);
 
