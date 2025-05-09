@@ -15,8 +15,13 @@ public class EmailSenderService(
     JwtEmailTokenService jwtService)
     : IEmailSender
 {
+
+    private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
+
     public async Task SendEmailAsync(string subject, string message)
     {
+        if (!ShouldSendEmails) return;
+
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
@@ -67,6 +72,9 @@ public class EmailSenderService(
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
+        if (!emailListRepository.EmailExists(dto.Email))
+            return;
+            
         emailListRepository.RemoveByEmail(dto.Email);
         emailListRepository.Save();
 
@@ -75,6 +83,8 @@ public class EmailSenderService(
 
     private async Task SendConfirmationEmailAsync(string toEmail)
     {
+        if (!ShouldSendEmails) return;
+
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
@@ -95,8 +105,12 @@ public class EmailSenderService(
         await client.SendMailAsync(mailMessage);
     }
 
+
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
+        
+        if (!ShouldSendEmails) return;
+        
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
