@@ -1,5 +1,5 @@
 ﻿using Core.Domain.Entities;
-using Infrastructure.Postgres.Repositories;
+using Infrastructure.Postgres.Postgresql.Data;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
