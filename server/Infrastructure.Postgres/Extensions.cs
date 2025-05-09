@@ -24,6 +24,7 @@ public static class Extensions
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IEmailListRepository, EmailListRepository>();
         services.AddScoped<IPlantRepository, PlantRepository>();
+        services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
         services.AddScoped<Seeder>();
 
         return services;

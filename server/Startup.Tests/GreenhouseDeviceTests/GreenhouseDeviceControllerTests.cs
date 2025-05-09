@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Application.Models.Dtos.RestDtos;
-using Application.Models.Dtos.RestDtos.UserDevice;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +10,7 @@ using NUnit.Framework;
 using Startup.Tests.TestUtils;
 using UserDevice = Core.Domain.Entities.UserDevice;
 using Api.Rest.Controllers;
+using Application.Models.Dtos.RestDtos.UserDevice.Response;
 
 namespace Startup.Tests.GreenhouseDeviceTests
 {
@@ -53,40 +53,6 @@ namespace Startup.Tests.GreenhouseDeviceTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
             => builder.ConfigureServices(s => s.DefaultTestConfig());
-
-        // -------------------- GET: GetAllUserDevices --------------------
-        
-        [Test]
-        public async Task GetAllUserDevices_ShouldReturnOk()
-        {
-            var resp = await _client.GetAsync($"api/GreenhouseDevice/{GreenhouseDeviceController.GetAllUserDevicesRoute}");
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        }
-
-        [Test]
-        public async Task GetAllUserDevices_ShouldReturnEmpty_WhenNoDevicesExist()
-        {
-            using (var scope = Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-                db.UserDevices.RemoveRange(db.UserDevices);
-                await db.SaveChangesAsync();
-            }
-
-            var response = await _client.GetAsync($"api/GreenhouseDevice/{GreenhouseDeviceController.GetAllUserDevicesRoute}");
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            
-            var contentObject = await response.Content.ReadFromJsonAsync<WrapperDto>();
-            Assert.That(contentObject!.AllUserDevice, Is.Empty);
-        }
-
-        [Test]
-        public async Task GetAllUserDevices_ShouldReturnBadRequest_WhenNoJwtProvided()
-        {
-            var clientWithoutJwt = CreateClient();
-            var response = await clientWithoutJwt.GetAsync($"api/GreenhouseDevice/{GreenhouseDeviceController.GetAllUserDevicesRoute}");
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        }
         
         // -------------------- GET: GetSensorDataByDeviceId --------------------
 
@@ -102,7 +68,8 @@ namespace Startup.Tests.GreenhouseDeviceTests
                     UserId = _testUser.UserId,
                     DeviceName = "D1",
                     DeviceDescription = "desc",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    WaitTime = "600"
                 };
                 db.UserDevices.Add(device);
                 await db.SaveChangesAsync();
@@ -125,7 +92,8 @@ namespace Startup.Tests.GreenhouseDeviceTests
                     UserId = _testUser.UserId,
                     DeviceName = "D1",
                     DeviceDescription = "desc",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    WaitTime = "600"
                 };
                 db.UserDevices.Add(device);
 
@@ -178,7 +146,9 @@ namespace Startup.Tests.GreenhouseDeviceTests
                     UserId = anotherUser.UserId,
                     DeviceName = "D1",
                     DeviceDescription = "desc",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    WaitTime = "600"
+                    
                 };
                 db.UserDevices.Add(device);
                 await db.SaveChangesAsync();
@@ -239,7 +209,8 @@ namespace Startup.Tests.GreenhouseDeviceTests
                     UserId = _testUser.UserId,
                     DeviceName = "D3",
                     DeviceDescription = "desc",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    WaitTime = "600"
                 };
                 db.UserDevices.Add(device);
                 await db.SaveChangesAsync();
@@ -273,58 +244,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
             // Assert: model binding fails because [FromHeader] authorization is missing → 400
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
-
-        // -------------------- POST: AdminChangesPreferences --------------------
-
-        [Test]
-        public async Task AdminChangesPreferences_ShouldReturnOk()
-        {
-            string deviceId;
-            using (var scope = Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-                var device = new UserDevice {
-                    DeviceId = Guid.NewGuid(),
-                    UserId = _testUser.UserId,
-                    DeviceName = "D2",
-                    DeviceDescription = "desc",
-                    CreatedAt = DateTime.UtcNow
-                };
-                db.UserDevices.Add(device);
-                await db.SaveChangesAsync();
-                deviceId = device.DeviceId.ToString();
-            }
-
-            // New DTO signature: all strings
-            var dto = new AdminChangesPreferencesDto {
-                DeviceId = deviceId,
-                Unit     = "Celsius",
-                Interval = "60"
-            };
-
-            var resp = await _client.PostAsJsonAsync(
-                $"api/GreenhouseDevice/{GreenhouseDeviceController.AdminChangesPreferencesRoute}", dto
-            );
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        }
         
-        [Test]
-        public async Task AdminChangesPreferences_ShouldReturnBadRequest_WhenNoJwtProvided()
-        {
-            var client = CreateClient(); // no JWT
-            var dto = new AdminChangesPreferencesDto {
-                DeviceId = Guid.NewGuid().ToString(),
-                Unit = "Celsius",
-                Interval = "60"
-            };
-
-            var resp = await client.PostAsJsonAsync(
-                $"api/GreenhouseDevice/{GreenhouseDeviceController.AdminChangesPreferencesRoute}", dto
-            );
-
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        }
-
         // -------------------- DELETE: DeleteData --------------------
 
         [Test]

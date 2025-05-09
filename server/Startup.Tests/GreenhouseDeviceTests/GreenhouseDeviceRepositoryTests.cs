@@ -67,6 +67,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
                 DeviceName =    "Test",
                 DeviceDescription = "Test",
                 CreatedAt = DateTime.Now,
+                WaitTime = "600"
             };
             
             _context.Users.Add(user);
@@ -79,9 +80,19 @@ namespace Startup.Tests.GreenhouseDeviceTests
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.UserId, Is.EqualTo(userId));
-            Assert.That(result.Email, Is.EqualTo("test@example.com"));
         }
-        
+
+        [Test]
+        public void GetUserByDeviceId_ShouldThrow_WhenDeviceNotFound()
+        {
+            var ex = Assert.ThrowsAsync<NotFoundException>(async () =>
+            {
+                await _repository.GetUserByDeviceId(Guid.NewGuid());
+            });
+
+            Assert.That(ex!.Message, Is.EqualTo("Device not found"));
+        }
+
         [Test]
         public void GetRecentSensorHistory_ShouldReturnOrderedList_ByDescendingTime()
         {
@@ -110,6 +121,52 @@ namespace Startup.Tests.GreenhouseDeviceTests
             Assert.That(result[1].Time, Is.EqualTo(now.AddMinutes(-5)));
             Assert.That(result[2].Time, Is.EqualTo(now.AddMinutes(-10))); // Oldest
         }
-        
+
+        [Test]
+        public Task GetSensorHistoryByDeviceIdAsync_ShouldThrow_WhenDeviceNotFound()
+        {
+            var ex = Assert.ThrowsAsync<NotFoundException>(async () =>
+            {
+                await _repository.GetSensorHistoryByDeviceIdAsync(Guid.NewGuid());
+            });
+
+            Assert.That(ex!.Message, Is.EqualTo("Device not found"));
+            return Task.CompletedTask;
+        }
+
+        [Test]
+        public async Task GetSensorHistoryByDeviceIdAsync_ShouldFilterByTimeRange()
+        {
+            var deviceId = Guid.NewGuid();
+            var device = new UserDevice
+            {
+                DeviceId = deviceId,
+                DeviceName = "FilterTest",
+                CreatedAt = DateTime.UtcNow,
+                DeviceDescription = "In the downstairs",
+                WaitTime = "600"
+            };
+            _context.UserDevices.Add(device);
+
+            var now = DateTime.UtcNow;
+
+            var sensorHistories = new List<SensorHistory>
+            {
+                new() { SensorHistoryId = Guid.NewGuid(), DeviceId = deviceId, Temperature = 10, Time = now.AddDays(-2) },
+                new() { SensorHistoryId = Guid.NewGuid(), DeviceId = deviceId, Temperature = 20, Time = now.AddDays(-1) },
+                new() { SensorHistoryId = Guid.NewGuid(), DeviceId = deviceId, Temperature = 30, Time = now },
+            };
+
+            _context.SensorHistories.AddRange(sensorHistories);
+            await _context.SaveChangesAsync();
+
+            var from = now.AddDays(-1.5);
+            var to = now.AddHours(-12);
+
+            var result = await _repository.GetSensorHistoryByDeviceIdAsync(deviceId, from, to);
+
+            Assert.That(result.Single().SensorHistoryRecords.Count, Is.EqualTo(1));
+            Assert.That(result.Single().SensorHistoryRecords[0].Temperature, Is.EqualTo(20));
+        }
     }
 }

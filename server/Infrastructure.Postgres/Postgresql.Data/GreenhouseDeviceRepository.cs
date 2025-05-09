@@ -1,11 +1,12 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos.SensorHistory;
-using Application.Models.Dtos.RestDtos.UserDevice;
+using Application.Models.Dtos.RestDtos.UserDevice.Response;
 using Core.Domain.Entities;
 using Core.Domain.Exceptions;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
+using UserDevice = Application.Models.Dtos.RestDtos.UserDevice.Response.UserDevice;
 
 namespace Infrastructure.Postgres.Postgresql.Data
 {
@@ -36,6 +37,9 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 {
                     DeviceId = device.DeviceId,
                     DeviceName = device.DeviceName,
+                    DeviceCreateDateTime = device.CreatedAt,
+                    DeviceDesc = device.DeviceDescription,
+                    DeviceWaitTime = device.WaitTime,
                     Temperature = device.SensorHistories
                         .OrderByDescending(s => s.Time)
                         .Select(s => s.Temperature)
@@ -59,26 +63,6 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 })
                 .ToListAsync();
         }
-
-        public async Task<GetAllUserDeviceDto> GetAllUserDevices(Guid userId)
-        {
-            var devices = await ctx.UserDevices
-                .Where(device => device.UserId == userId)
-                .Select(device => new Application.Models.Dtos.RestDtos.UserDevice.UserDevice
-                {
-                    DeviceId = device.DeviceId,
-                    UserId = device.UserId,
-                    DeviceName = device.DeviceName,
-                    DeviceDescription = device.DeviceDescription,
-                    CreatedAt = device.CreatedAt
-                })
-                .ToListAsync();
-
-            return new GetAllUserDeviceDto
-            {
-                AllUserDevice = devices
-            };
-        }
         
         public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId, DateTime? from = null, DateTime? to = null)
         {
@@ -87,7 +71,7 @@ namespace Infrastructure.Postgres.Postgresql.Data
                 .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
 
             if (device == null)
-                throw new Exception("Device not found");
+                throw new NotFoundException("Device not found");
 
             var query = ctx.SensorHistories
                 .Where(sh => sh.DeviceId == deviceId);

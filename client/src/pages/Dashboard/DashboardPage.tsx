@@ -1,28 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { formatDateTimeForUserTZ } from "../import";
+import React from "react";
+import {TitleTimeHeader} from "../import";
 
 const DashboardPage = () => {
-
-    const [currentTime, setCurrentTime] = useState(new Date());
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <div
             className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display overflow-hidden">
             {/* Header */}
-            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
-
-                <h1 className="text-2xl font-bold text-[--color-primary]">Dashboard</h1>
-                <span className="text-sm text-gray-600">
-                    {formatDateTimeForUserTZ(currentTime)}
-                </span>
-            </header>
+            <TitleTimeHeader title="Dashboard"/>
 
             {/* Full-height Loading Spinner */}
             <main className="flex-1 flex items-center justify-center overflow-hidden">

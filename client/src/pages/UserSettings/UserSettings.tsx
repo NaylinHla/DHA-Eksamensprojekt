@@ -7,7 +7,7 @@ import {useNavigate} from "react-router";
 import EmailModal from "../../components/Modals/EmailModal.tsx";
 import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.tsx";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
-import {formatDateTimeForUserTZ, useLogout} from "../../components";
+import {TitleTimeHeader, useLogout} from "../../components";
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
@@ -33,13 +33,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const { logout } = useLogout();
 
     // ------
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-    
     useEffect(() => {
         const theme = darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
@@ -112,13 +105,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
             {/* Header */}
-            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">User Profile</h1>
-                <span className="text-sm text-gray-600">
-                    {formatDateTimeForUserTZ(currentTime)}
-                </span>
-            </header>
-
+            <TitleTimeHeader title="User Profile"/>
 
             {/* Content card */}
             <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
@@ -161,8 +148,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 onChange={() => setDarkTheme(!darkTheme)}
                             />
                         </li>
-                        <li className="flex justify-between"><span>IoT Wait time</span><span
-                            className="text-sm opacity-70">12 m</span></li>
                     </ul>
 
                     <button onClick={saveToggles} className="btn btn-primary btn-sm mt-auto">Save settings</button>

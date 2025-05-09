@@ -60,6 +60,7 @@ CREATE TABLE meetyourplants."UserDevice" (
     "DeviceName" text NOT NULL,
     "DeviceDescription" text NOT NULL,
     "CreatedAt" timestamp with time zone NOT NULL,
+    "WaitTime" text NOT NULL,
     CONSTRAINT "PK_UserDevice" PRIMARY KEY ("DeviceId"),
     CONSTRAINT "FK_UserDevice_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
 );
@@ -80,7 +81,6 @@ CREATE TABLE meetyourplants."UserSettings" (
     "DarkTheme" boolean NOT NULL,
     "ConfirmDialog" boolean NOT NULL,
     "SecretMode" boolean NOT NULL,
-    "WaitTime" text NOT NULL,
     CONSTRAINT "PK_UserSettings" PRIMARY KEY ("UserId"),
     CONSTRAINT "FK_UserSettings_User_UserId" FOREIGN KEY ("UserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
 );

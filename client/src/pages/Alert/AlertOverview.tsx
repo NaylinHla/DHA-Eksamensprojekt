@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import useAlertsRest, { Alert } from "../../hooks/useAlertsRest.tsx";
+import {TitleTimeHeader} from "../../components";
 
 const getYear = (dateString: string) => new Date(dateString).getFullYear();
 
@@ -15,6 +16,7 @@ const AlertOverview = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-[--color-background] text-[--color-primary] font-display">
+            <TitleTimeHeader title="Alerts Overview"/>
             <div className="flex flex-grow overflow-hidden">
                 {/* Sidebar Year Filter */}
                 <aside className="bg-base-100 w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm text-gray-500">

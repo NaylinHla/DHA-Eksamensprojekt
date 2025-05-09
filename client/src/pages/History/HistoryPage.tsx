@@ -18,13 +18,13 @@ import {
     JwtAtom,
     SelectedDeviceIdAtom,
     SensorHistoryDto, SensorHistoryWithDeviceDto,
-    StringConstants,
+    StringConstants, TitleTimeHeader,
     UserDevice,
     useThrottle,
     useTopicManager,
     useWebSocketMessage,
 } from "../import";
-import {greenhouseDeviceClient} from "../../apiControllerClients.ts";
+import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
@@ -182,12 +182,12 @@ export default function HistoryPage() {
     useEffect(() => {
         if (!jwt) return;
         setLoadingDevices(true);
-        greenhouseDeviceClient
+        userDeviceClient
             .getAllUserDevices(jwt)
             .then((res: any) => {
-                const list = res.allUserDevice || [];
+                const list = Array.isArray(res) ? res : [];
                 setDevices(list);
-                if (!selectedDeviceId && list.length) setSelectedDeviceId(list[0].deviceId!);
+                if (!selectedDeviceId && list.length) {setSelectedDeviceId(list[0].deviceId!);}
             })
             .catch(() => toast.error("Failed to load devices", {id: "load-devices-error"}))
             .finally(() => setLoadingDevices(false));
@@ -227,8 +227,12 @@ export default function HistoryPage() {
 
         greenhouseDeviceClient
             .getRecentSensorDataForAllUserDevice(jwt)
-            .then((res: GetRecentSensorDataForAllUserDeviceDto) => {
-                const records = res.sensorHistoryWithDeviceRecords || [];
+            .then((res: GetRecentSensorDataForAllUserDeviceDto | null) => {
+                if (!res || !res.sensorHistoryWithDeviceRecords || res.sensorHistoryWithDeviceRecords.length === 0) {
+                    setLatestSensorData({});
+                    return; //If server responded with 204 No Content, res might be null or empty object
+                }
+                const records = res.sensorHistoryWithDeviceRecords;
                 const snapshot = records.reduce((acc, curr) => {
                     if (curr.deviceId) acc[curr.deviceId] = curr;
                     return acc;
@@ -393,10 +397,11 @@ export default function HistoryPage() {
     return (
         <div>
             {/* Filters */}
+            <div>
+                <TitleTimeHeader title="Overview" />
+            </div>
+
             <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">
-
-                <h1 className="text-2xl font-bold">Overview:</h1>
-
                 <div className="flex gap-2">
                     <label>From:
                         <input
@@ -422,14 +427,8 @@ export default function HistoryPage() {
                         Spinner
                     ) : (() => {
                         const latest = latestSensorData[selectedDeviceId!];
-                        if (!latest) return <p className="text-center justify-center">No data available</p>;
 
-                        // Check if any sensor field has 0.00 or invalid values (could be considered as no data)
-                        const isNoData = fields.some(
-                            (field) => latest[field] === 0.00 || latest[field] == null
-                        );
-
-                        if (isNoData) {
+                        if (!latest || fields.some((field) => latest[field] === 0.00 || latest[field] == null)) {
                             return (
                                 <div className="flex justify-center items-center h-full">
                                     <p className="text-center">No data available</p>
@@ -463,7 +462,7 @@ export default function HistoryPage() {
 
                     <label className="font-medium">Select Device:</label>
                     <select
-                        className="border rounded p-2 min-w-[120px]"
+                        className="border rounded p-2 min-w-[120px] max-w-[200px] truncate"
                         value={selectedDeviceId || ""}
                         onChange={(e) => setSelectedDeviceId(e.target.value)}
                         disabled={loadingDevices}
@@ -472,8 +471,8 @@ export default function HistoryPage() {
                             <option>No devices</option>
                         ) : (
                             devices.map(d => (
-                                <option key={d.deviceId} value={d.deviceId}>
-                                    {d.deviceName}
+                                <option key={d.deviceId} value={d.deviceId} title={d.deviceName ?? 'Unnamed Device'}>
+                                    {(d.deviceName?.length ?? 0) > 15 ? `${d.deviceName?.slice(0, 15)}...` : d.deviceName ?? 'Unnamed Device'}
                                 </option>
                             ))
                         )}

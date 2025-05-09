@@ -25,8 +25,7 @@ CREATE TABLE IF NOT EXISTS meetyourplants."UserSettings" (
                                                              "Celsius" BOOLEAN,
                                                              "DarkTheme" BOOLEAN,
                                                              "ConfirmDialog" BOOLEAN,
-                                                             "SecretMode" BOOLEAN,
-                                                             "WaitTime" VARCHAR(50)
+                                                             "SecretMode" BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS meetyourplants."Plant" (
@@ -60,7 +59,8 @@ CREATE TABLE IF NOT EXISTS meetyourplants."UserDevice" (
                                                            "UserId" UUID REFERENCES meetyourplants."User"("UserId") ON DELETE CASCADE,
                                                            "DeviceName" VARCHAR(100),
                                                            "DeviceDescription" TEXT,
-                                                           "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                           "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                           "WaitTime" VARCHAR(50)
 );
 
 
