@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { formatDateTimeForUserTZ } from '../index';
+import React, {useEffect, useState} from 'react';
+import {formatDateTimeForUserTZ} from '../index';
 
 // Define props type
 interface TitleTimeHeaderProps {
     title: string;
 }
 
-const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({ title }) => {
+const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({title}) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {

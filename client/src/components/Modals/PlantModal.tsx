@@ -1,20 +1,9 @@
 import React, {Fragment, useEffect, useRef, useState} from "react";
-import {
-    X,
-    Trash2,
-    Check,
-    Pencil,
-    Droplet,
-} from "lucide-react";
-import type { CardPlant }   from "./PlantCard";
-import {
-    PlantClient,
-    PlantCreateDto,
-    PlantEditDto,
-    PlantResponseDto, } from "../../atoms";
-import { useAtom } from "jotai";
-import { JwtAtom } from "../../atoms";
-import { format } from "date-fns";
+import {Check, Droplet, Pencil, X,} from "lucide-react";
+import type {CardPlant} from "./PlantCard";
+import {JwtAtom, PlantClient, PlantCreateDto, PlantEditDto, PlantResponseDto,} from "../../atoms";
+import {useAtom} from "jotai";
+import {format} from "date-fns";
 import toast from "react-hot-toast";
 
 const plantClient = new PlantClient(
@@ -29,33 +18,33 @@ interface Props {
 }
 
 const toEditDto = (p: PlantResponseDto): PlantEditDto => ({
-    plantName : p.plantName ?? "",
-    plantType : p.plantType ?? "",
+    plantName: p.plantName ?? "",
+    plantType: p.plantType ?? "",
     plantNotes: p.plantNotes ?? "",
-    planted   : p.planted,
+    planted: p.planted,
     lastWatered: p.lastWatered,
     waterEvery: p.waterEvery,
-    isDead    : p.isDead,
+    isDead: p.isDead,
 });
 
 const emptyCreate: PlantCreateDto = {
-    plantName : "",
-    plantType : "",
+    plantName: "",
+    plantType: "",
     plantNotes: "",
-    planted   : new Date(),
+    planted: new Date(),
     waterEvery: 7,
-    isDead    : false,
+    isDead: false,
 };
 
-const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
+const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
     const [jwt] = useAtom(JwtAtom);
     const [isEditing, setEditing] = useState(false);
-    
+
     // Form State
     const [data, setData] = useState<PlantEditDto>(emptyCreate);
     const [full, setFull] = useState<PlantResponseDto | null>(null);
-    const [saving, setSaving]     = useState(false);
-    const [loading, setLoading]   = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const backdrop = useRef<HTMLDivElement>(null);
 
@@ -69,14 +58,16 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                 const p = await plantClient.getPlant(plant.id, jwt);
                 setFull(p);
                 setData(toEditDto(p));
-            } finally { setLoading(false); }
+            } finally {
+                setLoading(false);
+            }
         };
         run();
     }, [open, plant, jwt]);
 
     useEffect(() => {
         if (open) {
-            setEditing(plant === null); 
+            setEditing(plant === null);
         }
     }, [open, plant]);
 
@@ -102,10 +93,10 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
             backdrop.current?.removeEventListener("click", onClick);
         };
     }, [open, onClose]);
-    
+
     // Helpers
     const upd = <K extends keyof PlantEditDto>(k: K, v: PlantEditDto[K]) =>
-        setData((d) => ({ ...d, [k]: v }));
+        setData((d) => ({...d, [k]: v}));
 
     // Handlers
     const save = async () => {
@@ -117,7 +108,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                 await plantClient.editPlant(plant.id, data, jwt);
 
                 onSaved();
-                
+
                 const latest = await plantClient.getPlant(plant.id, jwt);
                 setFull(latest);
                 setData(toEditDto(latest));
@@ -125,14 +116,14 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                 setEditing(false);
                 toast.success("Plant updated");
             }
-            
+
             // Create New
             else {
                 const newDto = {
                     ...data,
                     planted: data.planted ?? new Date()
                 };
-                
+
                 await plantClient.createPlant(newDto, jwt);
                 onSaved();
 
@@ -145,7 +136,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
             setSaving(false);
         }
     };
-    
+
     const waterNow = async () => {
         if (!plant) return;
         try {
@@ -153,9 +144,11 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
             await plantClient.waterPlant(plant.id, jwt);
             onSaved();
             setFull((p) =>
-                p ? { ...p, lastWatered: new Date() } : p
+                p ? {...p, lastWatered: new Date()} : p
             );
-        } finally { setSaving(false); }
+        } finally {
+            setSaving(false);
+        }
     };
 
     const goBack = () => {
@@ -187,7 +180,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                   : "never"}
           </span>
                     <button onClick={waterNow} title="Water now">
-                        <Droplet size={18} className="text-blue-500" />
+                        <Droplet size={18} className="text-blue-500"/>
                     </button>
                 </Pill>
 
@@ -277,7 +270,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                     className="absolute right-4 top-4 text-muted-foreground"
                     onClick={onClose}
                 >
-                    <X size={20} />
+                    <X size={20}/>
                 </button>
 
                 {/* Title */}
@@ -313,7 +306,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                                 onClick={save}
                                 disabled={saving}
                             >
-                                <Check size={14} />
+                                <Check size={14}/>
                                 {saving ? "Saving…" : "Save"}
                             </button>
                         </>
@@ -322,7 +315,7 @@ const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
                             className="btn btn-primary ml-auto flex items-center gap-1"
                             onClick={() => setEditing(true)}
                         >
-                            <Pencil size={14} />
+                            <Pencil size={14}/>
                             Edit
                         </button>
                     )}

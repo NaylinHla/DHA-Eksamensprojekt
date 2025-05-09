@@ -27,7 +27,7 @@ export default function App() {
         const finalUrl = prod ? 'wss://' + baseUrl + '?id=' + randomUid : 'ws://' + baseUrl + '?id=' + randomUid;
         setServerUrl(finalUrl);
     }, [prod, baseUrl]);
-    
+
     return (<>
         {serverUrl && <WsClientProvider url={serverUrl}>
             <ApplicationRoutes/>
