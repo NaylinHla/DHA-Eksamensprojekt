@@ -16,7 +16,7 @@ public class EmailSenderService(
     : IEmailSender
 {
 
-    private bool ShouldSendEmails => _optionsMonitor.CurrentValue.EnableEmailSending;
+    private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
 
     public async Task SendEmailAsync(string subject, string message)
     {
