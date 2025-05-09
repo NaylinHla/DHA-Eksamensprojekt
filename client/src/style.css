@@ -14,7 +14,6 @@ html { transition: background-color .25s ease, color .25s ease; }
     --color-base-200:  oklch(0.88 0.0147 102.47);
     --color-base-300:  oklch(0.84 0.0147 102.47);
     --color-surface: oklch(100% 0 0);
-    --color-success-content: oklch(37% 0.077 168.94);
     --color-primary: oklch(0.635 0.169 151.4);
     --color-primary-content: oklch(93% 0.034 272.788);
     --color-secondary: oklch(66% 0.295 322.15);

@@ -303,7 +303,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 />
                                 {requiredHint(registerErrors.birthday)}
                             </div>
-                            
+
                             <div className="flex-1 relative overflow-visible">
                                 <label className="label py-0 text-white">Country</label>
                                 <select
@@ -313,20 +313,23 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 >
                                     <option value="">Select country</option>
                                     {countries.map((country) => (
-                                        <option key={country} value={country}>
-                                            {registerErrors.country && errorClass}
+                                        <option
+                                            key={country}
+                                            value={country}
+                                        >
+                                            {country}
                                         </option>
                                     ))}
                                 </select>
-                                {requiredHint(registerErrors.country)}
-                            </div>
+                            {requiredHint(registerErrors.country)}
                         </div>
+                </div>
 
-                        {/* Password */}
-                        <label className="label py-0 text-white">Password</label>
-                        <PasswordField
-                            name="password"
-                            placeholder="Password"
+                {/* Password */}
+                <label className="label py-0 text-white">Password</label>
+                <PasswordField
+                    name="password"
+                    placeholder="Password"
                             className={`bg-white ${registerErrors.password && errorClass}`}
                         />
                         {requiredHint(registerErrors.password)}
