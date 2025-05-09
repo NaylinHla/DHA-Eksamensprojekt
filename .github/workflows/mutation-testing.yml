@@ -7,7 +7,6 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     env:
-      DOTNET_ROLL_FORWARD: LatestMajor
       APPOPTIONS__DbConnectionString: ${{secrets.DBCONNECTIONSTRING}}
       APPOPTIONS__JwtSecret: ${{secrets.JWT_TOKEN}}
       APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
@@ -41,37 +40,38 @@ jobs:
         run: dotnet tool install --global dotnet-stryker
 
       - name: Generate stryker-config.json
-        working-directory: server/Startup.Tests
         run: |
           cat > stryker-config.json <<'JSON'
           {
-            "stryker-config": {
-              "$schema": "https://stryker-mutator.io/stryker-schema.json",
-              "solution": "../DrivhusApplikation.sln",
-              "mutate": [
-                "server/Api.Rest/**/*.cs",
-                "server/Api.Websocket/**/*.cs",
-                "server/Application/**/*.cs",
-                "server/Infrastructure.MQTT/**/*.cs",
-                "server/Infrastructure.Postgres/**/*.cs",
-                "server/Infrastructure.Websocket/**/*.cs",
-                "!server/Core.Domain/**/*.cs",
-                "!server/Infrastructure.Postgres.Scaffolding/**",
-                "!server/Startup/**"
-              ],
-              "coverage-analysis": "perTest",
-              "thresholds": {
-                "break": 80
-              },
-              "max-test-run-time": 120
-            }
+            "$schema": "https://stryker-mutator.io/stryker-schema.json",
+            "solution": "../DrivhusApplikation.sln",
+            "mutate": [
+              "server/Api.Rest/**/*.cs",
+              "server/Api.Websocket/**/*.cs",
+              "server/Application/**/*.cs",
+              "server/Infrastructure.MQTT/**/*.cs",
+              "server/Infrastructure.Postgres/**/*.cs",
+              "server/Infrastructure.Websocket/**/*.cs",
+              "!server/Core.Domain/**/*.cs",
+              "!server/Infrastructure.Postgres.Scaffolding/**",
+              "!server/Startup/**"
+            ],
+            "coverage-analysis": "perTest",
+            "thresholds": {
+              "break": 80
+            },
+            "concurrency": "auto",
+            "max-test-run-time": 120
           }
           JSON
+        working-directory: server/Startup.Tests
+
 
 
       - name: Run Mutation Tests (Stryker)
-        working-directory: server/Startup.Tests
         run: dotnet stryker --reporter "html"
+        env:
+          DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
 
       - name: Upload Stryker Report
@@ -79,5 +79,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stryker-report
-          path: server/Startup.Tests/StrykerOutput/**/reports/mutation-report.html
+          path: StrykerOutput/**/reports/mutation-report.html
   
