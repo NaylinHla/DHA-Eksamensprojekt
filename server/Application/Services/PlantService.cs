@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
+using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 
@@ -27,9 +28,30 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         
         return await plantRepo.AddPlantAsync(userId, plant);
     }
-    
-    public async Task<Plant> EditPlantAsync(Guid plantId, PlantEditDto dto)
+
+    public async Task DeletePlantAsync(Guid plantId, JwtClaims claims)
     {
+        var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
+        if (plantOwnerId != Guid.Parse(claims.Id))
+        {
+            throw new UnauthorizedAccessException("This plant does not belong to you");
+        }
+        var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
+        if (plantToDelete.Result == null)
+            throw new KeyNotFoundException("Plant not found.");
+        if (plantToDelete.Result.IsDead == false)
+            throw new ArgumentException("Plant is not dead. Mark it as dead before deleting it.");
+        await plantRepo.DeletePlantAsync(plantId);
+    }
+    
+    public async Task<Plant> EditPlantAsync(Guid plantId, PlantEditDto dto, JwtClaims claims)
+    {
+        var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
+        if (plantOwnerId != Guid.Parse(claims.Id))
+        {
+            throw new UnauthorizedAccessException("This plant does not belong to you");
+        }
+        
         var plant = await plantRepo.GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
 
         if (dto.PlantName   is not null) plant.PlantName   = dto.PlantName;

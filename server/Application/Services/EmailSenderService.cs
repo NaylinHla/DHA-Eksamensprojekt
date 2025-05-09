@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Mail;
-using System.Threading.Tasks;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
@@ -10,22 +9,12 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class EmailSenderService : IEmailSender
+public class EmailSenderService(
+    IOptionsMonitor<AppOptions> optionsMonitor,
+    IEmailListRepository emailListRepository,
+    JwtEmailTokenService jwtService)
+    : IEmailSender
 {
-    private readonly IOptionsMonitor<AppOptions> _optionsMonitor;
-    private readonly IEmailListRepository _emailListRepository;
-    private readonly JwtEmailTokenService _jwtService;
-
-    public EmailSenderService(
-        IOptionsMonitor<AppOptions> optionsMonitor,
-        IEmailListRepository emailListRepository,
-        JwtEmailTokenService jwtService)
-    {
-        _optionsMonitor = optionsMonitor;
-        _emailListRepository = emailListRepository;
-        _jwtService = jwtService;
-    }
-
     public async Task SendEmailAsync(string subject, string message)
     {
         var client = new SmtpClient("smtp.mailersend.net", 2525)
@@ -33,16 +22,16 @@ public class EmailSenderService : IEmailSender
             EnableSsl = true,
             UseDefaultCredentials = false,
             Credentials = new NetworkCredential(
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
+                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
             )
         };
 
-        var emailList = _emailListRepository.GetAllEmails();
+        var emailList = emailListRepository.GetAllEmails();
 
         foreach (var email in emailList)
         {
-            string token = _jwtService.GenerateUnsubscribeToken(email);
+            string token = jwtService.GenerateUnsubscribeToken(email);
             string unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
 
             string htmlBody = $@"
@@ -67,10 +56,10 @@ public class EmailSenderService : IEmailSender
 
     public async Task AddEmailAsync(AddEmailDto dto)
     {
-        if (!_emailListRepository.EmailExists(dto.Email))
+        if (!emailListRepository.EmailExists(dto.Email))
         {
-            _emailListRepository.Add(new EmailList { Email = dto.Email });
-            _emailListRepository.Save();
+            emailListRepository.Add(new EmailList { Email = dto.Email });
+            emailListRepository.Save();
 
             await SendConfirmationEmailAsync(dto.Email);
         }
@@ -78,8 +67,8 @@ public class EmailSenderService : IEmailSender
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
-        _emailListRepository.RemoveByEmail(dto.Email);
-        _emailListRepository.Save();
+        emailListRepository.RemoveByEmail(dto.Email);
+        emailListRepository.Save();
 
         await SendGoodbyeEmailAsync(dto.Email);
     }
@@ -91,8 +80,8 @@ public class EmailSenderService : IEmailSender
             EnableSsl = true,
             UseDefaultCredentials = false,
             Credentials = new NetworkCredential(
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
+                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
             )
         };
 
@@ -113,8 +102,8 @@ public class EmailSenderService : IEmailSender
             EnableSsl = true,
             UseDefaultCredentials = false,
             Credentials = new NetworkCredential(
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                _optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
+                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
             )
         };
 

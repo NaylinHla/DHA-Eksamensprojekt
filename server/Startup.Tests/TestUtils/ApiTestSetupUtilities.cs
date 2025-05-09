@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using System.Security.Cryptography;
-using System.Text.Json;
 using Api.Rest.Controllers;
 using Application;
 using Application.Models;
@@ -68,6 +67,7 @@ public static class ApiTestSetupUtilities
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
         
+        
         if (makeMqttClient)
         {
             RemoveExistingService<TestMqttClient>(services);
@@ -77,7 +77,7 @@ public static class ApiTestSetupUtilities
                 return new TestMqttClient(options.MQTT_BROKER_HOST, options.MQTT_USERNAME);
             });
         }
-
+        
         return services;
     }
 
