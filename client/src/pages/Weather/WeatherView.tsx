@@ -12,10 +12,6 @@ import {CityHit, WXResp} from "../../types/WeatherTypes.ts";
 import {cssVar} from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, LinearScale, PointElement, CategoryScale);
-
-
-// ─────────────────────────────────────────────────
-
 const DEFAULT_CITY: CityHit = {
     name: "Copenhagen",
     country: "Denmark",
@@ -101,13 +97,13 @@ const WeatherView: React.FC = () => {
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
 
-            {/* header */}
+            {/* Header */}
             <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between">
                 <h1 className="text-2xl font-bold">Weather</h1>
                 <span className="text-sm text-gray-600">{formatDateTimeForUserTZ(new Date())}</span>
             </header>
 
-            {/* search bar */}
+            {/* Search bar */}
             <div className="px-6 pt-4">
                 <div className="relative max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
@@ -133,9 +129,9 @@ const WeatherView: React.FC = () => {
                 </div>
             </div>
 
-            {/* body */}
+            {/* Body */}
             <main className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-                {/* current card */}
+                {/* Current Card */}
                 {wx && (
                     <div className="rounded-2xl p-6 bg-[var(--color-surface)] shadow flex items-center gap-6">
                         <div className="text-6xl">{iconFromCode(wx.current_weather.weathercode)}</div>
@@ -156,41 +152,50 @@ const WeatherView: React.FC = () => {
                     </div>
                 )}
 
-                {/* Tab Bar */}
-                <div className="tabs tabs-bordered">
-                    {(["temp","rain","wind"] as Tab[]).map(t => (
-                        <a
-                            key={t}
-                            className={`tab tab-bordered${tab===t?" tab-active":""}`}
-                            onClick={()=>setTab(t)}
-                        >
-                            {t==="temp"?"Temperature":t==="rain"?"Rain%": "Wind"}
-                        </a>
-                    ))}
-                </div>
-
-                {/* 24‑hour chart */}
+                {/* Data Card */}
                 {chart && (
-                    <div className="rounded-2xl bg-[var(--color-surface)] p-4 shadow">
-                        <div className="h-40 w-full">
-                            <Line
-                                data={chart}
-                                options={{
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    animation: false,
-                                    devicePixelRatio: 1.5,
-                                    elements: { point: { radius: 0 } },
-                                    scales: {
-                                        x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12 } },
-                                        y: { grid: { display: false }, ticks: { display: false } },
-                                    },
-                                    plugins: {
-                                        legend: { display: false },
-                                        tooltip: { enabled: true, intersect: false, mode: "index" },
-                                    },
-                                }}
-                            />
+                    <div className="bg-[var(--color-surface)] shadow rounded-2xl overflow-hidden">
+
+                        {/* tab bar sits flush with the top edge */}
+                        <div className="tabs tabs-bordered rounded-t-2xl">
+                            {(["temp","rain","wind"] as Tab[]).map(t => (
+                                <a
+                                    key={t}
+                                    className={`tab flex-1 tab-bordered${tab===t?" tab-active":""}`}
+                                    onClick={()=>setTab(t)}
+                                >
+                                    {t==="temp" ? "Temperature" : t==="rain" ? "Rain %" : "Wind"}
+                                </a>
+                            ))}
+                        </div>
+                        
+                        <hr className="border-primary" />
+                        
+                        <div className="p-4 rounded-t-none">
+                            <h3 className="text-lg font-semibold mb-3">
+                                {city.name}, {city.country}
+                            </h3>
+
+                            <div className="h-40 w-full">
+                                <Line
+                                    data={chart}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        animation: false,
+                                        devicePixelRatio: 1.5,
+                                        elements: { point: { radius: 0 } },
+                                        scales: {
+                                            x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12 } },
+                                            y: { grid: { display: false }, ticks: { display: false } },
+                                        },
+                                        plugins: {
+                                            legend: { display: false },
+                                            tooltip: { enabled: true, intersect: false, mode: "index" },
+                                        },
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 )}
