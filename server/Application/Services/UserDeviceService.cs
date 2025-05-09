@@ -11,13 +11,17 @@ namespace Application.Services;
 
 public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublisher mqttPublisher) : IUserDeviceService
 {
+    private const string DeviceNotFound = "Device not found.";
+    private const string UnauthorizedDeviceAccess = "You do not own this device.";
+    private const string DeviceIdRequired = "DeviceId is required.";
+    
     public async Task<UserDevice?> GetUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
-                     ?? throw new NotFoundException("Device not found");
+                     ?? throw new NotFoundException(DeviceNotFound);
 
         if (device.UserId != Guid.Parse(claims.Id))
-            throw new UnauthorizedAccessException("You do not own this device.");
+            throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
 
         return device;
     }
@@ -44,12 +48,12 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
 
     public async Task<UserDevice> UpdateUserDeviceAsync(Guid deviceId, UserDeviceEditDto dto, JwtClaims claims)
     {
-        var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId) ?? throw new NotFoundException("Device not found");
+        var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
+                     ?? throw new NotFoundException(DeviceNotFound );
 
         if (device.UserId != Guid.Parse(claims.Id))
-            throw new UnauthorizedAccessException("You do not own this device.");
+            throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
 
-        // Update fields if they are not null
         if (dto.DeviceName is not null) device.DeviceName = dto.DeviceName;
         if (dto.DeviceDescription is not null) device.DeviceDescription = dto.DeviceDescription;
         if (dto.WaitTime is not null) device.WaitTime = dto.WaitTime;
@@ -57,14 +61,14 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
         await userDeviceRepo.SaveChangesAsync();
         return device;
     }
-    
+
     public async Task DeleteUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
-                     ?? throw new KeyNotFoundException("Device not found");
+                     ?? throw new KeyNotFoundException(DeviceNotFound );
 
         if (device.UserId != Guid.Parse(claims.Id))
-            throw new UnauthorizedAccessException("You do not own this device.");
+            throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
 
         await userDeviceRepo.DeleteUserDeviceAsync(deviceId);
     }
@@ -72,20 +76,15 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     public async Task UpdateDeviceFeed(AdminChangesPreferencesDto dto, JwtClaims claims)
     {
         if (string.IsNullOrEmpty(dto.DeviceId))
-        {
-            throw new ArgumentException("DeviceId is required.", nameof(dto.DeviceId));
-        }
-        var device = await userDeviceRepo.GetUserDeviceByIdAsync(Guid.Parse(dto.DeviceId));
-        if (device == null)
-            throw new NotFoundException("Device not found");
-        
+            throw new ArgumentException(DeviceIdRequired);
+
+        var device = await userDeviceRepo.GetUserDeviceByIdAsync(Guid.Parse(dto.DeviceId))
+                     ?? throw new NotFoundException(DeviceNotFound );
+
         if (device.UserId != Guid.Parse(claims.Id))
-            throw new UnauthorizedAccessException("You do not own this device.");
-        
-        await mqttPublisher.Publish(
-            dto,
-            $"{StringConstants.Device}/{dto.DeviceId}/{StringConstants.ChangePreferences}"
-        );
+            throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
+
+        await mqttPublisher.Publish(dto, $"{StringConstants.Device}/{dto.DeviceId}/{StringConstants.ChangePreferences}");
 
         // Update fields if they are not null
         if (dto.Interval is not null)
