@@ -38,11 +38,17 @@ public class Program
         services.AddTransient<IEmailSender, EmailSenderService>();
         services.AddSingleton<JwtEmailTokenService>();
 
+
         services.AddWebsocketInfrastructure();
         services.RegisterWebsocketApiServices();
         services.RegisterRestApiServices();
 
         var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
+        
+        services.Configure<AppOptions>(options =>
+        {
+            options.EnableEmailSending = false;
+        });
 
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {

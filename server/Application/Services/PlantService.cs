@@ -39,7 +39,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
         if (plantToDelete.Result == null)
             throw new KeyNotFoundException("Plant not found.");
-        if (plantToDelete.Result.IsDead == false)
+        if (!plantToDelete.Result.IsDead)
             throw new ArgumentException("Plant is not dead. Mark it as dead before deleting it.");
         await plantRepo.DeletePlantAsync(plantId);
     }
