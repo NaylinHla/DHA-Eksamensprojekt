@@ -10,7 +10,6 @@ namespace Api.Rest.Controllers;
 [Route("api/[controller]")]
 public class EmailController(IEmailSender emailSender, JwtEmailTokenService jwtService) : ControllerBase
 {
-
     [HttpPost("send")]
     public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
     {

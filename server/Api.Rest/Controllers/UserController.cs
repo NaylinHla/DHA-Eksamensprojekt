@@ -1,7 +1,6 @@
 ﻿using System.Security.Authentication;
 using Application.Interfaces;
 using Application.Models.Dtos.RestDtos.Request;
-using Application.Services;
 using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,7 +33,7 @@ public class UserController(IUserService userService, ISecurityService securityS
         }
     }
 
-    
+
     [HttpPatch]
     [Route("PatchUserEmail")]
     public ActionResult<User> PatchUserEmail([FromHeader] string authorization, [FromBody] PatchUserEmailDto dto)
@@ -60,7 +59,7 @@ public class UserController(IUserService userService, ISecurityService securityS
             return NotFound(new { message = e.Message });
         }
     }
-    
+
     [HttpPatch]
     [Route("PatchUserPassword")]
     public ActionResult<User> PatchUserPassword([FromHeader] string authorization, [FromBody] PatchUserPasswordDto dto)
@@ -80,5 +79,4 @@ public class UserController(IUserService userService, ISecurityService securityS
             return NotFound(new { message = e.Message });
         }
     }
-
 }

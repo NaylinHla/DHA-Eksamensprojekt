@@ -8,6 +8,9 @@ namespace Startup.Tests;
 
 public class SecurityServiceTests
 {
+    private HttpClient _httpClient;
+    private IServiceProvider _scopedServiceProvider;
+
     [SetUp]
     public void Setup()
     {
@@ -26,9 +29,6 @@ public class SecurityServiceTests
     {
         _httpClient?.Dispose();
     }
-
-    private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
 
     [Test]
     public async Task Hash_Can_Correctly_Hash_A_String()

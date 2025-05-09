@@ -1,6 +1,6 @@
 import {Link, NavLink, useNavigate} from "react-router";
 import React, {useEffect} from "react";
-import { links } from "../../types/NavLinks.ts"
+import {links} from "../../types/NavLinks.ts"
 import logo from "../../assets/Favicon/favicon.svg";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
@@ -10,12 +10,12 @@ import useDropdown from "../../hooks/useDropdown.ts";
 
 export default function NavBar() {
     const [, setJwt] = useAtom(JwtAtom);
-    const navigate   = useNavigate();
+    const navigate = useNavigate();
 
-    const mobileDrop  = useDropdown();
+    const mobileDrop = useDropdown();
     const profileDrop = useDropdown();
     const myDeviceDrop = useDropdown();
-    const { logout } = useLogout();
+    const {logout} = useLogout();
 
     useEffect(() => {
         mobileDrop.setOpen(false);
@@ -29,7 +29,7 @@ export default function NavBar() {
     };
 
     const liClass = "px-4 py-2 hover:bg-gray-100";
-    
+
     return (
         <header className="navbar bg-primary text-white sticky top-0 z-50 px-4 shadow-md">
             <div className="navbar-start">
@@ -53,11 +53,11 @@ export default function NavBar() {
             <div className="navbar-end">
                 <nav className="hidden lg:flex">
                     <ul className="menu menu-horizontal p-0 gap-2">
-                        {links.map(({ to, label }) => (
+                        {links.map(({to, label}) => (
                             <li key={to}>
                                 <NavLink
                                     to={to}
-                                    className={({ isActive }) =>
+                                    className={({isActive}) =>
                                         isActive ? "font-semibold underline" : undefined
                                     }
                                 >
@@ -79,7 +79,7 @@ export default function NavBar() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M4 6h16M4 12h16M4 18h16" />
+                              d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
 
@@ -89,7 +89,7 @@ export default function NavBar() {
                         className="absolute right-0 mt-3 w-44 rounded-box bg-[var(--color-surface)]
                shadow divide-y divide-gray-200"
                     >
-                        {links.map(({ to, label }) => (
+                        {links.map(({to, label}) => (
                             <li key={to}>
                                 <NavLink
                                     to={to}
@@ -114,7 +114,7 @@ export default function NavBar() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-full h-full p-1" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M15 9a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M15 9a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                     </div>
                 </button>

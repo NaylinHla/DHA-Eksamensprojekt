@@ -61,7 +61,7 @@ export default function MyDevicePage() {
                 sensorData.forEach((d) => {
                     const secs = Number(d.deviceWaitTime) || 0;
                     if (!d.deviceId) return;
-                    initial[d.deviceId] = { deviceId: d.deviceId, interval: secs };
+                    initial[d.deviceId] = {deviceId: d.deviceId, interval: secs};
                 });
                 setPreferences(initial);
             })
@@ -92,7 +92,7 @@ export default function MyDevicePage() {
                     toast.success(`Device "${deviceName}" removed successfully!`);
                     setDeviceData((prev) => prev.filter((d) => d.deviceId !== id)); // Remove from UI
                     setPreferences((prev) => {
-                        const newPref = { ...prev };
+                        const newPref = {...prev};
                         if (id) delete newPref[id];
                         return newPref;
                     });
@@ -116,7 +116,7 @@ export default function MyDevicePage() {
         <div
             className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
             {/* Header */}
-            <TitleTimeHeader title="My Device" />
+            <TitleTimeHeader title="My Device"/>
 
             <main className="flex-1 overflow-y-auto px-6 py-4">
                 <div className="flex flex-col p-6">
@@ -126,7 +126,8 @@ export default function MyDevicePage() {
                     </div>
 
                     {/* Grid of device cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                    <div
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         {filtered.map((device) => {
                             const id = device.deviceId!;
                             const pref = preferences[id]!;
@@ -283,7 +284,7 @@ export default function MyDevicePage() {
                             }}
                             className="flex items-center justify-center border-2 border-dashed border-muted rounded-xl h-[500px] bg-[var(--color-surface)] hover:border-muted/60 transition"
                         >
-                        <Plus className="w-10 h-10 text-muted-foreground"/>
+                            <Plus className="w-10 h-10 text-muted-foreground"/>
                         </button>
                     </div>
                 </div>
@@ -313,7 +314,7 @@ export default function MyDevicePage() {
                             records.forEach((d) => {
                                 const secs = Number(d.deviceWaitTime) || 0;
                                 if (!d.deviceId) return;
-                                initialPref[d.deviceId] = { deviceId: d.deviceId, interval: secs };
+                                initialPref[d.deviceId] = {deviceId: d.deviceId, interval: secs};
                             });
                             setPreferences(initialPref);
 

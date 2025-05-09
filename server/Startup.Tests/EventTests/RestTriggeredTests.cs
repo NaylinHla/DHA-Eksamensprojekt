@@ -141,10 +141,10 @@ public class RestTriggeredTests
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
         _httpClient.DefaultRequestHeaders.Add("Authorization", authDto!.Jwt);
-        
+
         // Use the seeded device ID
         var seededDeviceId = testUser.UserDevices.First().DeviceId;
-        
+
         //Arrange MQTT client to perform publish on REST trigger
         var testMqttClient = _scopedServiceProvider.GetService<TestMqttClient>();
         var topic = StringConstants.Device + "/" + seededDeviceId + "/" + StringConstants.ChangePreferences;
@@ -159,7 +159,7 @@ public class RestTriggeredTests
         var changePrefernecesDto = new AdminChangesPreferencesDto
         {
             DeviceId = seededDeviceId.ToString(),
-            Interval = "60",
+            Interval = "60"
         };
 
         //Act

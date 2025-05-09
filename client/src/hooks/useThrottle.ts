@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import {useRef} from "react";
 
 export function useThrottle<T extends any[]>(fn: (...args: T) => void, delay: number) {
     const last = useRef(0);

@@ -26,7 +26,7 @@ public class MoreRestTriggeredTests
                 builder.ConfigureServices(services =>
                 {
                     services.DefaultTestConfig();
-                    
+
                 });
             });
 
@@ -67,24 +67,24 @@ public class MoreRestTriggeredTests
         dbCtx.SaveChanges();
 
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_httpClient);
-        
+
         //Act
         _ = await _httpClient.DeleteAsync(WeatherStationController.DeleteDataRoute);
 
         await Task.Delay(1000);
-        
+
         //Assertion
         var numberOfRows = dbCtx.Devicelogs.Count();
         if (numberOfRows != 0)
             throw new Exception("There should be no device logs after deletion!!");
-       
+
         var receivedDtos = wsClient1.ReceivedMessages
             .Select(str => JsonSerializer.Deserialize<BaseDto>(str));
 
         var filtered = receivedDtos.Where(dto => dto.eventType == nameof(AdminHasDeletedData));
         if (filtered.Count() != 1)
             throw new Exception("There should be exactly one broadcast of the type " + nameof(AdminHasDeletedData)+ " but we received all of this data in the array: "+JsonSerializer.Serialize(filtered));
-        
+
         var receivedDtosForClient2 = wsClient2.ReceivedMessages
             .Select(str => JsonSerializer.Deserialize<BaseDto>(str));
 
@@ -93,3 +93,4 @@ public class MoreRestTriggeredTests
             throw new Exception("There should be exactly one broadcast of the type " + nameof(AdminHasDeletedData));
     }
 }*/
+

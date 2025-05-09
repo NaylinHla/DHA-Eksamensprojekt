@@ -10,5 +10,4 @@ public class PlantResponseDto
     public DateTime? LastWatered { get; set; }
     public int? WaterEvery { get; set; }
     public bool IsDead { get; set; }
-    
 }

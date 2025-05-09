@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import SearchBar from "./SearchBar";
+import {useEffect} from "react";
 
 export function UseCloseOnEscapeOrBackdrop(open: boolean, onClose: () => void, backdropRef: React.RefObject<HTMLElement>) {
     useEffect(() => {

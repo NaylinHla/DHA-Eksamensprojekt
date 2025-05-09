@@ -9,16 +9,16 @@ namespace Api.Rest.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserDeviceController(IUserDeviceService userDeviceService, ISecurityService securityService) : ControllerBase
+public class UserDeviceController(IUserDeviceService userDeviceService, ISecurityService securityService)
+    : ControllerBase
 {
-    
     public const string GetUserDeviceRoute = nameof(GetUserDevice);
     public const string GetAllUserDevicesRoute = nameof(GetAllUserDevices);
     public const string CreateUserDeviceRoute = nameof(CreateUserDevice);
     public const string EditUserDeviceRoute = nameof(EditUserDevice);
     public const string DeleteUserDeviceRoute = nameof(DeleteUserDevice);
     public const string AdminChangesPreferencesRoute = nameof(AdminChangesPreferences);
-    
+
     [HttpGet]
     [Route(GetUserDeviceRoute)]
     public async Task<ActionResult<UserDeviceResponseDto>> GetUserDevice(
@@ -29,7 +29,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         var userDevice = await userDeviceService.GetUserDeviceAsync(userDeviceId, claims);
         return userDevice is null ? NotFound() : Ok(ToDto(userDevice));
     }
-    
+
     [HttpGet]
     [Route(GetAllUserDevicesRoute)]
     public async Task<ActionResult<UserDeviceResponseDto>> GetAllUserDevices(
@@ -62,7 +62,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         var updated = await userDeviceService.UpdateUserDeviceAsync(userDeviceId, dto, claims);
         return Ok(ToDto(updated));
     }
-    
+
     [HttpDelete]
     [Route(DeleteUserDeviceRoute)]
     public async Task<ActionResult<UserDeviceEditDto>> DeleteUserDevice(
@@ -73,7 +73,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         await userDeviceService.DeleteUserDeviceAsync(userDeviceId, claims);
         return Ok();
     }
-    
+
     [HttpPost]
     [Route(AdminChangesPreferencesRoute)]
     public async Task<ActionResult> AdminChangesPreferences([FromBody] AdminChangesPreferencesDto dto,
@@ -83,15 +83,17 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         await userDeviceService.UpdateDeviceFeed(dto, claims);
         return Ok();
     }
-    
-    private static UserDeviceResponseDto ToDto(UserDevice device) => new()
+
+    private static UserDeviceResponseDto ToDto(UserDevice device)
     {
-        DeviceId          = device.DeviceId,
-        UserId            = device.UserId,
-        DeviceName        = device.DeviceName,
-        DeviceDescription = device.DeviceDescription,
-        CreatedAt         = device.CreatedAt,
-        WaitTime          = device.WaitTime
-    };
-    
+        return new UserDeviceResponseDto
+        {
+            DeviceId = device.DeviceId,
+            UserId = device.UserId,
+            DeviceName = device.DeviceName,
+            DeviceDescription = device.DeviceDescription,
+            CreatedAt = device.CreatedAt,
+            WaitTime = device.WaitTime
+        };
+    }
 }

@@ -3,7 +3,7 @@ import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
 import PlantModal from "../../components/Modals/PlantModal.tsx";
 import {TitleTimeHeader} from "../../components";
-import {JwtAtom, PlantResponseDto } from "../../atoms";
+import {JwtAtom, PlantResponseDto} from "../../atoms";
 import {useAtom} from "jotai";
 import PlantToolbar from "../../components/Modals/PlantToolbar.tsx";
 import {plantClient} from "../../apiControllerClients.ts";
@@ -20,14 +20,16 @@ const toCard = (dto: PlantResponseDto): CardPlant => {
                 )
             )
             : 0;
-    return { id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days, isDead: !!dto.isDead };
+    return {id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days, isDead: !!dto.isDead};
 };
 
 function userIdFromJwt(token: string): string | null {
     try {
-        const { sub, Id } = JSON.parse(atob(token.split(".")[1]));
+        const {sub, Id} = JSON.parse(atob(token.split(".")[1]));
         return (sub || Id) ?? null;
-    } catch { return null; }
+    } catch {
+        return null;
+    }
 }
 
 const PlantsView: React.FC = () => {
@@ -37,15 +39,18 @@ const PlantsView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
     const [now, setNow] = useState(new Date());
-    const [modalOpen, setModalOpen]   = useState(false);
-    const [selected, setSelected]     = useState<CardPlant | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selected, setSelected] = useState<CardPlant | null>(null);
     const [showDead, setShowDead] = useState(false);
 
     // Fetch plants
     const fetchPlants = useCallback(async () => {
         if (!jwt) return;
         const uid = userIdFromJwt(jwt);
-        if (!uid) { setErr("Invalid token"); return; }
+        if (!uid) {
+            setErr("Invalid token");
+            return;
+        }
 
         try {
             setLoading(true);
@@ -59,35 +64,51 @@ const PlantsView: React.FC = () => {
         }
     }, [jwt]);
 
-    useEffect(() => { fetchPlants(); }, [fetchPlants]);
+    useEffect(() => {
+        fetchPlants();
+    }, [fetchPlants]);
 
     // Water Plants
     const waterAll = async () => {
-        try { await plantClient.waterAllPlants(jwt); await fetchPlants(); }
-        catch (e:any){ alert(e.message ?? "Failed"); }
+        try {
+            await plantClient.waterAllPlants(jwt);
+            await fetchPlants();
+        } catch (e: any) {
+            alert(e.message ?? "Failed");
+        }
     };
     const waterOne = async (id: string) => {
-        try { await plantClient.waterPlant(id, jwt); await fetchPlants(); }
-        catch (e:any){ alert(e.message ?? "Failed"); }
+        try {
+            await plantClient.waterPlant(id, jwt);
+            await fetchPlants();
+        } catch (e: any) {
+            alert(e.message ?? "Failed");
+        }
     };
 
-    
+
     // Open helpers 
-    const openNew   = () => { setSelected(null);   setModalOpen(true); };
-    const openDetails  = (p: CardPlant) => { setSelected(p); setModalOpen(true); };
-    const closeMod  = () => setModalOpen(false);
-    
+    const openNew = () => {
+        setSelected(null);
+        setModalOpen(true);
+    };
+    const openDetails = (p: CardPlant) => {
+        setSelected(p);
+        setModalOpen(true);
+    };
+    const closeMod = () => setModalOpen(false);
+
     // Search filter
     const visible = useMemo(() => {
         const t = search.trim().toLowerCase();
-
+    
         return plants
             .filter((p) => (showDead ? true : !p.isDead))
             .filter((p) => (t ? p.name.toLowerCase().includes(t) : true));
     }, [plants, search, showDead]);
 
     if (loading) return <p className="p-6">Loading…</p>;
-    if (err)     return <p className="p-6 text-error">{err}</p>;
+    if (err) return <p className="p-6 text-error">{err}</p>;
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
@@ -97,8 +118,8 @@ const PlantsView: React.FC = () => {
 
             {/* content */}
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <PlantToolbar 
-                    onSearch={setSearch} 
+                <PlantToolbar
+                    onSearch={setSearch}
                     onWaterAll={waterAll}
                     showDead={showDead}
                     onToggleDead={() => setShowDead((d) => !d)}
@@ -115,7 +136,7 @@ const PlantsView: React.FC = () => {
                             showDead={showDead}
                         />
                     ))}
-                    <AddPlantCard onClick={openNew} />
+                    <AddPlantCard onClick={openNew}/>
                 </div>
             </main>
 

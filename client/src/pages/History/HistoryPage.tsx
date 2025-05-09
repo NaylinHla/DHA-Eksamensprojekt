@@ -13,16 +13,19 @@ import {Line} from "react-chartjs-2";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
 import {
-    formatDateTimeForUserTZ, GetRecentSensorDataForAllUserDeviceDto,
+    formatDateTimeForUserTZ,
+    GetRecentSensorDataForAllUserDeviceDto,
     GreenhouseSensorDataAtom,
     JwtAtom,
     SelectedDeviceIdAtom,
-    SensorHistoryDto, SensorHistoryWithDeviceDto,
-    StringConstants, TitleTimeHeader,
+    SensorHistoryDto,
+    SensorHistoryWithDeviceDto,
+    StringConstants,
+    TitleTimeHeader,
     UserDevice,
     useThrottle,
     useTopicManager,
-    useWebSocketMessage,
+    useWebSocketMessage
 } from "../import";
 import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients.ts";
 
@@ -116,10 +119,10 @@ export default function HistoryPage() {
             const t = formatDateTimeForUserTZ(r.time);
             if (!t) return;
 
-            appendPointToChart(chartRefs.temperature,  { time: t, value: Number(r.temperature) });
-            appendPointToChart(chartRefs.humidity,     { time: t, value: Number(r.humidity)    });
-            appendPointToChart(chartRefs.airPressure,  { time: t, value: Number(r.airPressure) });
-            appendPointToChart(chartRefs.airQuality,   { time: t, value: Number(r.airQuality)  });
+            appendPointToChart(chartRefs.temperature, {time: t, value: Number(r.temperature)});
+            appendPointToChart(chartRefs.humidity, {time: t, value: Number(r.humidity)});
+            appendPointToChart(chartRefs.airPressure, {time: t, value: Number(r.airPressure)});
+            appendPointToChart(chartRefs.airQuality, {time: t, value: Number(r.airQuality)});
         });
     }, 1000);
 
@@ -187,7 +190,9 @@ export default function HistoryPage() {
             .then((res: any) => {
                 const list = Array.isArray(res) ? res : [];
                 setDevices(list);
-                if (!selectedDeviceId && list.length) {setSelectedDeviceId(list[0].deviceId!);}
+                if (!selectedDeviceId && list.length) {
+                    setSelectedDeviceId(list[0].deviceId!);
+                }
             })
             .catch(() => toast.error("Failed to load devices", {id: "load-devices-error"}))
             .finally(() => setLoadingDevices(false));
@@ -240,7 +245,7 @@ export default function HistoryPage() {
 
                 setLatestSensorData(snapshot);
             })
-            .catch(() => toast.error("Failed to load recent sensor data", { id: "load-sensor-error" }));
+            .catch(() => toast.error("Failed to load recent sensor data", {id: "load-sensor-error"}));
     }, [jwt, selectedDeviceId]);
 
     function downSampleRecords<T>(arr: T[], maxPoints = 500): T[] {
@@ -364,13 +369,13 @@ export default function HistoryPage() {
 
         if (isFromDate) {
             if (new Date(newDate) > new Date(rangeTo)) {
-                toast.error("From date cannot be after To date", { id: "date-range-error" });
+                toast.error("From date cannot be after To date", {id: "date-range-error"});
                 return;
             }
             setRangeFrom(newDate);
         } else {
             if (new Date(newDate) < new Date(rangeFrom)) {
-                toast.error("To date cannot be before From date", { id: "date-range-error" });
+                toast.error("To date cannot be before From date", {id: "date-range-error"});
                 return;
             }
             setRangeTo(newDate);
@@ -398,7 +403,7 @@ export default function HistoryPage() {
         <div>
             {/* Filters */}
             <div>
-                <TitleTimeHeader title="Overview" />
+                <TitleTimeHeader title="Overview"/>
             </div>
 
             <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">

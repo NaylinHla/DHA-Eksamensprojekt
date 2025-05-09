@@ -9,9 +9,6 @@ namespace Startup.Tests.Infrastructure;
 [TestFixture]
 public class EmailListRepositoryTest
 {
-    private MyDbContext _dbContext = null!;
-    private EmailListRepository _repository = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -28,6 +25,9 @@ public class EmailListRepositoryTest
     {
         _dbContext.Dispose();
     }
+
+    private MyDbContext _dbContext = null!;
+    private EmailListRepository _repository = null!;
 
     [Test]
     public void Add_ShouldAddEmail()
@@ -48,8 +48,8 @@ public class EmailListRepositoryTest
     {
         _dbContext.EmailList.AddRange(new List<EmailList>
         {
-            new EmailList { Email = "a@example.com" },
-            new EmailList { Email = "b@example.com" }
+            new() { Email = "a@example.com" },
+            new() { Email = "b@example.com" }
         });
         _dbContext.SaveChanges();
 

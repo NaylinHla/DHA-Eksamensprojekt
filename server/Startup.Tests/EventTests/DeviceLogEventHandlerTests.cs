@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using Application.Interfaces;
@@ -15,15 +14,15 @@ namespace Startup.Tests.EventTests;
 [TestFixture]
 public class DeviceLogEventHandlerTests
 {
-    private Mock<IGreenhouseDeviceService> _mockGreenhouseService;
-    private DeviceLogEventHandler _handler;
-
     [SetUp]
     public void SetUp()
     {
         _mockGreenhouseService = new Mock<IGreenhouseDeviceService>();
         _handler = new DeviceLogEventHandler(_mockGreenhouseService.Object);
     }
+
+    private Mock<IGreenhouseDeviceService> _mockGreenhouseService;
+    private DeviceLogEventHandler _handler;
 
     [Test]
     public void Handle_ValidPayload_CallsAddToDbAndBroadcast()
@@ -64,7 +63,7 @@ public class DeviceLogEventHandlerTests
                 Payload = Encoding.UTF8.GetBytes(badJson)
             }
         );
-        
+
         Assert.Throws<JsonException>(() => _handler.Handle(null, args));
     }
 
@@ -75,7 +74,7 @@ public class DeviceLogEventHandlerTests
         {
             Time = DateTime.UtcNow,
             Temperature = 22,
-            DeviceId = "", // required, must be set
+            DeviceId = "" // required, must be set
         };
 
         var json = JsonSerializer.Serialize(invalidDto);
