@@ -27,11 +27,12 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Cache NuGet & dotnet-tools
+      - name: Cache NuGet packages & global tools
         uses: actions/cache@v3
         with:
           path: |
             ~/.nuget/packages
+            ~/.dotnet/tools/.store
             ~/.dotnet/tools
             ~/.dotnet/toolresolver
           key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
@@ -46,33 +47,27 @@ jobs:
           {
             "$schema": "https://stryker-mutator.io/stryker-schema.json",
             "solution": "../DrivhusApplikation.sln",
-            "project-file": "Startup.Tests.csproj",
             "mutate": [
-              "../Api.Rest/**/*.cs",
-              "../Api.Websocket/**/*.cs",
-              "../Application/**/*.cs",
-              "../Infrastructure.MQTT/**/*.cs",
-              "../Infrastructure.Postgres/**/*.cs",
-              "../Infrastructure.Websocket/**/*.cs"
-            ],
-            "ignore-mutations": [
-              "**/Infrastructure.Postgres.Scaffolding/**",
-              "**/server/Startup/**",
-              "**/server/Startup.Tests/**"
+              "server/Api.Rest/**/*.cs",
+              "server/Api.Websocket/**/*.cs",
+              "server/Application/**/*.cs",
+              "server/Infrastructure.MQTT/**/*.cs",
+              "server/Infrastructure.Postgres/**/*.cs",
+              "server/Infrastructure.Websocket/**/*.cs",
+              "!server/Core.Domain/**/*.cs",
+              "!server/Infrastructure.Postgres.Scaffolding/**",
+              "!server/Startup/**"
             ],
             "coverage-analysis": "perTest",
-            "thresholds": {
-              "break": 80
-            },
+            "thresholds": { "break": 80 },
             "concurrency": "auto",
-            "max-test-run-time": 120,
-            "reporters": [ "progress", "html" ]
+            "max-test-run-time": 120
           }
           JSON
 
       - name: Run Mutation Tests (Stryker)
         working-directory: server/Startup.Tests
-        run: dotnet stryker
+        run: dotnet stryker --reporter "html"
         continue-on-error: true
 
       - name: Upload Stryker Report
