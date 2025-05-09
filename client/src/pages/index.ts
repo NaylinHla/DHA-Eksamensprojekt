@@ -1,6 +1,9 @@
 export {default as DashboardPage} from './Dashboard/DashboardPage.tsx';
+export {default as AuthScreen} from './Auth/AuthScreen.tsx'
 export {default as HistoryPage} from './History/HistoryPage';
-export {default as AlertPage} from './Alert/AlertOverview'
-
+export {default as AlertPage} from './Alert/AlertOverview';
+export {default as UserSettings} from './UserSettings/UserSettings'
+export {default as WeatherView} from './Weather/WeatherView'
+export {default as PlantsView} from './PlantsView/PlantsView.tsx'
 export {default as NotFoundPage} from './Misc/NotFound'
 export {default as MyDevicePage} from './MyDevice/MyDevicePage'
