@@ -1,6 +1,6 @@
 ﻿{
   "stryker-config": {
-  "solution": "../DrivhusApplikation.sln",
+  "solution": "../../DrivhusApplikation.sln",
   "mutate": [
     "../Api.Rest/**/*.cs",
     "../Api.Websocket/**/*.cs",
