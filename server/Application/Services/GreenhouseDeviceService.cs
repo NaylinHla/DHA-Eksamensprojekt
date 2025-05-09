@@ -15,9 +15,9 @@ namespace Application.Services;
 
 public class GreenhouseDeviceService : IGreenhouseDeviceService
 {
+    private readonly IConnectionManager _connectionManager;
     private readonly ILogger<GreenhouseDeviceService> _logger;
     private readonly IServiceProvider _services;
-    private readonly IConnectionManager _connectionManager;
 
     public GreenhouseDeviceService(
         ILogger<GreenhouseDeviceService> logger,

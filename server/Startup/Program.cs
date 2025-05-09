@@ -44,11 +44,8 @@ public class Program
         services.RegisterRestApiServices();
 
         var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
-        
-        services.Configure<AppOptions>(options =>
-        {
-            options.EnableEmailSending = false;
-        });
+
+        services.Configure<AppOptions>(options => { options.EnableEmailSending = false; });
 
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {
@@ -76,7 +73,7 @@ public class Program
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         var serializedAppOptions = JsonSerializer.Serialize(appOptions);
         logger.LogInformation("Serialized AppOptions: {serializedAppOptions}", serializedAppOptions);
-        
+
         using (var scope = app.Services.CreateScope())
         {
             if (appOptions.Seed)
@@ -89,12 +86,12 @@ public class Program
             .StartProxyServer(appOptions.PORT, appOptions.REST_PORT, appOptions.WS_PORT);
 
         app.ConfigureRestApi();
-    
+
         if (!appOptions.IsTesting && !string.IsNullOrEmpty(appOptions.MQTT_BROKER_HOST))
             await app.ConfigureMqtt();
         else
             Console.WriteLine("Skipping MQTT service configuration");
-    
+
 
         await app.ConfigureWebsocketApi(appOptions.WS_PORT);
 

@@ -16,10 +16,6 @@ namespace Startup.Tests.EmailTests;
 [TestFixture]
 public class EmailControllerTest
 {
-    private WebApplicationFactory<Program> _factory = null!;
-    private HttpClient _client = null!;
-    private User _testUser = null!;
-
     [SetUp]
     public async Task Setup()
     {
@@ -31,13 +27,13 @@ public class EmailControllerTest
                 builder.ConfigureServices(services =>
                 {
                     services.DefaultTestConfig();
-                    
+
                     var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailSender));
                     if (descriptor != null)
                         services.Remove(descriptor);
 
                     services.AddSingleton<IEmailSender, FakeEmailSender>();
-                    
+
                     services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
                 });
             });
@@ -56,6 +52,10 @@ public class EmailControllerTest
         _client.Dispose();
         _factory.Dispose();
     }
+
+    private WebApplicationFactory<Program> _factory = null!;
+    private HttpClient _client = null!;
+    private User _testUser = null!;
 
     [Test]
     public async Task SubscribeToEmailList_ShouldReturnOk()
@@ -107,11 +107,22 @@ public class EmailControllerTest
         var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
-    
+
     private class FakeEmailSender : IEmailSender
     {
-        public Task AddEmailAsync(AddEmailDto dto) => Task.CompletedTask;
-        public Task RemoveEmailAsync(RemoveEmailDto dto) => Task.CompletedTask;
-        public Task SendEmailAsync(string subject, string message) => Task.CompletedTask;
+        public Task AddEmailAsync(AddEmailDto dto)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveEmailAsync(RemoveEmailDto dto)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task SendEmailAsync(string subject, string message)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

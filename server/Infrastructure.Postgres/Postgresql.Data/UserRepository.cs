@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Postgres.Postgresql.Data;
 
@@ -16,7 +15,7 @@ public class UserRepository(MyDbContext ctx) : IUserRepository
     {
         return ctx.Users.Any(u => u.Email == email);
     }
-    
+
     public bool HashExists(string hash)
     {
         return ctx.Users.Any(u => u.Hash == hash);

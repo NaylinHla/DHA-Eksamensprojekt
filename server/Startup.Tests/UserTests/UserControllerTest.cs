@@ -14,10 +14,6 @@ namespace Startup.Tests.UserTests;
 [TestFixture]
 public class UserControllerTest
 {
-    private WebApplicationFactory<Program> _factory = null!;
-    private HttpClient _client = null!;
-    private User _testUser = null!;
-
     [SetUp]
     public async Task Setup()
     {
@@ -40,7 +36,7 @@ public class UserControllerTest
         await db.SaveChangesAsync();
 
         // Login and set JWT
-        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { Email = _testUser.Email, Password = "pass" });
+        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
         _client.DefaultRequestHeaders.Add("Authorization", authDto!.Jwt);
@@ -52,6 +48,10 @@ public class UserControllerTest
         _client.Dispose();
         _factory.Dispose();
     }
+
+    private WebApplicationFactory<Program> _factory = null!;
+    private HttpClient _client = null!;
+    private User _testUser = null!;
 
     [Test]
     public async Task DeleteUser_ShouldReturnOk()
@@ -70,7 +70,7 @@ public class UserControllerTest
         };
 
         var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
-        
+
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
@@ -107,7 +107,7 @@ public class UserControllerTest
         var response = await unauthClient.DeleteAsync("api/User/DeleteUser");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task PatchUserEmail_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
@@ -130,28 +130,27 @@ public class UserControllerTest
         // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
-    
+
     [Test]
     public async Task PatchUserEmail_ShouldReturnBadRequest_WhenEmailIsInvalid()
     {
-
         var patchDto = new PatchUserEmailDto { NewEmail = "" }; // empty email should trigger ArgumentException
         var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task PatchUserPassword_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
         using var scope = _factory.Services.CreateScope();
-        
+
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-        
+
         var user = db.Users.First();
-        
+
         db.Users.Remove(user);
-        
+
         await db.SaveChangesAsync();
 
         var patchDto = new PatchUserPasswordDto
@@ -164,11 +163,10 @@ public class UserControllerTest
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
-    
+
     [Test]
     public async Task PatchUserPassword_ShouldReturnBadRequest_WhenNewPasswordIsInvalid()
     {
-
         var patchDto = new PatchUserPasswordDto
         {
             OldPassword = "pass",
@@ -179,11 +177,10 @@ public class UserControllerTest
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
-        
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
         var user = db.Users.First();
@@ -194,5 +191,4 @@ public class UserControllerTest
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
-
 }

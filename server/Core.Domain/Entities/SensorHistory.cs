@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Core.Domain.Entities;
+﻿namespace Core.Domain.Entities;
 
 public class SensorHistory
 {
@@ -11,6 +9,6 @@ public class SensorHistory
     public double AirPressure { get; set; }
     public int AirQuality { get; set; }
     public DateTime Time { get; set; }
-    
+
     public UserDevice? UserDevice { get; set; }
 }

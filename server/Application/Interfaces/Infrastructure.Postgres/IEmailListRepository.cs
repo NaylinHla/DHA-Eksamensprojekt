@@ -9,5 +9,4 @@ public interface IEmailListRepository
     void Save();
     bool EmailExists(string email);
     List<string> GetAllEmails();
-
 }

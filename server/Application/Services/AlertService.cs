@@ -47,7 +47,7 @@ public class AlertService : IAlertService
     }
 
     public Task<List<Alert>> GetAlertsAsync(Guid userId, int? year = null)
-        => _alertRepo.GetAlertsAsync(userId, year);
+    {
+        return _alertRepo.GetAlertsAsync(userId, year);
+    }
 }
-
-

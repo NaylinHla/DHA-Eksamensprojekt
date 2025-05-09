@@ -12,11 +12,11 @@ namespace Startup.Tests.UserDeviceTests;
 
 public class UserDeviceServiceTests
 {
-    private Mock<IUserDeviceRepository> _userDeviceRepoMock = null!;
+    private readonly Guid _otherUserId = Guid.NewGuid();
+    private readonly Guid _userId = Guid.NewGuid();
     private Mock<IMqttPublisher> _mqttPublisherMock = null!;
     private UserDeviceService _service = null!;
-    private readonly Guid _userId = Guid.NewGuid();
-    private readonly Guid _otherUserId = Guid.NewGuid();
+    private Mock<IUserDeviceRepository> _userDeviceRepoMock = null!;
 
     [SetUp]
     public void Setup()
@@ -26,13 +26,16 @@ public class UserDeviceServiceTests
         _service = new UserDeviceService(_userDeviceRepoMock.Object, _mqttPublisherMock.Object);
     }
 
-    private JwtClaims MockClaims(Guid id) => new JwtClaims
+    private JwtClaims MockClaims(Guid id)
     {
-        Id = id.ToString(),
-        Role = "User",
-        Email = "test@example.com",
-        Exp = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
-    };
+        return new JwtClaims()
+        {
+            Id = id.ToString(),
+            Role = "User",
+            Email = "test@example.com",
+            Exp = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
+        };
+    }
 
 
     [Test]
@@ -97,7 +100,7 @@ public class UserDeviceServiceTests
         Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             await _service.DeleteUserDeviceAsync(deviceId, MockClaims(_userId)));
     }
-    
+
     [Test]
     public void UpdateDeviceFeed_ShouldThrowUnauthorized_WhenDeviceNotOwned()
     {

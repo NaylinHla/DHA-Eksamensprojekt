@@ -8,7 +8,7 @@ public static class MockObjects
     public static User GetUser(string? role = null)
     {
         var userId = Guid.NewGuid();
-        
+
         // Create a user instance
         var user = new User
         {
@@ -16,7 +16,8 @@ public static class MockObjects
             Role = role ?? Constants.UserRole,
             Email = $"testing{Guid.NewGuid()}@gmail.com",
             Salt = "word", // password is "pass" and the hash is the combined pass + word hashed together
-            Hash = "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
+            Hash =
+                "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
             FirstName = "Test",
             LastName = "User",
             Birthday = DateTime.UtcNow.AddYears(-30),
@@ -51,11 +52,11 @@ public static class MockObjects
             CreatedAt = DateTime.UtcNow,
             SensorHistories = new List<SensorHistory>()
         };
-        
+
         var emaillist = new EmailList
         {
             Email = user.Email,
-            Id = 1,
+            Id = 1
         };
 
         // Add sample sensor data to the device

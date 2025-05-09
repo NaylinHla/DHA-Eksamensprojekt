@@ -9,6 +9,7 @@ public interface IGreenhouseDeviceService
 {
     Task<List<GetAllSensorHistoryByDeviceIdDto>>
         GetSensorHistoryByDeviceId(Guid deviceId, DateTime? from, DateTime? to, JwtClaims claims);
+
     Task<GetRecentSensorDataForAllUserDeviceDto> GetRecentSensorDataForAllUserDevicesAsync(JwtClaims claims);
     Task AddToDbAndBroadcast(DeviceSensorDataDto? dto);
     Task DeleteDataFromSpecificDeviceAndBroadcast(Guid deviceId, JwtClaims claims);

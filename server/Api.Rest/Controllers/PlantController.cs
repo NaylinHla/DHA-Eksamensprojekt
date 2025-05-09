@@ -9,9 +9,6 @@ namespace Api.Rest.Controllers;
 [Route("api/[controller]")]
 public class PlantController(IPlantService plantService, ISecurityService securityService) : ControllerBase
 {
-    
-    
-    
     public const string GetPlantRoute = nameof(GetPlant);
     public const string GetPlantsRoute = nameof(GetAllPlants);
     public const string CreatePlantRoute = nameof(CreatePlant);
@@ -20,7 +17,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     public const string WaterPlantRoute = nameof(WaterPlant);
     public const string WaterAllPlantsRoute = nameof(WaterAllPlants);
     public const string DeletePlantRoute = nameof(DeletePlant);
-    
+
     [HttpGet]
     [Route(GetPlantRoute)]
     public async Task<ActionResult<PlantResponseDto>> GetPlant(
@@ -28,11 +25,11 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         securityService.VerifyJwtOrThrow(authorization);
-        
+
         var plant = await plantService.GetPlantByIdAsync(plantId);
         return plant is null ? NotFound() : Ok(ToDto(plant));
     }
-    
+
     [HttpGet]
     [Route(GetPlantsRoute)]
     public async Task<ActionResult<IEnumerable<PlantResponseDto>>> GetAllPlants(
@@ -40,10 +37,10 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        
+
         if (userId != Guid.Parse(claims.Id))
             throw new UnauthorizedAccessException("Your JWT token does not belong to your account.");
-        
+
         var plants = await plantService.GetAllPlantsAsync(Guid.Parse(claims.Id));
         return Ok(plants.Select(ToDto));
     }
@@ -69,7 +66,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         await plantService.DeletePlantAsync(plantId, claims);
         return Ok();
     }
-    
+
     [HttpPatch]
     [Route(EditPlantRoute)]
     public async Task<ActionResult<PlantEditDto>> EditPlant(
@@ -93,11 +90,11 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         await plantService.MarkPlantAsDeadAsync(plantId);
         return Ok();
     }
-    
+
     [HttpPatch]
     [Route(WaterPlantRoute)]
     public async Task<IActionResult> WaterPlant(
-        Guid   plantId,
+        Guid plantId,
         [FromHeader] string authorization)
     {
         securityService.VerifyJwtOrThrow(authorization);
@@ -114,17 +111,20 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         await plantService.WaterAllPlantsAsync(Guid.Parse(claims.Id));
         return Ok();
     }
-    
-    
-    private static PlantResponseDto ToDto(Plant p) => new()
+
+
+    private static PlantResponseDto ToDto(Plant p)
     {
-        PlantId      = p.PlantId,
-        PlantName    = p.PlantName,
-        PlantType    = p.PlantType,
-        PlantNotes   = p.PlantNotes,
-        Planted      = p.Planted,
-        LastWatered  = p.LastWatered,
-        WaterEvery   = p.WaterEvery,
-        IsDead       = p.IsDead
-    };
+        return new PlantResponseDto
+        {
+            PlantId = p.PlantId,
+            PlantName = p.PlantName,
+            PlantType = p.PlantType,
+            PlantNotes = p.PlantNotes,
+            Planted = p.Planted,
+            LastWatered = p.LastWatered,
+            WaterEvery = p.WaterEvery,
+            IsDead = p.IsDead
+        };
+    }
 }

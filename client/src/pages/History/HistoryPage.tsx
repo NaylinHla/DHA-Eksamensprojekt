@@ -22,7 +22,7 @@ import {
     UserDevice,
     useThrottle,
     useTopicManager,
-    useWebSocketMessage,
+    useWebSocketMessage, useLogout
 } from "../import";
 import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients.ts";
 

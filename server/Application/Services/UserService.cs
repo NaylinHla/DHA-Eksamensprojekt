@@ -1,15 +1,14 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.RestDtos.Request;
-using Application.Services;
 using Core.Domain.Entities;
 
 namespace Application.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
     private readonly ISecurityService _securityService;
+    private readonly IUserRepository _userRepository;
 
     public UserService(IUserRepository userRepository, ISecurityService securityService)
     {
@@ -24,13 +23,13 @@ public class UserService : IUserService
             throw new KeyNotFoundException("Bruger blev ikke fundet.");
 
         // Base anonymized email
-        string baseEmail = "Deleted@User.com";
-        string updatedEmail = baseEmail;
-        int counter = 1;
+        var baseEmail = "Deleted@User.com";
+        var updatedEmail = baseEmail;
+        var counter = 1;
 
         // Ensure email is unique
         while (_userRepository.EmailExists(updatedEmail))
-        { 
+        {
             updatedEmail = $"Deleted{counter}@User.com";
             counter++;
         }
@@ -47,7 +46,7 @@ public class UserService : IUserService
 
         return user;
     }
-    
+
     public User PatchUserEmail(PatchUserEmailDto request)
     {
         var user = _userRepository.GetUserOrNull(request.OldEmail);
@@ -64,6 +63,7 @@ public class UserService : IUserService
 
         return user;
     }
+
     public User PatchUserPassword(string email, PatchUserPasswordDto request)
     {
         var user = _userRepository.GetUserOrNull(email);
@@ -82,6 +82,4 @@ public class UserService : IUserService
 
         return user;
     }
-
-
 }

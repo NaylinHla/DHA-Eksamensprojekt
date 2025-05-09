@@ -15,7 +15,6 @@ public class EmailSenderService(
     JwtEmailTokenService jwtService)
     : IEmailSender
 {
-
     private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
 
     public async Task SendEmailAsync(string subject, string message)
@@ -36,10 +35,10 @@ public class EmailSenderService(
 
         foreach (var email in emailList)
         {
-            string token = jwtService.GenerateUnsubscribeToken(email);
-            string unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
+            var token = jwtService.GenerateUnsubscribeToken(email);
+            var unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
 
-            string htmlBody = $@"
+            var htmlBody = $@"
                 <p>{message}</p>
                 <hr />
                 <p style='font-size:12px;color:#888;'>
@@ -74,7 +73,7 @@ public class EmailSenderService(
     {
         if (!emailListRepository.EmailExists(dto.Email))
             return;
-            
+
         emailListRepository.RemoveByEmail(dto.Email);
         emailListRepository.Save();
 
@@ -96,10 +95,10 @@ public class EmailSenderService(
         };
 
         var mailMessage = new MailMessage(
-            from: "noreply@meetyourplants.site",
-            to: toEmail,
-            subject: "Welcome to Meet Your Plants!",
-            body: "Thank you for subscribing to our email list. We’re excited to share updates with you!"
+            "noreply@meetyourplants.site",
+            toEmail,
+            "Welcome to Meet Your Plants!",
+            "Thank you for subscribing to our email list. We’re excited to share updates with you!"
         );
 
         await client.SendMailAsync(mailMessage);
@@ -108,9 +107,8 @@ public class EmailSenderService(
 
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
-        
         if (!ShouldSendEmails) return;
-        
+
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
@@ -122,10 +120,10 @@ public class EmailSenderService(
         };
 
         var mailMessage = new MailMessage(
-            from: "noreply@meetyourplants.site",
-            to: toEmail,
-            subject: "Goodbye from Meet Your Plants",
-            body: "You've been unsubscribed from our email list. We're sad to see you go!"
+            "noreply@meetyourplants.site",
+            toEmail,
+            "Goodbye from Meet Your Plants",
+            "You've been unsubscribed from our email list. We're sad to see you go!"
         );
 
         await client.SendMailAsync(mailMessage);

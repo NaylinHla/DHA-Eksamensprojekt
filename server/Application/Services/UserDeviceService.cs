@@ -14,7 +14,7 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     private const string DeviceNotFound = "Device not found.";
     private const string UnauthorizedDeviceAccess = "You do not own this device.";
     private const string DeviceIdRequired = "DeviceId is required.";
-    
+
     public async Task<UserDevice?> GetUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
@@ -49,7 +49,7 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     public async Task<UserDevice> UpdateUserDeviceAsync(Guid deviceId, UserDeviceEditDto dto, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
-                     ?? throw new NotFoundException(DeviceNotFound );
+                     ?? throw new NotFoundException(DeviceNotFound);
 
         if (device.UserId != Guid.Parse(claims.Id))
             throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
@@ -65,7 +65,7 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     public async Task DeleteUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
-                     ?? throw new KeyNotFoundException(DeviceNotFound );
+                     ?? throw new KeyNotFoundException(DeviceNotFound);
 
         if (device.UserId != Guid.Parse(claims.Id))
             throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
@@ -79,12 +79,13 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
             throw new ArgumentException(DeviceIdRequired);
 
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(Guid.Parse(dto.DeviceId))
-                     ?? throw new NotFoundException(DeviceNotFound );
+                     ?? throw new NotFoundException(DeviceNotFound);
 
         if (device.UserId != Guid.Parse(claims.Id))
             throw new UnauthorizedAccessException(UnauthorizedDeviceAccess);
 
-        await mqttPublisher.Publish(dto, $"{StringConstants.Device}/{dto.DeviceId}/{StringConstants.ChangePreferences}");
+        await mqttPublisher.Publish(dto,
+            $"{StringConstants.Device}/{dto.DeviceId}/{StringConstants.ChangePreferences}");
 
         // Update fields if they are not null
         if (dto.Interval is not null)

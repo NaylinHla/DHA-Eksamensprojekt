@@ -51,6 +51,8 @@ public class UserDeviceRepository(MyDbContext ctx) : IUserDeviceRepository
         await ctx.SaveChangesAsync();
     }
 
-    public Task SaveChangesAsync() => ctx.SaveChangesAsync();
-
+    public Task SaveChangesAsync()
+    {
+        return ctx.SaveChangesAsync();
+    }
 }

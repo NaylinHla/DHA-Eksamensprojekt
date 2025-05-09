@@ -1,4 +1,5 @@
 ﻿using System.Net.Mail;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
@@ -6,17 +7,12 @@ using Core.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
-using Application.Interfaces.Infrastructure.Postgres;
 
 namespace Startup.Tests.EmailTests;
 
 [TestFixture]
 public class EmailSenderServiceTest
 {
-    private EmailSenderService _service = null!;
-    private Mock<IEmailListRepository> _emailRepo = null!;
-    private JwtEmailTokenService _jwtService = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -33,12 +29,16 @@ public class EmailSenderServiceTest
         var jwtOptionsMock = new Mock<IOptions<AppOptions>>();
         jwtOptionsMock.Setup(o => o.Value).Returns(appOptions);
         _jwtService = new JwtEmailTokenService(jwtOptionsMock.Object);
-        
+
         var emailOptionsMonitorMock = new Mock<IOptionsMonitor<AppOptions>>();
         emailOptionsMonitorMock.Setup(o => o.CurrentValue).Returns(appOptions);
-        
+
         _service = new EmailSenderService(emailOptionsMonitorMock.Object, _emailRepo.Object, _jwtService);
     }
+
+    private EmailSenderService _service = null!;
+    private Mock<IEmailListRepository> _emailRepo = null!;
+    private JwtEmailTokenService _jwtService = null!;
 
     [Test]
     public async Task AddEmailAsync_ShouldAdd_WhenEmailNotExists()
@@ -95,7 +95,7 @@ public class EmailSenderServiceTest
 
         Assert.DoesNotThrowAsync(() => _service.SendEmailAsync("Subject", "Body"));
     }
-    
+
     [Test]
     public async Task SendEmailAsync_ShouldGenerateUnsubscribeLinks_WhenEnabled()
     {
@@ -123,7 +123,7 @@ public class EmailSenderServiceTest
         });
 
         var service = new EmailSenderService(monitorMock.Object, repo.Object, jwtService);
-        
+
         try
         {
             await service.SendEmailAsync("Test Subject", "Hello users!");
@@ -136,7 +136,7 @@ public class EmailSenderServiceTest
 
         repo.Verify(r => r.GetAllEmails(), Times.Once);
     }
-    
+
     [Test]
     public async Task RemoveEmailAsync_ShouldSendGoodbye_WhenEnabled()
     {
@@ -173,5 +173,4 @@ public class EmailSenderServiceTest
         repo.Verify(r => r.RemoveByEmail("bye@example.com"), Times.Once);
         repo.Verify(r => r.Save(), Times.Once);
     }
-
 }

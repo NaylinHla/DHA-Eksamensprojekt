@@ -28,7 +28,7 @@ public static class GenerateTypescriptClient
         var generator = new TypeScriptClientGenerator(document, settings);
         var code = generator.GenerateFile();
 
-        var linesArray = new[] {"\r\n", "\n" };
+        var linesArray = new[] { "\r\n", "\n" };
         var lines = code.Split(linesArray, StringSplitOptions.None).ToList();
         var startIndex = lines.FindIndex(l => l.Contains("export interface BaseDto"));
         if (startIndex >= 0)
