@@ -18,7 +18,7 @@ const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({ title }) => {
     }, []);
 
     return (
-        <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
+        <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-[--color-primary]">{title}</h1>
             <span className="text-sm text-gray-600">
         {formatDateTimeForUserTZ(currentTime)}

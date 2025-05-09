@@ -18,7 +18,7 @@ import {
     JwtAtom,
     SelectedDeviceIdAtom,
     SensorHistoryDto, SensorHistoryWithDeviceDto,
-    StringConstants,
+    StringConstants, TitleTimeHeader,
     UserDevice,
     useThrottle,
     useTopicManager,
@@ -397,10 +397,11 @@ export default function HistoryPage() {
     return (
         <div>
             {/* Filters */}
+            <div>
+                <TitleTimeHeader title="Overview" />
+            </div>
+
             <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">
-
-                <h1 className="text-2xl font-bold">Overview:</h1>
-
                 <div className="flex gap-2">
                     <label>From:
                         <input
@@ -461,7 +462,7 @@ export default function HistoryPage() {
 
                     <label className="font-medium">Select Device:</label>
                     <select
-                        className="border rounded p-2 min-w-[120px]"
+                        className="border rounded p-2 min-w-[120px] max-w-[200px] truncate"
                         value={selectedDeviceId || ""}
                         onChange={(e) => setSelectedDeviceId(e.target.value)}
                         disabled={loadingDevices}
@@ -470,8 +471,8 @@ export default function HistoryPage() {
                             <option>No devices</option>
                         ) : (
                             devices.map(d => (
-                                <option key={d.deviceId} value={d.deviceId}>
-                                    {d.deviceName}
+                                <option key={d.deviceId} value={d.deviceId} title={d.deviceName ?? 'Unnamed Device'}>
+                                    {(d.deviceName?.length ?? 0) > 15 ? `${d.deviceName?.slice(0, 15)}...` : d.deviceName ?? 'Unnamed Device'}
                                 </option>
                             ))
                         )}

@@ -134,7 +134,7 @@ export default function MyDevicePage() {
 
                             return (
                                 <div key={id}
-                                    className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow cursor-pointer hover:shadow-lg">
+                                     className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow cursor-pointer hover:shadow-lg">
 
                                     <div className="absolute top-2 right-2 flex items-center gap-2">
                                         <button
@@ -229,12 +229,16 @@ export default function MyDevicePage() {
                                     </div>
 
                                     <div className="text-sm space-y-1 mb-3">
-                                        <p>Temp: {formatDeviceValue(device.temperature, "°C")}</p>
-                                        <p>Humidity: {formatDeviceValue(device.humidity, "%")}</p>
-                                        <p>Air Pressure: {formatDeviceValue(device.airPressure, "hPa")}</p>
-                                        <p>Air Quality: {formatDeviceValue(device.airQuality, "ppm")}</p>
-                                        <p>When:{" "}{device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
-                                            ? new Date(device.time).toLocaleString() : "N/A"}
+                                        <p><strong>Temp:</strong> {formatDeviceValue(device.temperature, "°C")}</p>
+                                        <p><strong>Humidity:</strong> {formatDeviceValue(device.humidity, "%")}</p>
+                                        <p><strong>Air Pressure:</strong> {formatDeviceValue(device.airPressure, "hPa")}
+                                        </p>
+                                        <p><strong>Air Quality:</strong> {formatDeviceValue(device.airQuality, "ppm")}
+                                        </p>
+                                        <p><strong>When:</strong>{" "}
+                                            {device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
+                                                ? new Date(device.time).toLocaleString()
+                                                : "N/A"}
                                         </p>
                                     </div>
 
@@ -279,7 +283,7 @@ export default function MyDevicePage() {
                             }}
                             className="flex items-center justify-center border-2 border-dashed border-muted rounded-xl h-[500px] bg-[var(--color-surface)] hover:border-muted/60 transition"
                         >
-                            <Plus className="w-10 h-10 text-muted-foreground"/>
+                        <Plus className="w-10 h-10 text-muted-foreground"/>
                         </button>
                     </div>
                 </div>

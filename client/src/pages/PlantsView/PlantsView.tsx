@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from "react";
 import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
 import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
 import PlantModal from "../../components/Modals/PlantModal.tsx";
-import {formatDateTimeForUserTZ} from "../../components";
+import {TitleTimeHeader} from "../../components";
 import {JwtAtom, PlantResponseDto } from "../../atoms";
 import {useAtom} from "jotai";
 import PlantToolbar from "../../components/Modals/PlantToolbar.tsx";
@@ -40,12 +40,6 @@ const PlantsView: React.FC = () => {
     const [modalOpen, setModalOpen]   = useState(false);
     const [selected, setSelected]     = useState<CardPlant | null>(null);
     const [showDead, setShowDead] = useState(false);
-
-    // Clock
-    useEffect(() => {
-        const id = setInterval(() => setNow(new Date()), 1_000);
-        return () => clearInterval(id);
-    }, []);
 
     // Fetch plants
     const fetchPlants = useCallback(async () => {
@@ -99,12 +93,7 @@ const PlantsView: React.FC = () => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
 
             {/* header */}
-            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between">
-                <h1 className="text-2xl font-bold">Plants</h1>
-                <span className="text-sm text-gray-600">
-          {formatDateTimeForUserTZ(now)}
-        </span>
-            </header>
+            <TitleTimeHeader title="Plants"/>
 
             {/* content */}
             <main className="flex-1 overflow-y-auto px-6 py-4">
