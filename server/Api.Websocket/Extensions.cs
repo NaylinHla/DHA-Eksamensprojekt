@@ -53,10 +53,11 @@ public static class Extensions
                 catch (Exception e)
                 {
                     logger.LogError(e, "Error in handling message: {message}", message);
-                    var baseDto = JsonSerializer.Deserialize<BaseDto>(message, JsonDefaults.CaseInsensitive) ?? new BaseDto
-                    {
-                        eventType = nameof(ServerSendsErrorMessage)
-                    };
+                    var baseDto = JsonSerializer.Deserialize<BaseDto>(message, JsonDefaults.CaseInsensitive) ??
+                                  new BaseDto
+                                  {
+                                      eventType = nameof(ServerSendsErrorMessage)
+                                  };
                     var resp = new ServerSendsErrorMessage
                         { Message = e.Message, requestId = baseDto.requestId ?? "" };
                     ws.SendDto(resp);

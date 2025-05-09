@@ -1,0 +1,325 @@
+﻿using Core.Domain.Exceptions;
+using Fleck;
+using Infrastructure.Websocket;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
+
+namespace Startup.Tests.EventTests;
+
+public class WebSocketConnectionManagerTests
+{
+    private WebSocketConnectionManager _connectionManager;
+
+    [SetUp]
+    public void SetUp()
+    {
+        var loggerMock = new Mock<ILogger<WebSocketConnectionManager>>();
+        _connectionManager = new WebSocketConnectionManager(loggerMock.Object);
+    }
+
+    [Test]
+    public void GetConnectionIdToSocketDictionary_ShouldReturnCorrectData()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        _ = _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Act
+        var result = _connectionManager.GetConnectionIdToSocketDictionary();
+
+        // Assert
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result.ContainsKey(clientId), Is.True);
+        Assert.That(result[clientId], Is.EqualTo(socketMock.Object));
+    }
+
+    [Test]
+    public async Task OnOpen_ShouldAddConnection()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        // Act
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Assert
+        var result = _connectionManager.GetConnectionIdToSocketDictionary();
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result.ContainsKey(clientId), Is.True);
+    }
+
+    [Test]
+    public async Task OnClose_ShouldRemoveConnection()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        // Act
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.OnClose(socketMock.Object, clientId);
+
+        // Assert
+        var result = _connectionManager.GetConnectionIdToSocketDictionary();
+        Assert.That(result.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AddToTopic_ShouldAddMember()
+    {
+        // Arrange
+        var clientId = "client1";
+        var topic = "test/topic";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Act
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // Assert
+        var members = await _connectionManager.GetMembersFromTopicId(topic);
+        Assert.That(members, Contains.Item(clientId));
+    }
+
+    [Test]
+    public async Task RemoveFromTopic_ShouldRemoveMember()
+    {
+        // Arrange
+        var clientId = "client1";
+        var topic = "test/topic";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // Act
+        await _connectionManager.RemoveFromTopic(topic, clientId);
+
+        // Assert
+        var members = await _connectionManager.GetMembersFromTopicId(topic);
+        Assert.That(members, Does.Not.Contain(clientId));
+    }
+
+    [Test]
+    public async Task BroadcastToTopic_ShouldSendMessageToMembers()
+    {
+        // Arrange
+        var topic = "test/topic";
+        var message = new { text = "Hello" };
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+        socketMock.Setup(s => s.IsAvailable).Returns(true); // Ensure the socket is available
+
+        // Act
+        await _connectionManager.OnOpen(socketMock.Object, clientId); // Open connection
+        await _connectionManager.AddToTopic(topic, clientId); // Add to topic
+
+        // Assert the socket was added to the topic
+        var members = await _connectionManager.GetMembersFromTopicId(topic);
+        Assert.That(members, Contains.Item(clientId));
+
+        // Broadcast the message to the topic
+        await _connectionManager.BroadcastToTopic(topic, message);
+
+        // Assert that Send was called on the mock socket
+        socketMock.Verify(s => s.Send(It.IsAny<string>()), Times.Once);
+    }
+
+
+    [Test]
+    public async Task GetTopicsFromMemberId_ShouldReturnCorrectTopics()
+    {
+        // Arrange
+        var clientId = "client1";
+        var topic = "test/topic";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // Act
+        var topics = await _connectionManager.GetTopicsFromMemberId(clientId);
+
+        // Assert
+        Assert.That(topics, Contains.Item(topic));
+    }
+
+    [Test]
+    public async Task GetMembersFromTopicId_ShouldReturnCorrectMembers()
+    {
+        // Arrange
+        var clientId = "client1";
+        var topic = "test/topic";
+        var socketMock = new Mock<IWebSocketConnection>();
+
+        // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid()); // Return a mocked Guid
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // Act
+        var members = await _connectionManager.GetMembersFromTopicId(topic);
+
+        // Assert
+        Assert.That(members, Contains.Item(clientId));
+    }
+
+    [Test]
+    public void GetSocketIdToClientIdDictionary_ShouldReturnCorrectData()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        _ = _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Act
+        var result = _connectionManager.GetSocketIdToClientIdDictionary();
+
+        // Assert
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result.ContainsKey(socketMock.Object.ConnectionInfo.Id.ToString()), Is.True);
+    }
+
+    [Test]
+    public void GetClientIdFromSocket_ShouldReturnCorrectClientId()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        _ = _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Act
+        var result = _connectionManager.GetClientIdFromSocket(socketMock.Object);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(clientId));
+    }
+
+    [Test]
+    public void GetSocketFromClientId_ShouldReturnCorrectSocket()
+    {
+        // Arrange
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        _ = _connectionManager.OnOpen(socketMock.Object, clientId);
+
+        // Act
+        var result = _connectionManager.GetSocketFromClientId(clientId);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(socketMock.Object));
+    }
+
+    [Test]
+    public async Task OnOpen_ShouldReplaceOldSocketIfExists()
+    {
+        var clientId = "client1";
+
+        var oldSocketMock = new Mock<IWebSocketConnection>();
+        var oldConnectionInfo = new Mock<IWebSocketConnectionInfo>();
+        oldConnectionInfo.Setup(c => c.Id).Returns(Guid.NewGuid());
+        oldSocketMock.Setup(s => s.ConnectionInfo).Returns(oldConnectionInfo.Object);
+
+        var newSocketMock = new Mock<IWebSocketConnection>();
+        var newConnectionInfo = new Mock<IWebSocketConnectionInfo>();
+        newConnectionInfo.Setup(c => c.Id).Returns(Guid.NewGuid());
+        newSocketMock.Setup(s => s.ConnectionInfo).Returns(newConnectionInfo.Object);
+
+        await _connectionManager.OnOpen(oldSocketMock.Object, clientId);
+        await _connectionManager.OnOpen(newSocketMock.Object, clientId);
+
+        var currentSocket = _connectionManager.GetSocketFromClientId(clientId);
+        Assert.That(currentSocket, Is.EqualTo(newSocketMock.Object));
+    }
+
+    [Test]
+    public async Task BroadcastToTopic_ShouldLogErrorIfSendFails()
+    {
+        var topic = "test/topic";
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+        socketMock.Setup(s => s.IsAvailable).Returns(true);
+        socketMock.Setup(s => s.Send(It.IsAny<string>())).ThrowsAsync(new Exception("Send failed"));
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // No assert needed — we're just ensuring no exception propagates
+        Assert.DoesNotThrowAsync(() => _connectionManager.BroadcastToTopic(topic, new { msg = "fail" }));
+    }
+
+    [Test]
+    public void GetClientIdFromSocket_ShouldThrowIfSocketNotRegistered()
+    {
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+
+        Assert.Throws<NotFoundException>(() => _connectionManager.GetClientIdFromSocket(socketMock.Object));
+    }
+
+    [Test]
+    public void GetSocketFromClientId_ShouldThrowIfClientNotFound()
+    {
+        Assert.Throws<NotFoundException>(() => _connectionManager.GetSocketFromClientId("nonexistent"));
+    }
+}

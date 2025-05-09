@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { EmailClient } from "../../generated-client.ts"; // Adjust path
+import {useState} from "react";
+import {EmailClient} from "../../generated-client.ts"; // Adjust path
 
 const emailClient = new EmailClient("http://localhost:5000"); // Adjust base URL
 
@@ -23,7 +23,7 @@ export default function Footer() {
     const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            await emailClient.subscribeToEmailList({ email });
+            await emailClient.subscribeToEmailList({email});
             setEmail("");
             showToast("Subscribed successfully!");
         } catch (err) {

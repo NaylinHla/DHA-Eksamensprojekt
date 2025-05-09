@@ -1,5 +1,4 @@
-import {atom, atomWithStorage, AlertResponseDto} from "./import";
-
+import {AlertResponseDto, atom, atomWithStorage} from "./import";
 
 
 const getInitialJwt = () => {

@@ -3,7 +3,7 @@ import {useWsClient} from "ws-request-hook"; // Assuming you're using this or a 
 
 // Generic WebSocket hook
 const useWebSocketMessage = (messageKey: string, callback: (data: any) => void) => {
-    const { onMessage, readyState } = useWsClient(); // Assuming this provides WebSocket connection status and message handling
+    const {onMessage, readyState} = useWsClient(); // Assuming this provides WebSocket connection status and message handling
 
     useEffect(() => {
         if (readyState !== 1) return; // Ensure the WebSocket connection is open (readyState 1 is connected)

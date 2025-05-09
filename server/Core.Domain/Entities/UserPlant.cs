@@ -1,5 +1,3 @@
-using System;
-
 namespace Core.Domain.Entities;
 
 public class UserPlant

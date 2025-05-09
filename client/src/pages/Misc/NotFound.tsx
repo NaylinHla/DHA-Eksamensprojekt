@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import {useNavigate} from "react-router";
 
 function NotFound() {
     const navigate = useNavigate();
@@ -17,7 +17,8 @@ function NotFound() {
                     </h2>
 
                     <p className="text-2xl font-semibold md:text-3xl">Sorry, we couldn’t find this page.</p>
-                    <p className="mt-4 mb-8">But don’t worry, you can explore many other plants in our web application.</p>
+                    <p className="mt-4 mb-8">But don’t worry, you can explore many other plants in our web
+                        application.</p>
 
                     <button
                         rel="noopener noreferrer"

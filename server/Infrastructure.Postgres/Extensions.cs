@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Infrastructure.Postgres.Postgresql.Data;
-using Infrastructure.Postgres.Repositories;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -25,6 +24,7 @@ public static class Extensions
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IEmailListRepository, EmailListRepository>();
         services.AddScoped<IPlantRepository, PlantRepository>();
+        services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
         services.AddScoped<Seeder>();
 
         return services;

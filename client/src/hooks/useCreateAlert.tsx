@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useAtom } from "jotai";
-import { JwtAtom } from "../atoms";
+import {useState} from "react";
+import {useAtom} from "jotai";
+import {JwtAtom} from "../atoms";
 
 export interface AlertCreate {
     alertName: string;
@@ -48,5 +48,5 @@ export default function useCreateAlert() {
         }
     };
 
-    return { createAlert, loading, error };
+    return {createAlert, loading, error};
 }

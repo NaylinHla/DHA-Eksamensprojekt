@@ -1,7 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.Linq;
 
 namespace Infrastructure.Postgres.Scaffolding;
 
@@ -36,14 +35,10 @@ public partial class MyDbContext : DbContext
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime)))
-            {
                 property.SetValueConverter(utcConverter);
-            }
 
             foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime?)))
-            {
                 property.SetValueConverter(nullableUtcConverter);
-            }
         }
 
         modelBuilder.HasDefaultSchema("meetyourplants");
@@ -92,7 +87,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.DarkTheme).HasColumnName("DarkTheme");
             entity.Property(e => e.ConfirmDialog).HasColumnName("ConfirmDialog");
             entity.Property(e => e.SecretMode).HasColumnName("SecretMode");
-            entity.Property(e => e.WaitTime).HasColumnName("WaitTime");
 
             entity.HasOne(e => e.User)
                 .WithOne(u => u.UserSettings)
@@ -191,6 +185,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.DeviceName).HasColumnName("DeviceName");
             entity.Property(e => e.DeviceDescription).HasColumnName("DeviceDescription");
             entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
+            entity.Property(e => e.WaitTime).HasColumnName("WaitTime");
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.UserDevices)

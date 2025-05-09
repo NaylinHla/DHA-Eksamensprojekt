@@ -1,5 +1,4 @@
-﻿
-using Application.Models.Dtos.RestDtos.Request;
+﻿using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
 
 namespace Application.Interfaces;
