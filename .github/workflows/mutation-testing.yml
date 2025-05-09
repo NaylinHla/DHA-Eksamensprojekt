@@ -63,7 +63,6 @@ jobs:
               "thresholds": {
                 "break": 80
               },
-              "concurrency": "auto",
               "max-test-run-time": 120
             }
           }
