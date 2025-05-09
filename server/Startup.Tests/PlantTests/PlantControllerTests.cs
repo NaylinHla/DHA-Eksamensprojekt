@@ -290,7 +290,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
 
     [Test]
     public async Task MarkPlantAsDead_FlagsPlantAsDead_ShouldSucceedAndReturnOk()
-    {
+    { 
         // arrange
         var create = await _client.PostAsJsonAsync(
             $"api/Plant/{PlantController.CreatePlantRoute}",
@@ -319,6 +319,98 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
+    public async Task DeletePlant_DifferentPlantThatDoesNotExist_ShouldFailAndReturnNotFound()
+    {
+        // arrange – create a plant first
+        var create = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName   = "Rosemary",
+                PlantType   = "Herb",
+                PlantNotes  = "",
+                Planted     = DateTime.UtcNow.Date
+            });
+
+        create.EnsureSuccessStatusCode();
+        var id = (await create.Content
+            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+        
+        var markAsDead = await _client.PatchAsync(
+            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
+        markAsDead.EnsureSuccessStatusCode();
+
+        var otherUserClient = CreateClient();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(otherUserClient);
+                
+        var fakePlantId = Guid.NewGuid();
+        
+        //act
+        var resp = await otherUserClient.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={fakePlantId}");
+
+        //assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+    
+    [Test]
+    public async Task DeletePlant_DifferentUserAttemptsToDeletePlant_ShouldFailAndReturnUnauthorized()
+    {
+        // arrange – create a plant first
+        var create = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName   = "Rosemary",
+                PlantType   = "Herb",
+                PlantNotes  = "",
+                Planted     = DateTime.UtcNow.Date
+            });
+
+        create.EnsureSuccessStatusCode();
+        var id = (await create.Content
+            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+        
+        var markAsDead = await _client.PatchAsync(
+            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
+        markAsDead.EnsureSuccessStatusCode();
+
+        var otherUserClient = CreateClient();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(otherUserClient);
+                
+        //act
+        var resp = await otherUserClient.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
+
+        //assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    
+    [Test]
+    public async Task DeletePlant_TryAndDeleteAlivePlant_ShouldReturnBadRequest()
+    {
+        // arrange – create a plant first
+        var create = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName   = "Rosemary",
+                PlantType   = "Herb",
+                PlantNotes  = "",
+                Planted     = DateTime.UtcNow.Date
+            });
+
+        create.EnsureSuccessStatusCode();
+        var id = (await create.Content
+            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+
+        //act
+        var resp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
+
+        //assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+    
+    
+    [Test]
     public async Task GetPlant_UnknownId_ReturnsNotFound()
     {
         var resp = await _client.GetAsync(
@@ -340,6 +432,42 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
+    [Test]
+    public async Task EditPlant_UpdateChosenFields_ShouldReturnUnauthorized()
+    {
+        // Arrange
+        var createResp = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName   = "Parsley",
+                PlantType   = "Herb",
+                PlantNotes  = "",
+                Planted     = DateTime.UtcNow.Date
+            });
+
+        var created = await createResp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        var plantId = created!.PlantId;
+
+        var patch = new PlantEditDto
+        {
+            PlantName  = "Flat‑leaf Parsley",
+            PlantType  = "Herb",
+            PlantNotes = "Move to bigger pot"
+        };
+        
+        var otherUserClient = CreateClient();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(otherUserClient);
+        
+        // Act
+        var resp = await otherUserClient.PatchAsJsonAsync(
+            $"api/Plant/{PlantController.EditPlantRoute}?plantId={plantId}",
+            patch);
+
+        // Assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    
     [Test]
     public async Task WaterPlant_UnknownId_ReturnsNotFound()
     {
