@@ -81,6 +81,9 @@ public class EmailSenderService : IEmailSender
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
+        if (!_emailListRepository.EmailExists(dto.Email))
+            return;
+
         _emailListRepository.RemoveByEmail(dto.Email);
         _emailListRepository.Save();
 
@@ -89,6 +92,8 @@ public class EmailSenderService : IEmailSender
 
     private async Task SendConfirmationEmailAsync(string toEmail)
     {
+        if (!ShouldSendEmails) return;
+
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
@@ -109,8 +114,12 @@ public class EmailSenderService : IEmailSender
         await client.SendMailAsync(mailMessage);
     }
 
+
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
+        
+        if (!ShouldSendEmails) return;
+        
         var client = new SmtpClient("smtp.mailersend.net", 2525)
         {
             EnableSsl = true,
