@@ -1,6 +1,5 @@
 ﻿{
   "stryker-config": {
-  "$schema": "https://stryker-mutator.io/stryker-schema.json",
   "solution": "../DrivhusApplikation.sln",
   "mutate": [
     "../Api.Rest/**/*.cs",
