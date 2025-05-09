@@ -15,7 +15,6 @@
     "!../Startup/**"
   ],
   "coverage-analysis": "perTest",
-  "thresholds": {"break": 80},
-  "concurrency": "auto"
+  "thresholds": {"break": 80}
   }
 }
