@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { JwtAtom } from "../atoms/atoms.ts";
-import { useAtom } from "jotai";
+import {useEffect, useState} from "react";
+import {JwtAtom} from "../atoms/atoms.ts";
+import {useAtom} from "jotai";
 import toast from "react-hot-toast";
-import { alertClient } from "../apiControllerClients";
+import {alertClient} from "../apiControllerClients";
 
 export interface Alert {
     alertId: string;
@@ -43,5 +43,5 @@ export default function useAlertsRest() {
             .finally(() => setLoading(false));
     }, [jwt]);
 
-    return { alerts, loading };
+    return {alerts, loading};
 }

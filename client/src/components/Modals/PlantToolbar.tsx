@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import React, {useState} from "react";
+import {Search} from "lucide-react";
 
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
     onToggleDead: () => void;
 }
 
-const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onToggleDead }) => {
+const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggleDead}) => {
     const [term, setTerm] = useState("");
 
     return (
@@ -17,7 +17,7 @@ const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onTogg
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
                 <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-64">
-                    <Search className="absolute h-4 w-4 left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute h-4 w-4 left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
                     <input
                         placeholder="Search"
                         value={term}

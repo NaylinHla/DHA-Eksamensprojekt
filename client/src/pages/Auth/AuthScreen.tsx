@@ -1,10 +1,6 @@
 import {useEffect, useLayoutEffect, useRef, useState} from "react";
 import logo from "../../assets/Favicon/favicon.svg";
-import {
-    AuthClient,
-    AuthLoginDto,
-    AuthRegisterDto
-} from "../../generated-client.ts";
+import {AuthClient, AuthLoginDto, AuthRegisterDto} from "../../generated-client.ts";
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
 import {JwtAtom, useAtom} from "../../components/import";
 import toast from "react-hot-toast";
@@ -26,20 +22,20 @@ interface RegisterErrors {
 
 const authClient = new AuthClient("http://localhost:5000");
 
-const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
+const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
     const [loggedIn, setLoggedIn] = useState(false);
     const [, setJwt] = useAtom(JwtAtom);
 
     const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({});
     const errorClass = "border-red-500 focus:border-red-600";
-    const wrapperRef   = useRef<HTMLDivElement>(null);
-    const registerFormRef  = useRef<HTMLFormElement>(null);
-    const loginFormRef     = useRef<HTMLFormElement>(null);
-    
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const registerFormRef = useRef<HTMLFormElement>(null);
+    const loginFormRef = useRef<HTMLFormElement>(null);
+
     // ANIMATION ---
     useLayoutEffect(() => {
-        const wrapper  = wrapperRef.current;
+        const wrapper = wrapperRef.current;
         const register = registerFormRef.current;
 
         if (!wrapper) return;
@@ -84,7 +80,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     const fade = (visible: boolean) =>
         visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none";
 
-    
+
     // HANDLERS ---
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -93,9 +89,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         const password = formData.get("password") as string;
 
         try {
-            const loginDto: AuthLoginDto = { email, password };
+            const loginDto: AuthLoginDto = {email, password};
             const response = await authClient.login(loginDto);
-            const { jwt } = response;
+            const {jwt} = response;
             setJwt(jwt);
             localStorage.setItem("jwt", jwt);
             setLoggedIn(true);
@@ -321,15 +317,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                         </option>
                                     ))}
                                 </select>
-                            {requiredHint(registerErrors.country)}
+                                {requiredHint(registerErrors.country)}
+                            </div>
                         </div>
-                </div>
 
-                {/* Password */}
-                <label className="label py-0 text-white">Password</label>
-                <PasswordField
-                    name="password"
-                    placeholder="Password"
+                        {/* Password */}
+                        <label className="label py-0 text-white">Password</label>
+                        <PasswordField
+                            name="password"
+                            placeholder="Password"
                             className={`bg-white ${registerErrors.password && errorClass}`}
                         />
                         {requiredHint(registerErrors.password)}
@@ -359,7 +355,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     <p className="absolute bottom-4 text-xs italic opacity-60">
                         You are now logged in (placeholder)
                     </p>
-            )}
+                )}
         </main>
     );
 };

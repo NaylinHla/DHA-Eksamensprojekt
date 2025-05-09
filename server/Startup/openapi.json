@@ -396,82 +396,6 @@
         }
       }
     },
-    "/api/GreenhouseDevice/GetAllUserDevices": {
-      "get": {
-        "tags": [
-          "GreenhouseDevice"
-        ],
-        "operationId": "GreenhouseDevice_GetAllUserDevices",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GetAllUserDeviceDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/GreenhouseDevice/AdminChangesPreferences": {
-      "post": {
-        "tags": [
-          "GreenhouseDevice"
-        ],
-        "operationId": "GreenhouseDevice_AdminChangesPreferences",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 2
-          }
-        ],
-        "requestBody": {
-          "x-name": "dto",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/GreenhouseDevice/DeleteDataFromSpecificDevice": {
       "delete": {
         "tags": [
@@ -635,12 +559,12 @@
         }
       }
     },
-    "/api/Plant/EditPlant": {
-      "patch": {
+    "/api/Plant/DeletePlant": {
+      "delete": {
         "tags": [
           "Plant"
         ],
-        "operationId": "Plant_EditPlant",
+        "operationId": "Plant_DeletePlant",
         "parameters": [
           {
             "name": "plantId",
@@ -657,7 +581,55 @@
             "schema": {
               "type": "string"
             },
-            "x-position": 3
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/EditPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_EditPlant",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 4
           }
         ],
         "requestBody": {
@@ -670,7 +642,7 @@
             }
           },
           "required": true,
-          "x-position": 2
+          "x-position": 3
         },
         "responses": {
           "200": {
@@ -1029,6 +1001,250 @@
           }
         }
       }
+    },
+    "/api/UserDevice/GetUserDevice": {
+      "get": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_GetUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/GetAllUserDevices": {
+      "get": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_GetAllUserDevices",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/CreateUserDevice": {
+      "post": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_CreateUserDevice",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDeviceCreateDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceCreateDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/EditUserDevice": {
+      "patch": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_EditUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDeviceEditDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/DeleteUserDevice": {
+      "delete": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_DeleteUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/AdminChangesPreferences": {
+      "post": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_AdminChangesPreferences",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1192,9 +1408,6 @@
           "secretMode": {
             "type": "boolean"
           },
-          "waitTime": {
-            "type": "string"
-          },
           "user": {
             "nullable": true,
             "oneOf": [
@@ -1305,6 +1518,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "waitTime": {
+            "type": "string"
           },
           "user": {
             "nullable": true,
@@ -1579,6 +1795,16 @@
           "deviceName": {
             "type": "string"
           },
+          "deviceDesc": {
+            "type": "string"
+          },
+          "deviceWaitTime": {
+            "type": "string"
+          },
+          "deviceCreateDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
           "temperature": {
             "type": "number",
             "format": "double"
@@ -1598,60 +1824,6 @@
           "time": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "GetAllUserDeviceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "allUserDevice": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserDevice2"
-            }
-          }
-        }
-      },
-      "UserDevice2": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "deviceName": {
-            "type": "string"
-          },
-          "deviceDescription": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AdminChangesPreferencesDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "string",
-            "nullable": true
-          },
-          "unit": {
-            "type": "string",
-            "nullable": true
-          },
-          "interval": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -1843,6 +2015,97 @@
           }
         }
       },
+      "UserDeviceResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceDescription": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string"
+          }
+        }
+      },
+      "UserDeviceCreateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deviceName"
+        ],
+        "properties": {
+          "deviceName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 2
+          },
+          "deviceDescription": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserDeviceEditDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 2,
+            "nullable": true
+          },
+          "deviceDescription": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AdminChangesPreferencesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "interval": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "AdminHasDeletedData": {
         "allOf": [
           {
@@ -2008,6 +2271,7 @@
           "GreenhouseSensorData",
           "Device",
           "SensorData",
+          "ChangeWaitTime",
           "ChangePreferences"
         ]
       }

@@ -4,7 +4,7 @@ import {PasswordField} from "../utils/PasswordField/PasswordField.tsx";
 export interface PasswordDto {
     oldPassword: string;
     newPassword: string;
-    confirm:     string;
+    confirm: string;
 }
 
 type Props = {
@@ -22,13 +22,13 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit}) => {
     return (
         <dialog open className="modal modal-middle">
             <form
-                onSubmit={e=>{
+                onSubmit={e => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
                     onSubmit({
-                        oldPassword: fd.get("old")  as string,
-                        newPassword: fd.get("new")  as string,
-                        confirm:     fd.get("confirm") as string
+                        oldPassword: fd.get("old") as string,
+                        newPassword: fd.get("new") as string,
+                        confirm: fd.get("confirm") as string
                     });
                 }}
                 method="dialog"
@@ -43,8 +43,8 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit}) => {
                 {["old", "new", "confirm"].map((name, idx) => (
                     <label key={name} className="block space-y-1">
                         <span className="label-text">
-                            {idx === 0 ? "Current password" 
-                                : idx === 1 ? "New password" 
+                            {idx === 0 ? "Current password"
+                                : idx === 1 ? "New password"
                                     : "Repeat new password"}
                         </span>
 
@@ -57,7 +57,8 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit}) => {
                 ))}
 
                 <div className="modal-action mt-6">
-                    <button type="button" onClick={onClose} className="btn btn-neutral bg-transparent btn-sm">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn btn-neutral bg-transparent btn-sm">Cancel
+                    </button>
                     <button type="submit" className="btn btn-primary btn-sm">
                         {loading && <span className="loading loading-spinner w-4 mr-1"/>}
                         Confirm

@@ -11,7 +11,7 @@ public class AlertController(IAlertService alertService, ISecurityService securi
 {
     public const string CreateAlertRoute = nameof(CreateAlert);
     public const string GetAlertsRoute = nameof(GetAlerts);
-    
+
     [HttpGet]
     [Route(GetAlertsRoute)]
     public async Task<ActionResult<List<Alert>>> GetAlerts(

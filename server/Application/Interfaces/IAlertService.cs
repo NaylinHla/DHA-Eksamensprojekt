@@ -1,5 +1,3 @@
-using Application.Models;
-using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 
 namespace Application.Interfaces;

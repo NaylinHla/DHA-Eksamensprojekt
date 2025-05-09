@@ -12,23 +12,23 @@ namespace Startup.Tests.AlertTests;
 [TestFixture]
 public class AlertControllerTests : WebApplicationFactory<Program>
 {
-    private HttpClient _client = null!;
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
-    }
-    
     [SetUp]
     public void Setup()
     {
         _client = CreateClient();
     }
-    
+
     [TearDown]
     public void TearDown()
     {
         _client.Dispose();
+    }
+
+    private HttpClient _client = null!;
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
     }
 
     [Test]
@@ -36,7 +36,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     {
         // Arrange
         await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
-        
+
         var alertDto = new AlertCreate
         {
             AlertName = "High Temp",
@@ -70,7 +70,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         var alerts = await response.Content.ReadFromJsonAsync<List<AlertResponseDto>>();
         Assert.That(alerts, Is.Not.Null);
     }
-    
+
     [Test]
     public async Task CreateAlert_NoJwt_ReturnsUnauthorized()
     {
@@ -83,9 +83,9 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", dto);
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
-                .Or.EqualTo(HttpStatusCode.BadRequest));
+            .Or.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task CreateAlert_MissingName_ReturnsBadRequest()
     {
@@ -101,13 +101,13 @@ public class AlertControllerTests : WebApplicationFactory<Program>
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task GetAlerts_NoJwt_ReturnsUnauthorized()
     {
         var resp = await _client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
-                .Or.EqualTo(HttpStatusCode.BadRequest));
+            .Or.EqualTo(HttpStatusCode.BadRequest));
     }
 }
