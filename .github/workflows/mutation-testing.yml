@@ -40,7 +40,7 @@ jobs:
         run: dotnet tool install --global dotnet-stryker
 
       - name: Run Mutation Tests (Stryker)
-        working-directory: server/Startup.Tests
+        working-directory: server
         run: dotnet stryker --reporter "html"
         env:
           DOTNET_ROLL_FORWARD: LatestMajor
@@ -51,5 +51,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stryker-report
-          path: server/Startup.Tests/StrykerOutput/**/reports/mutation-report.html
+          path: server/StrykerOutput/**/reports/mutation-report.html
   
