@@ -1,4 +1,6 @@
-﻿using Application.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Authentication;
+using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
@@ -34,13 +36,13 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
-            throw new UnauthorizedAccessException("This plant does not belong to you");
+            throw new AuthenticationException("This plant does not belong to you");
         }
         var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
         if (plantToDelete.Result == null)
             throw new KeyNotFoundException("Plant not found.");
         if (!plantToDelete.Result.IsDead)
-            throw new ArgumentException("Plant is not dead. Mark it as dead before deleting it.");
+            throw new ValidationException("Plant is not dead. Mark it as dead before deleting it.");
         await plantRepo.DeletePlantAsync(plantId);
     }
     
@@ -49,7 +51,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
-            throw new UnauthorizedAccessException("This plant does not belong to you");
+            throw new AuthenticationException("This plant does not belong to you");
         }
         
         var plant = await plantRepo.GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
