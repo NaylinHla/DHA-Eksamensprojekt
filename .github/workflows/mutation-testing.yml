@@ -36,7 +36,7 @@ jobs:
           cat > stryker-config.json <<'JSON'
           {
             "$schema": "https://stryker-mutator.io/stryker-schema.json",
-            "solution": "../fullstack2025.slnx",
+            "solution": "../DrivhusApplikation.sln",
             "mutate": [ "!**/Startup/**" ],
             "coverage-analysis": "perTest",
             "thresholds": {
