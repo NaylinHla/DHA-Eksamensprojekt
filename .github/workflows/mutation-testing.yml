@@ -45,25 +45,30 @@ jobs:
         run: |
           cat > stryker-config.json <<'JSON'
           {
-            "$schema": "https://stryker-mutator.io/stryker-schema.json",
-            "solution": "../DrivhusApplikation.sln",
-            "mutate": [
-              "server/Api.Rest/**/*.cs",
-              "server/Api.Websocket/**/*.cs",
-              "server/Application/**/*.cs",
-              "server/Infrastructure.MQTT/**/*.cs",
-              "server/Infrastructure.Postgres/**/*.cs",
-              "server/Infrastructure.Websocket/**/*.cs",
-              "!server/Core.Domain/**/*.cs",
-              "!server/Infrastructure.Postgres.Scaffolding/**",
-              "!server/Startup/**"
-            ],
-            "coverage-analysis": "perTest",
-            "thresholds": { "break": 80 },
-            "concurrency": "auto",
-            "max-test-run-time": 120
+            "stryker-config": {
+              "$schema": "https://stryker-mutator.io/stryker-schema.json",
+              "solution": "../DrivhusApplikation.sln",
+              "mutate": [
+                "server/Api.Rest/**/*.cs",
+                "server/Api.Websocket/**/*.cs",
+                "server/Application/**/*.cs",
+                "server/Infrastructure.MQTT/**/*.cs",
+                "server/Infrastructure.Postgres/**/*.cs",
+                "server/Infrastructure.Websocket/**/*.cs",
+                "!server/Core.Domain/**/*.cs",
+                "!server/Infrastructure.Postgres.Scaffolding/**",
+                "!server/Startup/**"
+              ],
+              "coverage-analysis": "perTest",
+              "thresholds": {
+                "break": 80
+              },
+              "concurrency": "auto",
+              "max-test-run-time": 120
+            }
           }
           JSON
+
 
       - name: Run Mutation Tests (Stryker)
         working-directory: server/Startup.Tests
