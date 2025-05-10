@@ -38,7 +38,7 @@ jobs:
           dotnet stryker \
             --project "${{ matrix.project }}" \
             --test-project "server/Startup.Tests/Startup.Tests.csproj" \
-            --threshold-break 80 \
+            --break-at 80 \
             --reporters "html"
         env:
           DOTNET_ROLL_FORWARD: LatestMajor
