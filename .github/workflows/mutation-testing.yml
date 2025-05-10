@@ -1,12 +1,20 @@
 ﻿name: Mutation Testing
-on:
-  workflow_dispatch:
+on: [ workflow_dispatch ]
 
 jobs:
   mutation_testing:
-    name: Mutation Testing
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - Api.Rest
+          - Api.Websocket
+          - Application
+          - Infrastructure.MQTT
+          - Infrastructure.Postgres
+          - Infrastructure.Websocket
     env:
+      DOTNET_ROLL_FORWARD: LatestMajor
       APPOPTIONS__DbConnectionString: ${{secrets.DBCONNECTIONSTRING}}
       APPOPTIONS__JwtSecret: ${{secrets.JWT_TOKEN}}
       APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
@@ -15,16 +23,17 @@ jobs:
       APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{secrets.EMAIL_SENDER_PASSWORD}}
       APPOPTIONS__JWT_EMAIL_SECRET: ${{secrets.JWT_EMAIL_SECRET}}
     
+    defaults:
+      run:
+        working-directory: server/${{ matrix.project }}
+    
+    name: Stryker on ${{ matrix.project }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.x
+      - uses: actions/setup-dotnet@v3
+        with: { dotnet-version: 8.0.x }
 
       - name: Cache NuGet packages & global tools
         uses: actions/cache@v3
@@ -36,20 +45,34 @@ jobs:
             ~/.dotnet/toolresolver
           key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
 
-      - name: Install Stryker .NET globally
+      - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
 
-      - name: Run Mutation Tests (Stryker)
-        working-directory: server
+      - name: Create stryker-config for ${{ matrix.project }}
+        run: |
+          cat > stryker-config.json <<EOF
+          {
+            "solution": "../DrivhusApplikation.sln",
+            "test-projects": [ "Startup.Tests/Startup.Tests.csproj" ],
+            "mutate": [
+              "${{ matrix.project }}/**/*.cs",
+              "!Startup/**/*.cs",
+              "!Infrastructure.Postgres.Scaffolding/**"
+            ],
+            "coverage-analysis": "perTest",
+            "concurrency": "auto",
+            "thresholds": { "break": 80 }
+          }
+          EOF
+          
+      - name: Run Stryker on ${{ matrix.project }}
         run: dotnet stryker --reporter "html"
-        env:
-          DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
 
-      - name: Upload Stryker Report
+      - name: Upload Report for ${{ matrix.project }}
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stryker-report
-          path: server/StrykerOutput/**/reports/mutation-report.html
+          name: stryker-${{ matrix.project }}
+          path: StrykerOutput/**/reports/mutation-report.html
   
