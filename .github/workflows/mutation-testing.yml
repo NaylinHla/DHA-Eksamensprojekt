@@ -54,7 +54,7 @@ jobs:
           {
             "stryker-config": {
               "solution": "../../DrivhusApplikation.sln",
-              "test-projects": [ "Startup.Tests/Startup.Tests.csproj" ],
+              "test-projects": [ "../Startup.Tests/Startup.Tests.csproj" ],
               "mutate": [
                 "${{ matrix.project }}/**/*.cs",
                 "!../Startup.Tests/**/*.cs",
