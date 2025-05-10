@@ -49,19 +49,20 @@ jobs:
         run: dotnet tool install --global dotnet-stryker
 
       - name: Create stryker-config for ${{ matrix.project }}
-        run: |
+        run: |          
           cat > stryker-config.json <<EOF
           {
-            "solution": "../DrivhusApplikation.sln",
-            "test-projects": [ "Startup.Tests/Startup.Tests.csproj" ],
-            "mutate": [
-              "${{ matrix.project }}/**/*.cs",
-              "!Startup/**/*.cs",
-              "!Infrastructure.Postgres.Scaffolding/**"
-            ],
-            "coverage-analysis": "perTest",
-            "concurrency": "auto",
-            "thresholds": { "break": 80 }
+            "stryker-config": {
+              "solution": "../DrivhusApplikation.sln",
+              "test-projects": [ "Startup.Tests/Startup.Tests.csproj" ],
+              "mutate": [
+                "${{ matrix.project }}/**/*.cs",
+                "!../Startup.Tests/**/*.cs",
+                "!../Infrastructure.Postgres.Scaffolding/**"
+              ],
+              "coverage-analysis": "perTest",
+              "thresholds": { "break": 80 }
+            }
           }
           EOF
           
