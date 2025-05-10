@@ -53,7 +53,7 @@ jobs:
           cat > stryker-config.json <<EOF
           {
             "stryker-config": {
-              "solution": "../DrivhusApplikation.sln",
+              "solution": "../../DrivhusApplikation.sln",
               "test-projects": [ "Startup.Tests/Startup.Tests.csproj" ],
               "mutate": [
                 "${{ matrix.project }}/**/*.cs",
