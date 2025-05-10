@@ -1,53 +1,69 @@
 ﻿name: Mutation Testing
-on: [ workflow_dispatch ]
+on:
+  workflow_dispatch:
 
 jobs:
   mutation_testing:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        project:
-          - "server/Api.Rest/Api.Rest.csproj"
-          - "server/Api.Websocket/Api.Websocket.csproj"
-          - "server/Application/Application.csproj"
-          - "server/Infrastructure.MQTT/Infrastructure.MQTT.csproj"
-          - "server/Infrastructure.Postgres/Infrastructure.Postgres.csproj"
-          - "server/Infrastructure.Websocket/Infrastructure.Websocket.csproj"
     env:
-      APPOPTIONS__DbConnectionString: ${{secrets.DBCONNECTIONSTRING}}
-      APPOPTIONS__JwtSecret: ${{secrets.JWT_TOKEN}}
-      APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
-      APPOPTIONS__MQTT_USERNAME: ${{secrets.MQTT_USERNAME}}
-      APPOPTIONS__EMAIL_SENDER_USERNAME: ${{secrets.EMAIL_SENDER_USERNAME}}
-      APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{secrets.EMAIL_SENDER_PASSWORD}}
-      APPOPTIONS__JWT_EMAIL_SECRET: ${{secrets.JWT_EMAIL_SECRET}}
-    
-    name: Stryker on ${{ matrix.project }}
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+      APPOPTIONS__DbConnectionString: ${{ secrets.DBCONNECTIONSTRING }}
+      APPOPTIONS__JwtSecret:        ${{ secrets.JWT_TOKEN }}
+      APPOPTIONS__MQTT_BROKER_HOST: ${{ secrets.MQTT_BROKER_HOST }}
+      APPOPTIONS__MQTT_USERNAME:    ${{ secrets.MQTT_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_USERNAME: ${{ secrets.EMAIL_SENDER_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{ secrets.EMAIL_SENDER_PASSWORD }}
+      APPOPTIONS__JWT_EMAIL_SECRET: ${{ secrets.JWT_EMAIL_SECRET }}
 
-      - uses: actions/setup-dotnet@v3
-        with: { dotnet-version: 8.0.x }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
 
       - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
-          
-      - name: Run Stryker
+
+      - name: Run Stryker on all projects
         run: |
-          dotnet stryker \
-            --project "${{ matrix.project }}" \
-            --test-project "server/Startup.Tests/Startup.Tests.csproj" \
-            --break-at 80 \
-            --reporter "html"
+          # define your projects here
+          projects=(
+            "server/Api.Rest/Api.Rest.csproj"
+            "server/Api.Websocket/Api.Websocket.csproj"
+            "server/Application/Application.csproj"
+            "server/Infrastructure.MQTT/Infrastructure.MQTT.csproj"
+            "server/Infrastructure.Postgres/Infrastructure.Postgres.csproj"
+            "server/Infrastructure.Websocket/Infrastructure.Websocket.csproj"
+          )
+
+          for proj in "${projects[@]}"; do
+            echo "Running Stryker on $proj"
+            DOTNET_ROLL_FORWARD=LatestMajor \
+            dotnet stryker \
+              --project       "$proj" \
+              --test-project  "server/Startup.Tests/Startup.Tests.csproj" \
+              --break-at      80 \
+              --reporter      "html" \
+            || echo "Stryker failed on $proj, but continuing…"
+          done
         env:
           DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
 
-      - name: Upload Report
+      - name: Collect all reports
+        if: always()
+        run: |
+          mkdir -p collected-reports
+          find StrykerOutput -type f -name mutation-report.html \
+            -exec bash -c 'cp "$0" "collected-reports/$(basename $(dirname $(dirname "$0")))-mutation-report.html"' {} \;
+
+      - name: Upload mutation reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stryker-${{ matrix.project }}
-          path: StrykerOutput/**/reports/mutation-report.html
-  
+          name: mutation-reports
+          path: collected-reports/
