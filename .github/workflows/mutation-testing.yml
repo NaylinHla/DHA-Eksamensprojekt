@@ -7,14 +7,13 @@ jobs:
     strategy:
       matrix:
         project:
-          - Api.Rest
-          - Api.Websocket
-          - Application
-          - Infrastructure.MQTT
-          - Infrastructure.Postgres
-          - Infrastructure.Websocket
+          - "server/Api.Rest/Api.Rest.csproj"
+          - "server/Api.Websocket/Api.Websocket.csproj"
+          - "server/Application/Application.csproj"
+          - "server/Infrastructure.MQTT/Infrastructure.MQTT.csproj"
+          - "server/Infrastructure.Postgres/Infrastructure.Postgres.csproj"
+          - "server/Infrastructure.Websocket/Infrastructure.Websocket.csproj"
     env:
-      DOTNET_ROLL_FORWARD: LatestMajor
       APPOPTIONS__DbConnectionString: ${{secrets.DBCONNECTIONSTRING}}
       APPOPTIONS__JwtSecret: ${{secrets.JWT_TOKEN}}
       APPOPTIONS__MQTT_BROKER_HOST: ${{secrets.MQTT_BROKER_HOST}}
@@ -22,10 +21,6 @@ jobs:
       APPOPTIONS__EMAIL_SENDER_USERNAME: ${{secrets.EMAIL_SENDER_USERNAME}}
       APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{secrets.EMAIL_SENDER_PASSWORD}}
       APPOPTIONS__JWT_EMAIL_SECRET: ${{secrets.JWT_EMAIL_SECRET}}
-    
-    defaults:
-      run:
-        working-directory: server/${{ matrix.project }}
     
     name: Stryker on ${{ matrix.project }}
     steps:
@@ -35,42 +30,21 @@ jobs:
       - uses: actions/setup-dotnet@v3
         with: { dotnet-version: 8.0.x }
 
-      - name: Cache NuGet packages & global tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.nuget/packages
-            ~/.dotnet/tools/.store
-            ~/.dotnet/tools
-            ~/.dotnet/toolresolver
-          key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
-
       - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
-
-      - name: Create stryker-config for ${{ matrix.project }}
-        run: |          
-          cat > stryker-config.json <<EOF
-          {
-            "stryker-config": {
-              "solution": "../../DrivhusApplikation.sln",
-              "test-projects": [ "../Startup.Tests/Startup.Tests.csproj" ],
-              "mutate": [
-                "${{ matrix.project }}/**/*.cs",
-                "!../Startup.Tests/**/*.cs",
-                "!../Infrastructure.Postgres.Scaffolding/**"
-              ],
-              "coverage-analysis": "perTest",
-              "thresholds": { "break": 80 }
-            }
-          }
-          EOF
           
-      - name: Run Stryker on ${{ matrix.project }}
-        run: dotnet stryker --reporter "html"
+      - name: Run Stryker
+        run: |
+          dotnet stryker \
+            --project "${{ matrix.project }}" \
+            --test-project "server/Startup.Tests/Startup.Tests.csproj" \
+            --threshold-break 80 \
+            --reporters "html"
+        env:
+          DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
 
-      - name: Upload Report for ${{ matrix.project }}
+      - name: Upload Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
