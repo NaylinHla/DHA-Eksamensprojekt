@@ -1,10 +1,18 @@
 ﻿name: Mutation Testing
-on:
-  workflow_dispatch:
+on: [ workflow_dispatch ]
 
 jobs:
   mutation_testing:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - server/Api.Rest/Api.Rest.csproj
+          - server/Api.Websocket/Api.Websocket.csproj
+          - server/Application/Application.csproj
+          - server/Infrastructure.MQTT/Infrastructure.MQTT.csproj
+          - server/Infrastructure.Postgres/Infrastructure.Postgres.csproj
+          - server/Infrastructure.Websocket/Infrastructure.Websocket.csproj
     env:
       APPOPTIONS__DbConnectionString: ${{ secrets.DBCONNECTIONSTRING }}
       APPOPTIONS__JwtSecret:        ${{ secrets.JWT_TOKEN }}
@@ -15,55 +23,31 @@ jobs:
       APPOPTIONS__JWT_EMAIL_SECRET: ${{ secrets.JWT_EMAIL_SECRET }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
+      - uses: actions/setup-dotnet@v3
+        with: { dotnet-version: '8.0.x' }
 
       - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
 
-      - name: Run Stryker on all projects
+      - name: Run mutation tests
         run: |
-          # define your projects here
-          projects=(
-            "server/Api.Rest/Api.Rest.csproj"
-            "server/Api.Websocket/Api.Websocket.csproj"
-            "server/Application/Application.csproj"
-            "server/Infrastructure.MQTT/Infrastructure.MQTT.csproj"
-            "server/Infrastructure.Postgres/Infrastructure.Postgres.csproj"
-            "server/Infrastructure.Websocket/Infrastructure.Websocket.csproj"
-          )
-
-          for proj in "${projects[@]}"; do
-            echo "Running Stryker on $proj"
-            DOTNET_ROLL_FORWARD=LatestMajor \
-            dotnet stryker \
-              --project       "$proj" \
-              --test-project  "server/Startup.Tests/Startup.Tests.csproj" \
-              --break-at      80 \
-              --reporter      "html" \
-            || echo "Stryker failed on $proj, but continuing…"
-          done
-        env:
-          DOTNET_ROLL_FORWARD: LatestMajor
+          echo "Starting Stryker on ${{ matrix.project }}…"
+          DOTNET_ROLL_FORWARD=LatestMajor \
+          dotnet stryker \
+            --project      "${{ matrix.project }}" \
+            --test-project "server/Startup.Tests/Startup.Tests.csproj" \
+            --break-at     80 \
+            --reporter     html \
+            --concurrency  2
         continue-on-error: true
 
-      - name: Collect all reports
-        if: always()
-        run: |
-          mkdir -p collected-reports
-          find StrykerOutput -type f -name mutation-report.html \
-            -exec bash -c 'cp "$0" "collected-reports/$(basename $(dirname $(dirname "$0")))-mutation-report.html"' {} \;
 
-      - name: Upload mutation reports
+      - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutation-reports
-          path: collected-reports/
+          name: mutation-report-${{ matrix.project }}
+          path: StrykerOutput/**/reports/mutation-report.html
