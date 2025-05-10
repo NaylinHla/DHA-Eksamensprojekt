@@ -39,7 +39,7 @@ jobs:
             --project "${{ matrix.project }}" \
             --test-project "server/Startup.Tests/Startup.Tests.csproj" \
             --break-at 80 \
-            --reporters "html"
+            --reporter "html"
         env:
           DOTNET_ROLL_FORWARD: LatestMajor
         continue-on-error: true
