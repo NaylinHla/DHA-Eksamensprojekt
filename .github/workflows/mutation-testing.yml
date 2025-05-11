@@ -32,6 +32,14 @@ jobs:
       - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
 
+      - name: Compute safe project-dir name
+        id: vars
+        run: |
+          proj="${{ matrix.project }}"
+          dir="$(basename "$(dirname "$proj")")"
+          safe_dir="${dir//\//_}"
+          echo "SAFE_DIR=$safe_dir" >> $GITHUB_ENV
+
       - name: Run mutation tests
         run: |
           echo "Starting Stryker on ${{ matrix.project }}…"
@@ -49,5 +57,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutation-report-${{ replace(matrix.project, '/', '_') }}
+          name: mutation-report-${{ env.SAFE_DIR }}
           path: StrykerOutput/**/reports/mutation-report.html
