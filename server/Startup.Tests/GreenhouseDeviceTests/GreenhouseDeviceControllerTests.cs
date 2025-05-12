@@ -7,6 +7,7 @@ using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
@@ -262,17 +263,51 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
     // -------------------- DELETE: DeleteData --------------------
 
     [Test]
-    public async Task DeleteDataFromSpecificDevice_ShouldReturnOk()
+    public async Task DeleteDataFromSpecificDevice_ShouldDeleteSensorDataFromDb()
     {
         // Arrange: get deviceId from the user seeded in Setup
         var deviceId = _testUser.UserDevices.First().DeviceId;
 
+        // Ensure that sensor data exists for this device
+        var sensorData = new SensorHistory
+        {
+            SensorHistoryId = Guid.NewGuid(),
+            DeviceId = deviceId,
+            Humidity = 50,
+            Temperature = 22,
+            Time = DateTime.UtcNow
+        };
+
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            db.SensorHistories.Add(sensorData);
+            await db.SaveChangesAsync();
+        }
+
+        // Ensure the sensor data exists before deletion
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            var existingSensorData = await db.SensorHistories.FirstOrDefaultAsync(s => s.DeviceId == deviceId);
+            Assert.That(existingSensorData, Is.Not.Null, "Sensor data should exist before deletion");
+        }
+
+        // Act: Perform DELETE request to remove data from the device
         var response = await _client.DeleteAsync(
             $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={deviceId}"
         );
 
-        // Assert
+        // Assert: Check that the response is OK
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Assert: Check that the sensor data no longer exists in the database
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            var deletedSensorData = await db.SensorHistories.FirstOrDefaultAsync(s => s.DeviceId == deviceId);
+            Assert.That(deletedSensorData, Is.Null, "Sensor data should be deleted after the DELETE request");
+        }
     }
 
     [Test]

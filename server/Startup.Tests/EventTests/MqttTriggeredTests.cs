@@ -24,7 +24,6 @@ public class MqttTriggeredTests
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig();
                     services.DefaultTestConfig(makeMqttClient: true);
                 });
             });

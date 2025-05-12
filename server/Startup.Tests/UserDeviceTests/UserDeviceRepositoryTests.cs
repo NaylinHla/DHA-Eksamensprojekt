@@ -28,6 +28,29 @@ public class UserDeviceRepositoryTests
     {
         _context.Dispose();
     }
+    
+    [Test]
+    public async Task CreateUserDeviceAsync_ShouldAddDeviceToDatabase()
+    {
+        var deviceId = Guid.NewGuid();
+        var userDevice = new UserDevice
+        {
+            UserId = Guid.NewGuid(),
+            DeviceName = "Created Device",
+            DeviceDescription = "Desc",
+            CreatedAt = DateTime.UtcNow,
+            WaitTime = "100"
+        };
+
+        var result = await _repository.CreateUserDeviceAsync(deviceId, userDevice);
+
+        var deviceInDb = await _context.UserDevices.FindAsync(deviceId);
+
+        Assert.That(deviceInDb, Is.Not.Null);
+        Assert.That(deviceInDb!.DeviceName, Is.EqualTo("Created Device"));
+        Assert.That(result.DeviceId, Is.EqualTo(deviceId));
+    }
+
 
     [Test]
     public async Task GetUserDeviceByIdAsync_ShouldReturnDevice_WhenExists()
@@ -119,4 +142,42 @@ public class UserDeviceRepositoryTests
 
         Assert.That(result, Is.EqualTo(userId));
     }
+    
+    [Test]
+    public async Task DeleteUserDeviceAsync_ShouldRemoveDeviceFromDatabase()
+    {
+        var deviceId = Guid.NewGuid();
+        var userDevice = new UserDevice
+        {
+            DeviceId = deviceId,
+            UserId = Guid.NewGuid(),
+            DeviceName = "Device to Delete",
+            DeviceDescription = "Desc",
+            CreatedAt = DateTime.UtcNow,
+            WaitTime = "100"
+        };
+
+        _context.UserDevices.Add(userDevice);
+        await _context.SaveChangesAsync();
+
+        await _repository.DeleteUserDeviceAsync(deviceId);
+
+        var deletedDevice = await _context.UserDevices.FindAsync(deviceId);
+        Assert.That(deletedDevice, Is.Null);
+    }
+    
+    [Test]
+    public void DeleteUserDeviceAsync_ShouldThrowNotFoundException_WhenDeviceDoesNotExist()
+    {
+        var nonExistentDeviceId = Guid.NewGuid();
+
+        var ex = Assert.ThrowsAsync<NotFoundException>(async () =>
+        {
+            await _repository.DeleteUserDeviceAsync(nonExistentDeviceId);
+        });
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.EqualTo("Device not found"));
+    }
+
 }
