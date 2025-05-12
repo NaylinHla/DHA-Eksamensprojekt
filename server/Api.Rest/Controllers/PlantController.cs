@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
+using Infrastructure.Logging;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -24,9 +25,9 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid plantId,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-
-        var plant = await plantService.GetPlantByIdAsync(plantId);
+        MonitorService.Log.Debug("Entered GetPlant method in PlantController");
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var plant = await plantService.GetPlantByIdAsync(plantId, claims);
         return plant is null ? NotFound() : Ok(ToDto(plant));
     }
 
@@ -36,12 +37,10 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid userId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered GetAllPlants method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-
-        if (userId != Guid.Parse(claims.Id))
-            throw new UnauthorizedAccessException("Your JWT token does not belong to your account.");
-
-        var plants = await plantService.GetAllPlantsAsync(Guid.Parse(claims.Id));
+        
+        var plants = await plantService.GetAllPlantsAsync(userId, claims);
         return Ok(plants.Select(ToDto));
     }
 
@@ -51,6 +50,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromBody] PlantCreateDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered Create Plant method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var plant = await plantService.CreatePlantAsync(Guid.Parse(claims.Id), dto);
         return Ok(ToDto(plant));
@@ -62,6 +62,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid plantId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered Delete Plant method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         await plantService.DeletePlantAsync(plantId, claims);
         return Ok();
@@ -75,6 +76,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         [FromBody] PlantEditDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered Edit Plant method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var updated = await plantService.EditPlantAsync(plantId, dto, claims);
         return Ok(ToDto(updated));
@@ -86,8 +88,9 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid plantId,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        await plantService.MarkPlantAsDeadAsync(plantId);
+        MonitorService.Log.Debug("Entered Mark Plant As Dead method in PlantController");
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        await plantService.MarkPlantAsDeadAsync(plantId, claims);
         return Ok();
     }
 
@@ -97,18 +100,21 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         Guid plantId,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        await plantService.WaterPlantAsync(plantId);
+        MonitorService.Log.Debug("Entered Water Plant method in PlantController");
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        await plantService.WaterPlantAsync(plantId, claims);
         return Ok();
     }
 
     [HttpPatch]
     [Route(WaterAllPlantsRoute)]
     public async Task<IActionResult> WaterAllPlants(
+        Guid userId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered Water All Plants method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        await plantService.WaterAllPlantsAsync(Guid.Parse(claims.Id));
+        await plantService.WaterAllPlantsAsync(userId, claims);
         return Ok();
     }
 

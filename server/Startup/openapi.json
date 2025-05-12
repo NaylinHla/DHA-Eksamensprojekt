@@ -746,12 +746,21 @@
         "operationId": "Plant_WaterAllPlants",
         "parameters": [
           {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 1
+            "x-position": 2
           }
         ],
         "responses": {
@@ -1468,7 +1477,8 @@
             "type": "string"
           },
           "plantNotes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lastWatered": {
             "type": "string",
@@ -1842,7 +1852,8 @@
             "type": "string"
           },
           "plantNotes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "planted": {
             "type": "string",

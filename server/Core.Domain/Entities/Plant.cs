@@ -6,7 +6,7 @@ public class Plant
     public DateTime? Planted { get; set; }
     public string PlantName { get; set; } = null!;
     public string PlantType { get; set; } = null!;
-    public string PlantNotes { get; set; } = null!;
+    public string? PlantNotes { get; set; } = null!;
     public DateTime? LastWatered { get; set; }
     public int? WaterEvery { get; set; }
     public bool IsDead { get; set; }

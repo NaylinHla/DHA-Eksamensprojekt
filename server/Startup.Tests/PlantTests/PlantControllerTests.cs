@@ -307,10 +307,9 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PatchAsync(
             $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
 
-        // assert HTTP
+        // assert
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-        // fetch again
+        
         var fetch = await _client.GetAsync(
             $"api/Plant/{PlantController.GetPlantRoute}?plantId={id}");
         var dto = (await fetch.Content.ReadFromJsonAsync<PlantResponseDto>())!;
