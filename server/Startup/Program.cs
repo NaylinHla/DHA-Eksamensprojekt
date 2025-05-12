@@ -105,5 +105,7 @@ public class Program
 
         app.GenerateTypeScriptClient("/../../client/src/generated-client.ts").GetAwaiter().GetResult();
         app.MapScalarApiReference();
+
+        
     }
 }
