@@ -324,6 +324,50 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
         // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
+    
+    [Test]
+    public async Task DeleteDataFromSpecificDevice_ShouldReturnForbidden_WhenDeviceDoesNotBelongToUser()
+    {
+        // Arrange: create another user and a device they own
+        var otherUser = MockObjects.GetUser();
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            db.Users.Add(otherUser);
+            db.UserDevices.Add(new UserDevice
+            {
+                DeviceId = Guid.NewGuid(),
+                UserId = otherUser.UserId,
+                DeviceName = "ForeignDevice",
+                CreatedAt = DateTime.UtcNow,
+                WaitTime = "600",
+                DeviceDescription = "behind tomato"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var foreignDeviceId = otherUser.UserDevices.First().DeviceId;
+
+        // Act: attempt to delete with logged-in _testUser
+        var response = await _client.DeleteAsync(
+            $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={foreignDeviceId}"
+        );
+
+        // Assert: should be forbidden
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+    }
+    
+    [Test]
+    public async Task DeleteDataFromSpecificDevice_ShouldReturnNotFound_WhenDeviceDoesNotExist()
+    {
+        var nonExistentDeviceId = Guid.NewGuid();
+
+        var response = await _client.DeleteAsync(
+            $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={nonExistentDeviceId}"
+        );
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
 
 
     // -------------------- Helper Class --------------------

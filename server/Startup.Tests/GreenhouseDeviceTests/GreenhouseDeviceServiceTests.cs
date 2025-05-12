@@ -1,43 +1,39 @@
-using Core.Domain.Exceptions;
-using Infrastructure.Postgres.Postgresql.Data;
-using Infrastructure.Postgres.Scaffolding;
-using Microsoft.EntityFrameworkCore;
+using Application.Interfaces.Infrastructure.Postgres;
+using Application.Interfaces.Infrastructure.Websocket;
+using Application.Services;
+using Moq;
 using NUnit.Framework;
 
-namespace Startup.Tests.GreenhouseDeviceTests;
-
-public class GreenhouseDeviceServiceTests
+namespace Startup.Tests.GreenhouseDeviceTests
 {
-    private MyDbContext _context = null!;
-    private GreenhouseDeviceRepository _repository = null!;
-
-    [SetUp]
-    public void Setup()
+    public class GreenhouseDeviceServiceTests
     {
-        var options = new DbContextOptionsBuilder<MyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
+        private GreenhouseDeviceService _service = null!;
+        private Mock<IGreenhouseDeviceRepository> _repositoryMock = null!;
+        private Mock<IConnectionManager> _connectionManagerMock = null!;
+        private Mock<IServiceProvider> _serviceProviderMock = null!;
 
-        _context = new MyDbContext(options);
-        _repository = new GreenhouseDeviceRepository(_context);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _context.Dispose();
-    }
-
-    [Test]
-    public void GetDeviceByIdAsync_ShouldThrowNotFoundException_WhenDeviceNotFound()
-    {
-        var nonExistingId = Guid.NewGuid();
-
-        var ex = Assert.ThrowsAsync<NotFoundException>(async () =>
+        [SetUp]
+        public void Setup()
         {
-            await _repository.GetDeviceOwnerUserId(nonExistingId);
-        });
+            // Mock the repository and connection manager
+            _repositoryMock = new Mock<IGreenhouseDeviceRepository>();
+            _connectionManagerMock = new Mock<IConnectionManager>();
 
-        Assert.That(ex!.Message, Does.Contain("not found"));
+            // Mock IServiceProvider to resolve the repository
+            _serviceProviderMock = new Mock<IServiceProvider>();
+            _serviceProviderMock.Setup(sp => sp.GetService(typeof(IGreenhouseDeviceRepository)))
+                .Returns(_repositoryMock.Object);
+
+            // Create GreenhouseDeviceService with mocked dependencies
+            _service = new GreenhouseDeviceService(_serviceProviderMock.Object, _connectionManagerMock.Object);
+        }
+
+        [Test]
+        public void AddToDbAndBroadcast_ShouldReturnEarly_WhenDtoIsNull()
+        {
+            // Act & Assert: Ensure no exception is thrown when dto is null
+            Assert.DoesNotThrowAsync(async () => await _service.AddToDbAndBroadcast(null));
+        }
     }
 }

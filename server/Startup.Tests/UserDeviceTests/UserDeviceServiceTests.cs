@@ -130,4 +130,23 @@ public class UserDeviceServiceTests
         Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             await _service.UpdateDeviceFeed(dto, claims));
     }
+    
+    [Test]
+    public void UpdateDeviceFeed_ShouldThrowArgumentException_WhenDeviceIdIsNullOrEmpty()
+    {
+        // Arrange
+        var dto = new AdminChangesPreferencesDto
+        {
+            DeviceId = "", // or null
+            Interval = "15"
+        };
+
+        var claims = MockClaims(_userId);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<ArgumentException>(() =>
+            _service.UpdateDeviceFeed(dto, claims));
+
+        Assert.That(ex.Message, Is.EqualTo("DeviceId is required."));
+    }
 }
