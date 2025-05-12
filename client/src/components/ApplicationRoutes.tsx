@@ -1,6 +1,6 @@
 import {Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
-import {AuthScreen, WeatherView, PlantsView, UserSettings} from "../pages"
+import {AuthScreen, WeatherView, PlantsView, UserSettings, ContactUsPage} from "../pages"
 import toast from "react-hot-toast";
 import React from "react";
 import {Footer, NavBar} from "./index";
@@ -47,6 +47,7 @@ export default function ApplicationRoutes() {
                     {/* Public Routes */}
                     <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
                     <Route path="/about" element={<AboutPage/>}/>
+                    <Route path="/contact-us" element={<ContactUsPage/>}/>
                     <Route path="/career" element={<CareerPage/>}/>
                     <Route path="/advertisement" element={<AdvertisementPage/>}/>
                     <Route path="/marketing" element={<MarketingPage/>}/>
