@@ -7,7 +7,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { iconFromCode, cToF } from "../../components/utils/weather/weather.ts";
-import { formatDateTimeForUserTZ } from "../../components";
+import {formatDateTimeForUserTZ, TitleTimeHeader} from "../../components";
 import {CityHit, WXResp} from "../../types/WeatherTypes.ts";
 import {cssVar} from "../../components/utils/Theme/theme.ts";
 
@@ -98,11 +98,8 @@ const WeatherView: React.FC = () => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
 
             {/* Header */}
-            <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between">
-                <h1 className="text-2xl font-bold">Weather</h1>
-                <span className="text-sm text-gray-600">{formatDateTimeForUserTZ(new Date())}</span>
-            </header>
-
+            <TitleTimeHeader title="Weather"/>
+            
             {/* Search bar */}
             <div className="px-6 pt-4">
                 <div className="relative max-w-sm">
