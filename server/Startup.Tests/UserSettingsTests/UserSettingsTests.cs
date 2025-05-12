@@ -56,7 +56,7 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
-    public async Task PatchSetting_UpdatesCorrectField()
+    public async Task PatchSetting_UpdatesCorrectField_Confirmdialog()
     {
         var patch = new UpdateUserSettingDto { Value = false };
 
@@ -66,6 +66,45 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
         var fetch = await _client.GetAsync("/api/usersettings");
         var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
         Assert.That(settings!.ConfirmDialog, Is.False);
+    }
+    
+    [Test]
+    public async Task PatchSetting_UpdatesCorrectField_Celsius()
+    {
+        var patch = new UpdateUserSettingDto { Value = true };
+
+        var resp = await _client.PatchAsJsonAsync("/api/usersettings/celsius", patch);
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+
+        var fetch = await _client.GetAsync("/api/usersettings");
+        var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
+        Assert.That(settings!.Celsius, Is.True);
+    }
+    
+    [Test]
+    public async Task PatchSetting_UpdatesCorrectField_DarkTheme()
+    {
+        var patch = new UpdateUserSettingDto { Value = false };
+
+        var resp = await _client.PatchAsJsonAsync("/api/usersettings/darktheme", patch);
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+
+        var fetch = await _client.GetAsync("/api/usersettings");
+        var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
+        Assert.That(settings!.DarkTheme, Is.False);
+    }
+    
+    [Test]
+    public async Task PatchSetting_UpdatesCorrectField_SecretMode()
+    {
+        var patch = new UpdateUserSettingDto { Value = false };
+
+        var resp = await _client.PatchAsJsonAsync("/api/usersettings/secretmode", patch);
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+
+        var fetch = await _client.GetAsync("/api/usersettings");
+        var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
+        Assert.That(settings!.SecretMode, Is.False);
     }
 
     [Test]
