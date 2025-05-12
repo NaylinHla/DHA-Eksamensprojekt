@@ -49,7 +49,6 @@ jobs:
             --test-project "server/Startup.Tests/Startup.Tests.csproj" \
             --break-at     80 \
             --reporter     html \
-            --ignore-mutations 'MonitorService\.Log\..*' \
             --concurrency  2
         continue-on-error: true
 
