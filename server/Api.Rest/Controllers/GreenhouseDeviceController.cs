@@ -1,6 +1,7 @@
 using Application.Interfaces;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos.SensorHistory;
+using Infrastructure.Logging;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -26,6 +27,7 @@ public class GreenhouseDeviceController(
             [FromQuery] DateTime? to,
             [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered GetSensorData method in GreenhouseDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var result = await greenhouseDeviceService.GetSensorHistoryByDeviceId(deviceId, from, to, claims);
         return Ok(result);
@@ -36,6 +38,7 @@ public class GreenhouseDeviceController(
     public async Task<ActionResult<GetRecentSensorDataForAllUserDeviceDto>> GetRecentSensorDataForAllUserDevice(
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered GetRecentSensorDataForAllUserDevice method in GreenhouseDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var data = await greenhouseDeviceService.GetRecentSensorDataForAllUserDevicesAsync(claims);
         if (data.SensorHistoryWithDeviceRecords.Count == 0) return NoContent();
@@ -48,6 +51,7 @@ public class GreenhouseDeviceController(
     public async Task<ActionResult> DeleteDataFromSpecificDevice([FromQuery] Guid deviceId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered DeleteDataFromSpecificDevice method in GreenhouseDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
 
         await greenhouseDeviceService.DeleteDataFromSpecificDeviceAndBroadcast(deviceId, claims);
