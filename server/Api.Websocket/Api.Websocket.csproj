@@ -10,6 +10,7 @@
     <ItemGroup>
         <PackageReference Include="uldahlalex.websocket.boilerplate" Version="2.3.4"/>
         <ProjectReference Include="..\Application\Application.csproj"/>
+        <ProjectReference Include="..\Infrastructure.Logging\Infrastructure.Logging.csproj" />
     </ItemGroup>
 
 

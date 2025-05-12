@@ -5,22 +5,22 @@ namespace Application;
 
 public static class JsonDefaults
 {
-    public static readonly JsonSerializerOptions CaseInsensitive = new JsonSerializerOptions
+    public static readonly JsonSerializerOptions CaseInsensitive = new()
     {
         PropertyNameCaseInsensitive = true
     };
-    
-    public static readonly JsonSerializerOptions CamelCase = new JsonSerializerOptions
+
+    public static readonly JsonSerializerOptions CamelCase = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static readonly JsonSerializerOptions WriteIndented = new JsonSerializerOptions
+    public static readonly JsonSerializerOptions WriteIndented = new()
     {
         WriteIndented = true
     };
 
-    public static readonly JsonSerializerOptions MqttSerialize = new JsonSerializerOptions
+    public static readonly JsonSerializerOptions MqttSerialize = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

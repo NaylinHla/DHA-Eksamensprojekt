@@ -1,50 +1,61 @@
 ﻿name: Mutation Testing
-on:
-  workflow_dispatch:
+on: [ workflow_dispatch ]
 
 jobs:
   mutation_testing:
-    name: Mutation Testing
     runs-on: ubuntu-latest
-    
+    strategy:
+      matrix:
+        project:
+          - server/Api.Rest/Api.Rest.csproj
+          - server/Api.Websocket/Api.Websocket.csproj
+          - server/Application/Application.csproj
+          - server/Infrastructure.MQTT/Infrastructure.MQTT.csproj
+          - server/Infrastructure.Postgres/Infrastructure.Postgres.csproj
+          - server/Infrastructure.Websocket/Infrastructure.Websocket.csproj
+    env:
+      APPOPTIONS__DbConnectionString: ${{ secrets.DBCONNECTIONSTRING }}
+      APPOPTIONS__JwtSecret:        ${{ secrets.JWT_TOKEN }}
+      APPOPTIONS__MQTT_BROKER_HOST: ${{ secrets.MQTT_BROKER_HOST }}
+      APPOPTIONS__MQTT_USERNAME:    ${{ secrets.MQTT_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_USERNAME: ${{ secrets.EMAIL_SENDER_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{ secrets.EMAIL_SENDER_PASSWORD }}
+      APPOPTIONS__JWT_EMAIL_SECRET: ${{ secrets.JWT_EMAIL_SECRET }}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.x
+      - uses: actions/setup-dotnet@v3
+        with: { dotnet-version: '8.0.x' }
 
-      - name: Install required tools
+      - name: Install Stryker .NET
+        run: dotnet tool install --global dotnet-stryker
+
+      - name: Compute safe project-dir name
+        id: vars
         run: |
-          dotnet tool install -g dotnet-stryker
+          proj="${{ matrix.project }}"
+          dir="$(basename "$(dirname "$proj")")"
+          safe_dir="${dir//\//_}"
+          echo "SAFE_DIR=$safe_dir" >> $GITHUB_ENV
 
-      - name: Generate Stryker Config
+      - name: Run mutation tests
         run: |
-          cat <<EOF > stryker-config.json
-          {
-            "stryker-config": {
-              "thresholds": {
-                "break": 80
-              },
-              "coverage-analysis": "perTest"
-            }
-          }
-          EOF
-        working-directory: server/Startup.Tests
-
-      - name: Run Mutation Tests (Stryker)
-        run: dotnet stryker
-        working-directory: server/Startup.Tests
+          echo "Starting Stryker on ${{ matrix.project }}…"
+          DOTNET_ROLL_FORWARD=LatestMajor \
+          dotnet stryker \
+            --project      "${{ matrix.project }}" \
+            --test-project "server/Startup.Tests/Startup.Tests.csproj" \
+            --break-at     80 \
+            --reporter     html \
+            --concurrency  2
         continue-on-error: true
 
-      - name: Upload Stryker Report
+
+      - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stryker-report
-          path: server/Startup.Tests/StrykerOutput
-  
+          name: mutation-report-${{ env.SAFE_DIR }}
+          path: StrykerOutput/**/reports/mutation-report.html

@@ -1,41 +1,76 @@
-import {Route, Routes, useLocation, useNavigate} from "react-router";
+import {Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router";
 import {DashboardRoute, SettingsRoute, SignInRoute} from '../routeConstants.ts';
-import Settings from "./Settings.tsx";
-import Dock from "./Dock.tsx";
-import {AlertPage, DashboardPage, HistoryPage, NotFoundPage} from "../pages"
-import {useEffect} from "react";
-import {useAtom} from "jotai";
-import {JwtAtom} from "./import";
+import {AuthScreen, WeatherView, PlantsView, UserSettings, ContactUsPage} from "../pages"
 import toast from "react-hot-toast";
-import AuthScreen from "../pages/Auth/AuthScreen.tsx";
-import {NavBar} from "./index";
-import UserSettings from "../pages/UserSettings/UserSettings.tsx";
+import React from "react";
+import {Footer, NavBar} from "./index";
+import {
+    AboutPage,
+    AlertPage,
+    DashboardPage,
+    HistoryPage,
+    MyDevicePage,
+    NotFoundPage,
+    AdvertisementPage,
+    CareerPage,
+    CookiesPage,
+    MarketingPage,
+    PrivacyPage,
+    TermsPage,
+    JwtAtom,
+    useAtom,
+
+} from "./import";
 
 export default function ApplicationRoutes() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const [jwt] = useAtom(JwtAtom);
+    const isAuthScreen = location.pathname === SignInRoute;
 
-    useEffect(() => {
-        if (jwt == undefined || jwt.length < 1) {
-            navigate(SignInRoute)
-            toast("Please sign in to continue")
+    function RequireAuth() {
+        const [jwt] = useAtom(JwtAtom);
+
+        if (!jwt || jwt.length < 1) {
+            toast("Please sign in to continue");
+            return <Navigate to={SignInRoute} replace/>;
         }
-    }, [])
 
-    const isAuthScreen = location.pathname === SignInRoute
+        return <Outlet/>;
+    }
 
-    return (<>
-        {!isAuthScreen && <NavBar/>}
-        <Routes>
-            <Route element={<HistoryPage/>} path={"/history"}/>
-            <Route element={<DashboardPage/>} path={DashboardRoute}/>
-            <Route element={<UserSettings/>} path={SettingsRoute}/>
-            <Route element={<AlertPage/>} path={"/alerts"}></Route>
-            <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
-            <Route path="/*" element={<NotFoundPage/>}/>
-        </Routes>
-        {/*{!isAuthScreen && <Dock/>}*/}
-    </>)
+    return (
+        <>
+            {!isAuthScreen && <NavBar/>}
+            <div className="min-h-screen">
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path={SignInRoute} element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}/>
+                    <Route path="/about" element={<AboutPage/>}/>
+                    <Route path="/contact-us" element={<ContactUsPage/>}/>
+                    <Route path="/career" element={<CareerPage/>}/>
+                    <Route path="/advertisement" element={<AdvertisementPage/>}/>
+                    <Route path="/marketing" element={<MarketingPage/>}/>
+                    <Route path="/terms" element={<TermsPage/>}/>
+                    <Route path="/privacy" element={<PrivacyPage/>}/>
+                    <Route path="/cookies" element={<CookiesPage/>}/>
+
+                    {/* Grouped Protected Routes */}
+                    <Route element={<RequireAuth/>}>
+                        <Route path={DashboardRoute} element={<DashboardPage/>}/>
+                        <Route path="/history" element={<HistoryPage/>}/>
+                        <Route path={SettingsRoute} element={<UserSettings/>}/>
+                        <Route path="/alerts" element={<AlertPage/>}/>
+                        <Route path="/myDevice" element={<MyDevicePage/>}/>
+                        <Route path="/plants" element={<PlantsView/>}/>
+                        <Route path="/weather" element={<WeatherView />} />
+                    </Route>
+
+                    {/* Catch-all */}
+                    <Route path="/*" element={<NotFoundPage/>}/>
+                </Routes>
+            </div>
+            <Footer/>
+        </>
+    );
 }

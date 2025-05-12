@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Core.Domain.Entities;
+﻿namespace Core.Domain.Entities;
 
 public class User
 {
@@ -14,7 +11,7 @@ public class User
     public DateTime? Birthday { get; set; }
     public required string Country { get; set; }
     public string Role { get; set; } = null!;
-    
+
     public Weather? Weather { get; set; }
     public UserSettings? UserSettings { get; set; }
     public ICollection<UserPlant> UserPlants { get; set; } = new List<UserPlant>();

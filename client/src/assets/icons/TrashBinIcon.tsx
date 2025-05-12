@@ -7,11 +7,11 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
 }
 
 const TrashBinIcon: React.FC<IconProps> = ({
-                                            className,
-                                            color = "currentColor", // Default color
-                                            size = 24, // Default size
-                                            ...props
-                                        }) => (
+                                               className,
+                                               color = "currentColor", // Default color
+                                               size = 24, // Default size
+                                               ...props
+                                           }) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         width={size}

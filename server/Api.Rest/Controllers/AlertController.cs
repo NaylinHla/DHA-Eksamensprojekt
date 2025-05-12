@@ -1,37 +1,25 @@
 using Application.Interfaces;
-using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Api.Rest.Extensions;
 
 namespace Api.Rest.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AlertController : ControllerBase
+public class AlertController(IAlertService alertService, ISecurityService securityService) : ControllerBase
 {
-    private readonly IAlertService _alertService;
-    private readonly ISecurityService _securityService;
-
-    public AlertController(IAlertService alertService, ISecurityService securityService)
-    {
-        _alertService = alertService;
-        _securityService = securityService;
-    }
-
     public const string CreateAlertRoute = nameof(CreateAlert);
+    public const string GetAlertsRoute = nameof(GetAlerts);
 
-    
-    
-    [HttpGet("GetAlerts")]
+    [HttpGet]
+    [Route(GetAlertsRoute)]
     public async Task<ActionResult<List<Alert>>> GetAlerts(
         [FromHeader] string authorization,
         [FromQuery] int? year = null)
     {
-        var claims = _securityService.VerifyJwtOrThrow(authorization);
-
-        var alerts = await _alertService.GetAlertsAsync(Guid.Parse(claims.Id), year);
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var alerts = await alertService.GetAlertsAsync(Guid.Parse(claims.Id), year);
         return Ok(alerts);
     }
 
@@ -41,8 +29,8 @@ public class AlertController : ControllerBase
         [FromBody] AlertCreate dto,
         [FromHeader] string authorization)
     {
-        var claims = _securityService.VerifyJwtOrThrow(authorization);
-        var alert = await _alertService.CreateAlertAsync(
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var alert = await alertService.CreateAlertAsync(
             Guid.Parse(claims.Id),
             dto.AlertName,
             dto.AlertDesc,
@@ -57,8 +45,6 @@ public class AlertController : ControllerBase
             AlertTime = alert.AlertTime,
             AlertPlant = alert.AlertPlant
         };
-
         return Ok(response);
     }
-
 }

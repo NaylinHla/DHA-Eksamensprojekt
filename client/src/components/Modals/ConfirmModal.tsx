@@ -26,7 +26,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     return (
         <dialog open className="modal modal-middle">
-            <div className="modal-box max-w-md space-y-5 relative">
+            <div className="modal-box max-w-md space-y-5 relative bg-[var(--color-surface)]">
 
                 {/* Close icon */}
                 <button

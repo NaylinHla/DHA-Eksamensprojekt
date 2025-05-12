@@ -1,23 +1,63 @@
-import { useState } from "react";
+import {useEffect, useLayoutEffect, useRef, useState} from "react";
 import logo from "../../assets/Favicon/favicon.svg";
-import {
-    AuthClient,
-    AuthLoginDto,
-    AuthRegisterDto
-} from "../../generated-client.ts";
+import {AuthClient, AuthLoginDto, AuthRegisterDto} from "../../generated-client.ts";
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
 import {JwtAtom, useAtom} from "../../components/import";
+import toast from "react-hot-toast";
+import countries from "./countries.json";
 
 type AuthScreenProps = {
     onLogin?: () => void;
 };
 
+interface RegisterErrors {
+    firstName?: boolean;
+    lastName?: boolean;
+    email?: boolean;
+    birthday?: boolean;
+    country?: boolean;
+    password?: boolean;
+    confirmPassword?: "required" | "mismatch";
+}
+
 const authClient = new AuthClient("http://localhost:5000");
 
-const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
+const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
     const [loggedIn, setLoggedIn] = useState(false);
     const [, setJwt] = useAtom(JwtAtom);
+
+    const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({});
+    const errorClass = "border-red-500 focus:border-red-600";
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const registerFormRef = useRef<HTMLFormElement>(null);
+    const loginFormRef = useRef<HTMLFormElement>(null);
+
+    // ANIMATION ---
+    useLayoutEffect(() => {
+        const wrapper = wrapperRef.current;
+        const register = registerFormRef.current;
+
+        if (!wrapper) return;
+
+        if (mode === "register" && register) {
+            wrapper.style.height = "7rem";
+        } else if (mode === "login") {
+            wrapper.style.height = "7rem";
+        } else {
+            wrapper.style.height = "5rem";
+        }
+    }, [mode, registerErrors]);
+
+    useEffect(() => {
+        if (mode !== "login") {
+            loginFormRef.current?.reset();
+        }
+        if (mode !== "register") {
+            registerFormRef.current?.reset();
+            setRegisterErrors({});
+        }
+    }, [mode]);
 
     const lift = {
         idle: "translate-y-0",
@@ -32,11 +72,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 ? "-translate-y-12"
                 : "translate-y-0";
 
-    const reset = () => setMode("idle");
+    const reset = () => {
+        setMode("idle");
+        setRegisterErrors({});
+    };
 
     const fade = (visible: boolean) =>
         visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none";
 
+
+    // HANDLERS ---
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -44,64 +89,87 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         const password = formData.get("password") as string;
 
         try {
-            const loginDto: AuthLoginDto = { email, password };
+            const loginDto: AuthLoginDto = {email, password};
             const response = await authClient.login(loginDto);
-            const { jwt } = response;
+            const {jwt} = response;
             setJwt(jwt);
             localStorage.setItem("jwt", jwt);
             setLoggedIn(true);
             onLogin?.();
         } catch (error) {
             console.error("Login failed", error);
-            alert("Login failed. Please check your credentials.");
+            toast.error("Login failed. Please check your credentials.");
         }
     };
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
+        const firstName = (formData.get("firstName") as string)?.trim();
+        const lastName = (formData.get("lastName") as string)?.trim();
+        const email = (formData.get("email") as string)?.trim();
+        const birthdayRaw = formData.get("birthday") as string;
+        const country = (formData.get("country") as string)?.trim();
+        const password = (formData.get("password") as string)?.trim();
+        const confirmPassword = (formData.get("confirmPassword") as string)?.trim();
 
-        const firstName = formData.get("firstName") as string;
-        const lastName = formData.get("lastName") as string;
-        const email = formData.get("email") as string;
-        const birthday = new Date(formData.get("birthday") as string);
-        const country = formData.get("country") as string;
-        const password = formData.get("password") as string;
-        const confirmPassword = formData.get("confirmPassword") as string;
-
-        if (password !== confirmPassword) {
-            alert("Passwords do not match!");
-            return;
+        const errors: RegisterErrors = {};
+        if (!firstName) errors.firstName = true;
+        if (!lastName) errors.lastName = true;
+        if (!email) errors.email = true;
+        if (!birthdayRaw) errors.birthday = true;
+        if (!country) errors.country = true;
+        if (!password) errors.password = true;
+        if (!confirmPassword) errors.confirmPassword = "required";
+        if (
+            password &&
+            confirmPassword &&
+            password !== confirmPassword
+        ) {
+            errors.confirmPassword = "mismatch";
         }
 
+        setRegisterErrors(errors);
+        if (Object.keys(errors).length) return;
+
         try {
-            const registerDto: AuthRegisterDto = {
+            const birthday = new Date(birthdayRaw);
+            await authClient.register({
                 firstName,
                 lastName,
                 email,
                 birthday,
                 country,
                 password,
-            };
-
-            await authClient.register(registerDto);
-            alert("Registered successfully! You can now log in.");
+            } as AuthRegisterDto);
             reset();
+            toast.success("Registered successfully! You can now log in.");
         } catch (error) {
             console.error("Registration failed", error);
-            alert("Registration failed. Try again.");
+            toast.error("Registration failed. Try again.");
         }
     };
 
+    const requiredHint = (flag?: boolean | string) => (
+        <p
+            className={`text-white text-xs text-left ${
+                flag ? "block mt-1" : "hidden"
+            }`}
+        >
+            {flag === "mismatch" ? "*Mismatch" : "*Required"}
+        </p>
+    );
+
     return (
-        <main className="relative flex min-h-screen flex-col items-center justify-center bg-primary font-display text-base-100">
+        <main className="relative flex min-h-screen flex-col items-center bg-primary font-display text-base-100 py-50">
             {/* Header */}
             <h1 className="absolute top-5 text-xl tracking-wider font-bold lg:text-3xl sm:text-3xl text-white">
                 Greenhouse Application
             </h1>
 
             {/* Body */}
-            <section className="flex w-full max-w-1xl flex-col items-center justify-center gap-10 px-6 md:flex-row md:gap-20">
+            <section
+                className="flex w-full max-w-1xl flex-col items-center justify-center gap-10 px-6 md:flex-row md:gap-20">
                 <img
                     src={logo}
                     alt="Greenhouse"
@@ -109,7 +177,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 />
 
                 {/* AUTH COLUMN */}
-                <div className="relative text-white flex w-full max-w-xs flex-col items-center text-center md:max-w-sm">
+                <div
+                    ref={wrapperRef}
+                    className="relative text-white flex w-full max-w-xs flex-col items-center text-center md:max-w-sm overflow-visible transition-[height] duration-300 ease-in-out"
+                >
                     {/* Login / Register */}
                     <div
                         className={`flex flex-col items-center transition-transform duration-300 ${
@@ -138,11 +209,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         >
                             Register
                         </button>
-                        <span className="mt-1 h-px w-32 bg-white" />
+                        <span className="mt-1 h-px w-32 bg-white"/>
                     </div>
 
                     {/* Login Form */}
                     <form
+                        ref={loginFormRef}
                         onSubmit={handleLogin}
                         className={`absolute top-0 w-full space-y-2 transition-opacity duration-300 ${fade(
                             mode === "login",
@@ -168,77 +240,104 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                     {/* Register Form */}
                     <form
+                        ref={registerFormRef}
                         onSubmit={handleRegister}
-                        className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${fade(
-                            mode === "register",
-                        )}`}
+                        noValidate
+                        className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${
+                            mode === "register" ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                        }`}
                     >
+                        {/* First / Last name */}
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <label className="label py-0 text-white">First Name</label>
                                 <input
                                     name="firstName"
                                     placeholder="First Name"
-                                    className="input input-bordered bg-white input-sm w-full text-black"
-                                    required
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.firstName && errorClass
+                                    }`}
                                 />
+                                {requiredHint(registerErrors.firstName)}
                             </div>
+
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Last Name</label>
                                 <input
                                     name="lastName"
                                     placeholder="Last Name"
-                                    className="input input-bordered bg-white input-sm w-full text-black"
-                                    required
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.lastName && errorClass
+                                    }`}
                                 />
+                                {requiredHint(registerErrors.lastName)}
                             </div>
                         </div>
 
+                        {/* Email */}
                         <label className="label py-0 text-white">Email</label>
                         <input
                             name="email"
                             type="email"
                             placeholder="Email"
-                            className="input input-bordered bg-white input-sm w-full text-black"
-                            required
+                            className={`input input-bordered bg-white input-sm w-full text-black ${
+                                registerErrors.email && errorClass
+                            }`}
                         />
+                        {requiredHint(registerErrors.email)}
 
+                        {/* Birthday / Country */}
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Birthday</label>
                                 <input
                                     name="birthday"
                                     type="date"
-                                    className="input input-bordered bg-white input-sm w-full text-black"
-                                    required
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.birthday && errorClass
+                                    }`}
                                 />
+                                {requiredHint(registerErrors.birthday)}
                             </div>
-                            <div className="flex-1">
+
+                            <div className="flex-1 relative overflow-visible">
                                 <label className="label py-0 text-white">Country</label>
-                                <input
+                                <select
                                     name="country"
-                                    placeholder="Country"
-                                    className="input input-bordered bg-white input-sm w-full text-black"
+                                    className="select select-bordered bg-white select-sm w-full text-black"
                                     required
-                                />
+                                >
+                                    <option value="">Select country</option>
+                                    {countries.map((country) => (
+                                        <option
+                                            key={country}
+                                            value={country}
+                                        >
+                                            {country}
+                                        </option>
+                                    ))}
+                                </select>
+                                {requiredHint(registerErrors.country)}
                             </div>
                         </div>
 
+                        {/* Password */}
                         <label className="label py-0 text-white">Password</label>
                         <PasswordField
                             name="password"
                             placeholder="Password"
-                            required
-                            className="bg-white"
+                            className={`bg-white ${registerErrors.password && errorClass}`}
                         />
+                        {requiredHint(registerErrors.password)}
 
-                        <label className="label py-0 text-white">Confirm password</label>
+                        {/* Confirm password */}
+                        <label className="label py-0 text-white">Confirm Password</label>
                         <PasswordField
                             name="confirmPassword"
                             placeholder="Password"
-                            required
-                            className="bg-white"
+                            className={`bg-white ${registerErrors.confirmPassword && errorClass}`}
                         />
+                        {requiredHint(registerErrors.confirmPassword)}
 
                         <div className="flex gap-2 pt-1">
                             <button type="submit" className="btn bg-transparent text-white border-white btn-xs flex-1">
@@ -249,12 +348,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </div>
             </section>
 
-            {/* Logged-in Notice */}
-            {loggedIn && (
-                <p className="absolute bottom-4 text-xs italic opacity-60">
-                    You are now logged in (placeholder)
-                </p>
-            )}
+            {/* Logged-in Notice */
+            }
+            {
+                loggedIn && (
+                    <p className="absolute bottom-4 text-xs italic opacity-60">
+                        You are now logged in (placeholder)
+                    </p>
+                )}
         </main>
     );
 };

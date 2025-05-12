@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using System.Security.Cryptography;
-using System.Text.Json;
 using Api.Rest.Controllers;
 using Application;
 using Application.Models;
@@ -29,18 +28,18 @@ public static class ApiTestSetupUtilities
     {
         var jwtSecretBytes = RandomNumberGenerator.GetBytes(32); // 256 bits
         var jwtSecret = Convert.ToBase64String(jwtSecretBytes);
-        
+
         services.Configure<AppOptions>(options =>
         {
             options.JwtSecret = jwtSecret;
             options.Seed = true;
-            options.DbConnectionString = "testDBConnectionString"; 
+            options.DbConnectionString = "testDBConnectionString";
             options.PORT = 8080;
             options.WS_PORT = 8181;
             options.REST_PORT = 5000;
             options.IsTesting = true;
         });
-        
+
         if (useTestContainer)
         {
             var db = new PgCtxSetup<MyDbContext>();
@@ -67,7 +66,8 @@ public static class ApiTestSetupUtilities
         }
 
         if (makeWsClient) services.AddScoped<TestWsClient>();
-        
+
+
         if (makeMqttClient)
         {
             RemoveExistingService<TestMqttClient>(services);
@@ -93,7 +93,7 @@ public static class ApiTestSetupUtilities
         var random = new Random().Next(100000, 999999);
         var email = $"test{random}@gmail.com";
         var password = $"Pass{random}!";
-        
+
         var registerDto = new AuthRegisterDto
         {
             FirstName = "Test",
@@ -103,17 +103,18 @@ public static class ApiTestSetupUtilities
             Country = "TestCountry",
             Birthday = DateTime.UtcNow.AddYears(-25) // Required and UTC
         };
-         
+
         var signIn = await httpClient.PostAsJsonAsync(AuthController.RegisterRoute, registerDto);
-        
+
         if (!signIn.IsSuccessStatusCode)
         {
             var error = await signIn.Content.ReadAsStringAsync();
             throw new Exception($"Registration failed: {signIn.StatusCode} - {error}");
         }
-        
-        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(JsonDefaults.CaseInsensitive) ?? throw new Exception("Failed to deserialize AuthResponseDto");
-        
+
+        var authResponseDto = await signIn.Content.ReadFromJsonAsync<AuthResponseDto>(JsonDefaults.CaseInsensitive) ??
+                              throw new Exception("Failed to deserialize AuthResponseDto");
+
         httpClient.DefaultRequestHeaders.Add("authorization", authResponseDto.Jwt);
         return authResponseDto;
     }

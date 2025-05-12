@@ -176,12 +176,140 @@
         }
       }
     },
-    "/api/GreenhouseDevice/GetSensorDataByDeviceId": {
+    "/api/Email/send": {
+      "post": {
+        "tags": [
+          "Email"
+        ],
+        "operationId": "Email_SendEmail",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Email/subscribe": {
+      "post": {
+        "tags": [
+          "Email"
+        ],
+        "operationId": "Email_SubscribeToEmailList",
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddEmailDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Email/unsubscribe": {
+      "post": {
+        "tags": [
+          "Email"
+        ],
+        "operationId": "Email_UnsubscribeFromEmailList",
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveEmailDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Email"
+        ],
+        "operationId": "Email_UnsubscribeFromEmailLink",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/GreenhouseDevice/GetAllSensorHistoryByDeviceAndTimePeriodIdDto": {
       "get": {
         "tags": [
           "GreenhouseDevice"
         ],
-        "operationId": "GreenhouseDevice_GetSensorDataByDeviceId",
+        "operationId": "GreenhouseDevice_GetAllSensorHistoryByDeviceAndTimePeriodIdDto",
         "parameters": [
           {
             "name": "deviceId",
@@ -193,12 +321,32 @@
             "x-position": 1
           },
           {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 2
+            "x-position": 4
           }
         ],
         "responses": {
@@ -248,20 +396,108 @@
         }
       }
     },
-    "/api/GreenhouseDevice/GetAllUserDevices": {
-      "get": {
+    "/api/GreenhouseDevice/DeleteDataFromSpecificDevice": {
+      "delete": {
         "tags": [
           "GreenhouseDevice"
         ],
-        "operationId": "GreenhouseDevice_GetAllUserDevices",
+        "operationId": "GreenhouseDevice_DeleteDataFromSpecificDevice",
         "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
           {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/GetPlant": {
+      "get": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_GetPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
             "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/GetAllPlants": {
+      "get": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_GetAllPlants",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
           }
         ],
         "responses": {
@@ -272,7 +508,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GetAllUserDeviceDto"
+                    "$ref": "#/components/schemas/PlantResponseDto"
                   }
                 }
               }
@@ -281,12 +517,12 @@
         }
       }
     },
-    "/api/GreenhouseDevice/AdminChangesPreferences": {
+    "/api/Plant/CreatePlant": {
       "post": {
         "tags": [
-          "GreenhouseDevice"
+          "Plant"
         ],
-        "operationId": "GreenhouseDevice_AdminChangesPreferences",
+        "operationId": "Plant_CreatePlant",
         "parameters": [
           {
             "name": "authorization",
@@ -302,13 +538,222 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
+                "$ref": "#/components/schemas/PlantCreateDto"
               }
             }
           },
           "required": true,
           "x-position": 1
         },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/DeletePlant": {
+      "delete": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_DeletePlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/EditPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_EditPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantEditDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/MarkPlantAsDead": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_MarkPlantAsDead",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/WaterPlant": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_WaterPlant",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plant/WaterAllPlants": {
+      "patch": {
+        "tags": [
+          "Plant"
+        ],
+        "operationId": "Plant_WaterAllPlants",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -556,6 +1001,250 @@
           }
         }
       }
+    },
+    "/api/UserDevice/GetUserDevice": {
+      "get": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_GetUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/GetAllUserDevices": {
+      "get": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_GetAllUserDevices",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/CreateUserDevice": {
+      "post": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_CreateUserDevice",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDeviceCreateDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceCreateDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/EditUserDevice": {
+      "patch": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_EditUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDeviceEditDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/DeleteUserDevice": {
+      "delete": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_DeleteUserDevice",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeviceEditDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserDevice/AdminChangesPreferences": {
+      "post": {
+        "tags": [
+          "UserDevice"
+        ],
+        "operationId": "UserDevice_AdminChangesPreferences",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminChangesPreferencesDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -719,9 +1408,6 @@
           "secretMode": {
             "type": "boolean"
           },
-          "waitTime": {
-            "type": "string"
-          },
           "user": {
             "nullable": true,
             "oneOf": [
@@ -782,7 +1468,8 @@
             "type": "string"
           },
           "plantNotes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lastWatered": {
             "type": "string",
@@ -832,6 +1519,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "waitTime": {
+            "type": "string"
           },
           "user": {
             "nullable": true,
@@ -1008,6 +1698,36 @@
           }
         }
       },
+      "EmailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AddEmailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "RemoveEmailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
       "GetAllSensorHistoryByDeviceIdDto": {
         "type": "object",
         "additionalProperties": false,
@@ -1076,6 +1796,16 @@
           "deviceName": {
             "type": "string"
           },
+          "deviceDesc": {
+            "type": "string"
+          },
+          "deviceWaitTime": {
+            "type": "string"
+          },
+          "deviceCreateDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
           "temperature": {
             "type": "number",
             "format": "double"
@@ -1098,56 +1828,126 @@
           }
         }
       },
-      "GetAllUserDeviceDto": {
+      "PlantResponseDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "allUserDevice": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserDevice2"
-            }
-          }
-        }
-      },
-      "UserDevice2": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
+          "plantId": {
             "type": "string",
             "format": "guid"
           },
-          "userId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "deviceName": {
+          "plantName": {
             "type": "string"
           },
-          "deviceDescription": {
+          "plantType": {
             "type": "string"
           },
-          "createdAt": {
+          "plantNotes": {
             "type": "string",
-            "format": "date-time"
+            "nullable": true
+          },
+          "planted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastWatered": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean"
           }
         }
       },
-      "AdminChangesPreferencesDto": {
+      "PlantCreateDto": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "plantName",
+          "plantType"
+        ],
         "properties": {
-          "deviceId": {
+          "plantName": {
             "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantNotes": {
+            "type": "string",
+            "maxLength": 1000,
             "nullable": true
           },
-          "unit": {
+          "planted": {
             "type": "string",
+            "format": "date-time",
             "nullable": true
           },
-          "interval": {
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlantEditDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plantName",
+          "plantType"
+        ],
+        "properties": {
+          "plantName": {
             "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "plantNotes": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          },
+          "planted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastWatered": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waterEvery": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "isDead": {
+            "type": "boolean",
             "nullable": true
           }
         }
@@ -1214,6 +2014,97 @@
           "newPassword": {
             "type": "string",
             "minLength": 1
+          }
+        }
+      },
+      "UserDeviceResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceDescription": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string"
+          }
+        }
+      },
+      "UserDeviceCreateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deviceName"
+        ],
+        "properties": {
+          "deviceName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 2
+          },
+          "deviceDescription": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserDeviceEditDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 2,
+            "nullable": true
+          },
+          "deviceDescription": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "waitTime": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AdminChangesPreferencesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "interval": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1382,6 +2273,7 @@
           "GreenhouseSensorData",
           "Device",
           "SensorData",
+          "ChangeWaitTime",
           "ChangePreferences"
         ]
       }

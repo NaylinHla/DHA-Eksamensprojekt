@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using Application;
 using HiveMQtt.Client;

@@ -5,6 +5,7 @@ using Application;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.MQTT;
 using Application.Models;
+using Application.Services;
 using Infrastructure.MQTT;
 using Infrastructure.Postgres;
 using Infrastructure.Websocket;
@@ -32,16 +33,20 @@ public class Program
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
         services.RegisterApplicationServices();
-
         services.AddDataSourceAndRepositories();
 
-        services.AddWebsocketInfrastructure();
+        services.AddTransient<IEmailSender, EmailSenderService>();
+        services.AddSingleton<JwtEmailTokenService>();
 
+
+        services.AddWebsocketInfrastructure();
         services.RegisterWebsocketApiServices();
         services.RegisterRestApiServices();
-        
-        var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>(); // Direct binding 
-        
+
+        var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
+
+        services.Configure<AppOptions>(options => { options.EnableEmailSending = false; });
+
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {
             services.RegisterMqttInfrastructure();
@@ -61,13 +66,14 @@ public class Program
         services.AddSingleton<IProxyConfig, ProxyConfig>();
     }
 
+
     private static async Task ConfigureMiddleware(WebApplication app)
     {
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         var serializedAppOptions = JsonSerializer.Serialize(appOptions);
         logger.LogInformation("Serialized AppOptions: {serializedAppOptions}", serializedAppOptions);
-        
+
         using (var scope = app.Services.CreateScope())
         {
             if (appOptions.Seed)
@@ -80,18 +86,17 @@ public class Program
             .StartProxyServer(appOptions.PORT, appOptions.REST_PORT, appOptions.WS_PORT);
 
         app.ConfigureRestApi();
-    
+
         if (!appOptions.IsTesting && !string.IsNullOrEmpty(appOptions.MQTT_BROKER_HOST))
             await app.ConfigureMqtt();
         else
             Console.WriteLine("Skipping MQTT service configuration");
-    
+
 
         await app.ConfigureWebsocketApi(appOptions.WS_PORT);
 
         app.MapGet("Acceptance", () => "Accepted");
 
-        // === Added Swagger and OpenAPI serving ===
         app.UseOpenApi(conf => { conf.Path = "openapi/v1.json"; });
 
         var document = await app.Services.GetRequiredService<IOpenApiDocumentGenerator>().GenerateAsync("v1");

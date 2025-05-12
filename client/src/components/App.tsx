@@ -27,11 +27,15 @@ export default function App() {
         const finalUrl = prod ? 'wss://' + baseUrl + '?id=' + randomUid : 'ws://' + baseUrl + '?id=' + randomUid;
         setServerUrl(finalUrl);
     }, [prod, baseUrl]);
-    
+
     return (<>
         {serverUrl && <WsClientProvider url={serverUrl}>
             <ApplicationRoutes/>
         </WsClientProvider>}
         {!prod && <DevTools/>}
+        <div
+            id="toast-container"
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center space-y-2"
+        ></div>
     </>)
 }

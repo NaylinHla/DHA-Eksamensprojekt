@@ -122,7 +122,8 @@ public sealed class WebSocketConnectionManager : IConnectionManager
                 return newSet;
             });
 
-        if (_topicMembers.TryGetValue(topic, out var members) && members.Count == 0) _topicMembers.TryRemove(topic, out _);
+        if (_topicMembers.TryGetValue(topic, out var members) && members.Count == 0)
+            _topicMembers.TryRemove(topic, out _);
 
         _memberTopics.AddOrUpdate(
             memberId,

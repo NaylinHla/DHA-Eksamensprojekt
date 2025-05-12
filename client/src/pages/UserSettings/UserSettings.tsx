@@ -2,23 +2,23 @@ import React, {useEffect, useState} from "react";
 import {Pencil, Trash2} from "lucide-react";
 import toast from "react-hot-toast";
 import {useAtom} from "jotai";
-import {JwtAtom, PatchUserEmailDto, PatchUserPasswordDto, UserClient} from "../../atoms";
+import {JwtAtom, UserClient} from "../../atoms";
 import {useNavigate} from "react-router";
 import EmailModal from "../../components/Modals/EmailModal.tsx";
 import PasswordModal, {PasswordDto} from "../../components/Modals/PasswordModal.tsx";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
-import {formatDateTimeForUserTZ, useLogout} from "../../components";
+import {TitleTimeHeader, useLogout} from "../../components";
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
 
 const userClient = new UserClient("http://localhost:5000");
 
-const UserSettings: React.FC<Props> = ({ onChange }) => {
+const UserSettings: React.FC<Props> = ({onChange}) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
     const [saving, setSaving] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
-    
+
     const [confirmWater, setConfirmWater] = useState(false);
     const [fahrenheit, setFahrenheit] = useState(false);
     const [darkTheme, setDarkTheme] = useState(
@@ -29,17 +29,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [openDelete, setOpenDelete] = useState(false);
 
     const navigate = useNavigate();
-    
-    const { logout } = useLogout();
+
+    const {logout} = useLogout();
 
     // ------
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-    
     useEffect(() => {
         const theme = darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
@@ -57,7 +50,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     const spinner = (
         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-            <circle className="opacity-25 animate-gradientSpinner" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+            <circle className="opacity-25 animate-gradientSpinner" cx="12" cy="12" r="10" stroke="currentColor"
+                    strokeWidth="4" fill="none"/>
             <path className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="currentColor"/>
         </svg>
     );
@@ -79,7 +73,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     }
 
     async function handlePasswordDto(dto: PasswordDto) {
-        if (dto.newPassword !== dto.confirm) { toast.error("Passwords don’t match"); return; }
+        if (dto.newPassword !== dto.confirm) {
+            toast.error("Passwords don’t match");
+            return;
+        }
         try {
             setSaving(true);
             await userClient.patchUserPassword(jwt, {
@@ -88,10 +85,14 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             });
             toast.success("Password updated");
             setOpenPassword(false);
-        } catch (e:any) { toast.error(e.message ?? "Failed"); } finally { setSaving(false); }
+        } catch (e: any) {
+            toast.error(e.message ?? "Failed");
+        } finally {
+            setSaving(false);
+        }
     }
 
-    async function handleEmail(oldMail:string,newMail:string) {
+    async function handleEmail(oldMail: string, newMail: string) {
         try {
             setSaving(true);
             await userClient.patchUserEmail(jwt, {
@@ -100,7 +101,11 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             });
             toast.success("E-mail updated – please log in with the new address.");
             setOpenEmail(false);
-        } catch (e:any){ toast.error(e.message ?? "Failed"); } finally { setSaving(false); }
+        } catch (e: any) {
+            toast.error(e.message ?? "Failed");
+        } finally {
+            setSaving(false);
+        }
     }
 
     const saveToggles = () => {
@@ -109,16 +114,11 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
+        <div
+            className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
             {/* Header */}
-            <header className="w-full bg-background shadow px-6 py-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">User Profile</h1>
-                <span className="text-sm text-gray-600">
-                    {formatDateTimeForUserTZ(currentTime)}
-                </span>
-            </header>
-
+            <TitleTimeHeader title="User Profile"/>
 
             {/* Content card */}
             <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
@@ -128,9 +128,14 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <h2 className="text-xl font-semibold">Settings</h2>
 
                     <div className="flex flex-col gap-3">
-                        <button onClick={()=>setOpenPassword(true)}   className="btn btn-neutral bg-transparent btn-sm">Change password</button>
-                        <button onClick={()=>setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">Change e-mail</button>
-                        <button onClick={()=>setOpenDelete(true)} className="btn btn-error  btn-sm flex items-center gap-1">
+                        <button onClick={() => setOpenEmail(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change e-mail
+                        </button>
+                        <button onClick={() => setOpenPassword(true)}
+                                className="btn btn-neutral bg-transparent btn-sm">Change password
+                        </button>
+                        <button onClick={() => setOpenDelete(true)}
+                                className="btn btn-error  btn-sm flex items-center gap-1">
                             <Trash2 size={14}/> Delete my account
                         </button>
                     </div>
@@ -140,12 +145,12 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                         <li className="flex justify-between items-center">
                             <span>Confirm Water Dialog</span>
                             <input type="checkbox" className="toggle toggle-sm"
-                                   checked={confirmWater} onChange={()=>setConfirmWater(!confirmWater)}/>
+                                   checked={confirmWater} onChange={() => setConfirmWater(!confirmWater)}/>
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Fahrenheit</span>
                             <input type="checkbox" className="toggle toggle-sm"
-                                   checked={fahrenheit} onChange={()=>setFahrenheit(!fahrenheit)}/>
+                                   checked={fahrenheit} onChange={() => setFahrenheit(!fahrenheit)}/>
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Dark Theme</span>
@@ -156,8 +161,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 onChange={() => setDarkTheme(!darkTheme)}
                             />
                         </li>
-                        <li className="flex justify-between"><span>IoT Wait time</span><span
-                            className="text-sm opacity-70">12 m</span></li>
                     </ul>
 
                     <button onClick={saveToggles} className="btn btn-primary btn-sm mt-auto">Save settings</button>
@@ -165,7 +168,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
                 {/* RIGHT column – user data */}
                 <article className="relative flex-1 p-8 overflow-y-auto">
-                    <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]" aria-label="edit">
+                    <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]"
+                            aria-label="edit">
                         <Pencil size={20}/>
                     </button>
 
@@ -180,7 +184,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 <PasswordModal
                     open={openPassword}
                     loading={saving}
-                    onClose={()=>setOpenPassword(false)}
+                    onClose={() => setOpenPassword(false)}
                     onSubmit={handlePasswordDto}
                 />
             )}
@@ -188,26 +192,35 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             <EmailModal
                 open={openEmail}
                 loading={saving}
-                onClose={()=>setOpenEmail(false)}
+                onClose={() => setOpenEmail(false)}
                 onSubmit={handleEmail}
             />
 
             +<DeleteAccountModal
-                open={openDelete}
-                loading={saving}
-                onCancel={()=>setOpenDelete(false)}
-                onConfirm={handleDelete}
-            />
+            open={openDelete}
+            loading={saving}
+            onCancel={() => setOpenDelete(false)}
+            onConfirm={handleDelete}
+        />
 
             {/* gradient spinner keyframes */}
             <style jsx>{`
-        @keyframes gradientSpinner {
-          0%   { stroke: var(--color-primary); }
-          50%  { stroke: #ff00ff; }
-          100% { stroke: var(--color-primary); }
-        }
-        .animate-gradientSpinner { animation: gradientSpinner 3s ease-in-out infinite; }
-      `}</style>
+                @keyframes gradientSpinner {
+                    0% {
+                        stroke: var(--color-primary);
+                    }
+                    50% {
+                        stroke: #ff00ff;
+                    }
+                    100% {
+                        stroke: var(--color-primary);
+                    }
+                }
+
+                .animate-gradientSpinner {
+                    animation: gradientSpinner 3s ease-in-out infinite;
+                }
+            `}</style>
         </div>
     );
 };

@@ -19,6 +19,7 @@ public partial class MyDbContext : DbContext
     public virtual DbSet<Alert> Alerts { get; set; }
     public virtual DbSet<SensorHistory> SensorHistories { get; set; }
     public virtual DbSet<UserDevice> UserDevices { get; set; }
+    public virtual DbSet<EmailList> EmailList { get; set; } // ✅ added
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,14 +35,10 @@ public partial class MyDbContext : DbContext
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime)))
-            {
                 property.SetValueConverter(utcConverter);
-            }
 
             foreach (var property in entityType.GetProperties().Where(p => p.ClrType == typeof(DateTime?)))
-            {
                 property.SetValueConverter(nullableUtcConverter);
-            }
         }
 
         modelBuilder.HasDefaultSchema("meetyourplants");
@@ -90,7 +87,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.DarkTheme).HasColumnName("DarkTheme");
             entity.Property(e => e.ConfirmDialog).HasColumnName("ConfirmDialog");
             entity.Property(e => e.SecretMode).HasColumnName("SecretMode");
-            entity.Property(e => e.WaitTime).HasColumnName("WaitTime");
 
             entity.HasOne(e => e.User)
                 .WithOne(u => u.UserSettings)
@@ -163,7 +159,7 @@ public partial class MyDbContext : DbContext
             entity.HasKey(e => e.SensorHistoryId);
 
             entity.ToTable("SensorHistory");
-            
+
             entity.Property(e => e.SensorHistoryId).HasColumnName("SensorHistoryId");
             entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
             entity.Property(e => e.Temperature).HasColumnName("Temperature");
@@ -171,7 +167,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.AirPressure).HasColumnName("AirPressure");
             entity.Property(e => e.AirQuality).HasColumnName("AirQuality");
             entity.Property(e => e.Time).HasColumnName("Time");
-            
+
             entity.HasOne(e => e.UserDevice)
                 .WithMany(ud => ud.SensorHistories)
                 .HasForeignKey(e => e.DeviceId)
@@ -183,22 +179,33 @@ public partial class MyDbContext : DbContext
             entity.HasKey(e => e.DeviceId);
 
             entity.ToTable("UserDevice");
-            
+
             entity.Property(e => e.DeviceId).HasColumnName("DeviceId");
             entity.Property(e => e.UserId).HasColumnName("UserId");
             entity.Property(e => e.DeviceName).HasColumnName("DeviceName");
             entity.Property(e => e.DeviceDescription).HasColumnName("DeviceDescription");
             entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
-            
+            entity.Property(e => e.WaitTime).HasColumnName("WaitTime");
+
             entity.HasOne(e => e.User)
                 .WithMany(u => u.UserDevices)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             entity.HasMany(e => e.SensorHistories)
                 .WithOne(sh => sh.UserDevice)
                 .HasForeignKey(sh => sh.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailList>(entity => // ✅ Added EmailList
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToTable("EmailList");
+
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.Email).HasColumnName("Email").IsRequired();
         });
 
         OnModelCreatingPartial(modelBuilder);
