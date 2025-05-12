@@ -22,7 +22,13 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public Task<Plant?> GetPlantByIdAsync(Guid plantId)
     {
         MonitorService.Log.Debug("Entered Get Plant by Id method in PlantRepository");
-        return ctx.Plants.FirstOrDefaultAsync(p => p.PlantId == plantId);
+        var plant = ctx.Plants.FirstOrDefaultAsync(p => p.PlantId == plantId);
+        if (plant == null)
+        {
+            MonitorService.Log.Error("Failed to find plant");
+            throw new KeyNotFoundException();
+        }
+        return plant;
     }
 
     public async Task<Plant> AddPlantAsync(Guid userId, Plant plant)
@@ -42,9 +48,7 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
 
         if (plant != null) return plant.UserId;
         MonitorService.Log.Error("Failed to find plant");
-        throw new NotFoundException("Plant not found.");
-
-
+        throw new KeyNotFoundException();
     }
 
     public async Task DeletePlantAsync(Guid plantId)
