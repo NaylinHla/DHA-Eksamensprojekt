@@ -370,95 +370,93 @@ export default function HistoryPage() {
 
             {/* Charts */}
             <main className="flex-1 overflow-y-auto px-6 pb-6">
-                {loadingData ? Spinner : noData ? (
-                    <div className="p-8 text-center text-gray-500">
-                        No data available for the selected date range.
-                    </div>
-                ) : (
-                    <div className="bg-[var(--color-surface)] shadow rounded-2xl">
-
-                        <div className="px-4 pt-4 flex flex-wrap items-center gap-4 sm:gap-6">
+                <div className="bg-[var(--color-surface)] shadow rounded-2xl">
+                    <div className="px-4 pt-4 flex flex-wrap items-center gap-4 sm:gap-6">
+                        
+                        {/* Device selector */}
+                        <div className="flex items-center gap-2">
+                            <label className="font-medium text-sm">Device:</label>
+                            <select
+                                className="select select-xs bg-[var(--color-surface)]"
+                                value={selectedDeviceId || ""}
+                                onChange={e => setSelectedDeviceId(e.target.value)}
+                                disabled={loadingDevices}
+                            >
+                                {devices.length === 0
+                                    ? <option>No devices</option>
+                                    : devices.map(d => (
+                                        <option key={d.deviceId} value={d.deviceId}>
+                                            {d.deviceName?.length! > 25
+                                                ? d.deviceName!.slice(0, 25) + "…"
+                                                : d.deviceName || "Unnamed"}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
+                        
+                        {/* Date pickers */}
+                        <div className="flex items-center gap-2 text-sm ml-auto">
+                            <label className="font-medium text-sm">From:</label>
+                            <input
+                                type="date"
+                                value={rangeFrom}
+                                onChange={e => {
+                                    const v = e.target.value;
+                                    if (new Date(v) > new Date(rangeTo)) {
+                                        toast.error("From date cannot be after To date");
+                                        return;
+                                    }
+                                    setRangeFrom(v);
+                                }}
+                                className="input input-xs bg-[var(--color-surface)] ml-1"
+                            />
+                            <label className="font-medium text-sm">To:</label>
                             
-                            {/* Device selector */}
-                            <div className="flex items-center gap-2">
-                                <label className="font-medium text-sm">Device:</label>
-                                <select
-                                    className="select select-xs bg-[var(--color-surface)]"
-                                    value={selectedDeviceId || ""}
-                                    onChange={e => setSelectedDeviceId(e.target.value)}
-                                    disabled={loadingDevices}
-                                >
-                                    {devices.length === 0
-                                        ? <option>No devices</option>
-                                        : devices.map(d => (
-                                            <option key={d.deviceId} value={d.deviceId}>
-                                                {d.deviceName?.length! > 25
-                                                    ? d.deviceName!.slice(0, 25) + "…"
-                                                    : d.deviceName || "Unnamed"}
-                                            </option>
-                                        ))}
-                                </select>
-                            </div>
-
-                            {/* Date pickers */}
-                            <div className="flex items-center gap-2 text-sm ml-auto">
-                                <label className="font-medium text-sm">From:</label>
-
-                                <input
-                                    type="date"
-                                    value={rangeFrom}
-                                    onChange={e => {
-                                        const v = e.target.value;
-                                        if (new Date(v) > new Date(rangeTo)) {
-                                            toast.error("From date cannot be after To date");
-                                            return;
-                                        }
-                                        setRangeFrom(v);
-                                    }}
-                                    className="input input-xs bg-[var(--color-surface)] ml-1"
-                                />
-                                <label className="font-medium text-sm">To:</label>
-
-                                <input
-                                        type="date"
-                                        value={rangeTo}
-                                        onChange={e => {
-                                            const v = e.target.value;
-                                            if (new Date(v) < new Date(rangeFrom)) {
-                                                toast.error("To date cannot be before From date");
-                                                return;
-                                            }
-                                            setRangeTo(v);
-                                        }}
-                                        className="input input-xs bg-[var(--color-surface)] ml-1"
-                                    />
-                            </div>
+                            <input
+                                type="date"
+                                value={rangeTo}
+                                onChange={e => {
+                                    const v = e.target.value;
+                                    if (new Date(v) < new Date(rangeFrom)) {
+                                        toast.error("To date cannot be before From date");
+                                        return;
+                                    }
+                                    setRangeTo(v);
+                                }}
+                                className="input input-xs bg-[var(--color-surface)] ml-1"
+                            />
                         </div>
-
-                        {/* tab bar */}
-                        <div className="tabs tabs-bordered rounded-t-2xl">
-                            {(Object.keys(pretty) as TabKey[]).map(key => (
-                                <a
-                                    key={key}
-                                    className={`tab flex-1 tab-bordered${tab === key ? " tab-active" : ""}`}
-                                    onClick={() => setTab(key)}
-                                >
-                                    {pretty[key]}
-                                </a>
-                            ))}
-                        </div>
-                        <hr className="border-primary"/>
-
-                        {/* active chart */}
-                        <div className="p-4">
+                    </div>
+                    
+                    {/* tab bar */}
+                    <div className="tabs tabs-bordered rounded-t-2xl">
+                        {(Object.keys(pretty) as TabKey[]).map(key => (
+                            <a
+                                key={key}
+                                className={`tab flex-1 tab-bordered${tab === key ? " tab-active" : ""}`}
+                                onClick={() => setTab(key)}
+                            >
+                                {pretty[key]}
+                            </a>
+                        ))}
+                    </div>
+                    <hr className="border-primary"/>
+                    
+                    {/* active chart */}
+                    <div className="p-4">
+                        {loadingData ? Spinner : noData ? (
+                            <div className="p-8 text-center text-gray-500">
+                                No data available for the selected date range.
+                            </div>
+                        ) : (
                             <ChartCard
                                 data={series[tab]}
                                 label={pretty[tab]}
                                 chartRef={chartRefs[tab]}
-                            />
+                            /> 
+                            )}
                         </div>
                     </div>
-                )}
             </main>
         </div>
     );
