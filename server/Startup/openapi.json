@@ -1296,29 +1296,22 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/UserSettings": {
       "get": {
         "tags": [
           "UserSettings"
         ],
-        "operationId": "UserSettings_GetSetting",
+        "operationId": "UserSettings_GetAllSettings",
         "parameters": [
-          {
-            "name": "settingName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          },
           {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 2
+            "x-position": 1
           }
         ],
         "responses": {
@@ -1327,7 +1320,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/UserSettingsResponseDto"
                 }
               }
             }
@@ -2202,6 +2195,24 @@
         "additionalProperties": false,
         "properties": {
           "value": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UserSettingsResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "celsius": {
+            "type": "boolean"
+          },
+          "darkTheme": {
+            "type": "boolean"
+          },
+          "confirmDialog": {
+            "type": "boolean"
+          },
+          "secretMode": {
             "type": "boolean"
           }
         }

@@ -11,51 +11,76 @@ import {TitleTimeHeader, useLogout} from "../../components";
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
-
 const userClient = new UserClient("http://localhost:5000");
 
 const UserSettings: React.FC<Props> = ({onChange}) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
     const [saving, setSaving] = useState(false);
-    const [currentTime, setCurrentTime] = useState(new Date());
 
     const [confirmWater, setConfirmWater] = useState(false);
     const [fahrenheit, setFahrenheit] = useState(false);
-    const [darkTheme, setDarkTheme] = useState(
-        () => localStorage.getItem(LOCAL_KEY) === "dark"
-    );
+    const [darkTheme, setDarkTheme] = useState(false); // overridden on load
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
 
     const navigate = useNavigate();
-
     const {logout} = useLogout();
 
-    // ------
+    // Apply theme when darkTheme changes
     useEffect(() => {
         const theme = darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem(LOCAL_KEY, theme);
     }, [darkTheme]);
 
+    // Reset theme when logging out
     useEffect(() => {
         if (!jwt) {
-            // user just logged out, force light mode
             setDarkTheme(false);
             localStorage.removeItem(LOCAL_KEY);
             document.documentElement.setAttribute("data-theme", "light");
         }
     }, [jwt]);
 
-    const spinner = (
-        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-            <circle className="opacity-25 animate-gradientSpinner" cx="12" cy="12" r="10" stroke="currentColor"
-                    strokeWidth="4" fill="none"/>
-            <path className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="currentColor"/>
-        </svg>
-    );
+    // Load user settings from backend
+    useEffect(() => {
+        async function fetchSettings() {
+            if (!jwt) return;
+            try {
+                const res = await fetch("http://localhost:5000/api/usersettings", {
+                    headers: {
+                        Authorization: jwt,
+                    },
+                });
+                if (!res.ok) throw new Error("Failed to fetch settings");
+                const data = await res.json();
+                setConfirmWater(data.confirmDialog);
+                setFahrenheit(!data.celsius); // invert because backend uses celsius
+                setDarkTheme(data.darkTheme);
+            } catch (e: any) {
+                toast.error("Could not load user settings");
+                console.error(e);
+            }
+        }
 
+        fetchSettings();
+    }, [jwt]);
+
+    async function patchSetting(name: string, value: boolean) {
+        try {
+            await fetch(`http://localhost:5000/api/usersettings/${name}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: jwt,
+                },
+                body: JSON.stringify({ value }),
+            });
+        } catch (e: any) {
+            console.error(e);
+        }
+    }
 
     async function handleDelete() {
         try {
@@ -108,22 +133,13 @@ const UserSettings: React.FC<Props> = ({onChange}) => {
         }
     }
 
-    const saveToggles = () => {
-        onChange?.();
-        toast.success("Visual settings saved (local-only for now)");
-    };
-
     return (
         <div
             className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
 
-            {/* Header */}
             <TitleTimeHeader title="User Profile"/>
 
-            {/* Content card */}
             <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
-
-                {/* LEFT column – actions + toggles */}
                 <aside className="w-72 shrink-0 border-r border-gray-200 p-6 flex flex-col gap-4">
                     <h2 className="text-xl font-semibold">Settings</h2>
 
@@ -145,28 +161,39 @@ const UserSettings: React.FC<Props> = ({onChange}) => {
                         <li className="flex justify-between items-center">
                             <span>Confirm Water Dialog</span>
                             <input type="checkbox" className="toggle toggle-sm"
-                                   checked={confirmWater} onChange={() => setConfirmWater(!confirmWater)}/>
+                                   checked={confirmWater}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setConfirmWater(value);
+                                       patchSetting("confirmdialog", value);
+                                   }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Fahrenheit</span>
                             <input type="checkbox" className="toggle toggle-sm"
-                                   checked={fahrenheit} onChange={() => setFahrenheit(!fahrenheit)}/>
+                                   checked={fahrenheit}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setFahrenheit(value);
+                                       patchSetting("celsius", !value); // send inverted to backend
+                                   }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Dark Theme</span>
-                            <input
-                                type="checkbox"
-                                className="toggle toggle-sm"
-                                checked={darkTheme}
-                                onChange={() => setDarkTheme(!darkTheme)}
+                            <input type="checkbox" className="toggle toggle-sm"
+                                   checked={darkTheme}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setDarkTheme(value);
+                                       patchSetting("darktheme", value);
+                                   }}
                             />
                         </li>
                     </ul>
-
-                    <button onClick={saveToggles} className="btn btn-primary btn-sm mt-auto">Save settings</button>
                 </aside>
 
-                {/* RIGHT column – user data */}
                 <article className="relative flex-1 p-8 overflow-y-auto">
                     <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]"
                             aria-label="edit">
@@ -179,7 +206,6 @@ const UserSettings: React.FC<Props> = ({onChange}) => {
                 </article>
             </section>
 
-            {/* Modals */}
             {openPassword && (
                 <PasswordModal
                     open={openPassword}
@@ -196,14 +222,13 @@ const UserSettings: React.FC<Props> = ({onChange}) => {
                 onSubmit={handleEmail}
             />
 
-            +<DeleteAccountModal
-            open={openDelete}
-            loading={saving}
-            onCancel={() => setOpenDelete(false)}
-            onConfirm={handleDelete}
-        />
+            <DeleteAccountModal
+                open={openDelete}
+                loading={saving}
+                onCancel={() => setOpenDelete(false)}
+                onConfirm={handleDelete}
+            />
 
-            {/* gradient spinner keyframes */}
             <style jsx>{`
                 @keyframes gradientSpinner {
                     0% {

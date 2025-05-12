@@ -45,4 +45,12 @@ public class UserSettingsService(IUserSettingsRepository repository) : IUserSett
             _ => throw new ValidationException("Invalid setting name")
         };
     }
+    public UserSettings GetSettings(JwtClaims claims)
+    {
+        var userId = Guid.Parse(claims.Id);
+        var settings = repository.GetByUserId(userId)
+                       ?? throw new KeyNotFoundException("User settings not found");
+
+        return settings;
+    }
 }

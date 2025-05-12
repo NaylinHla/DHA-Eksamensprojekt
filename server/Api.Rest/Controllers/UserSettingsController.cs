@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
+using Application.Models.Dtos.RestDtos.UserSettings.Response;
 using Application.Models.Dtos.UserSettings;
 using Infrastructure.Logging;
 using Microsoft.AspNetCore.Mvc;
@@ -24,14 +25,22 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
         return NoContent();
     }
     
-    [HttpGet("{settingName}")]
-    public ActionResult<bool> GetSetting(string settingName, [FromHeader] string authorization)
+    [HttpGet]
+    public ActionResult<UserSettingsResponseDto> GetAllSettings([FromHeader] string authorization)
     {
-        MonitorService.Log.Debug($"Entered GetSetting({settingName}) in UserSettingsController");
+        MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
 
-        var value = service.GetSetting(settingName, claims);
-        return Ok(value);
+        var settings = service.GetSettings(claims);
+
+        return Ok(new UserSettingsResponseDto
+        {
+            Celsius = settings.Celsius,
+            DarkTheme = settings.DarkTheme,
+            ConfirmDialog = settings.ConfirmDialog,
+            SecretMode = settings.SecretMode
+        });
     }
+
 
 }
