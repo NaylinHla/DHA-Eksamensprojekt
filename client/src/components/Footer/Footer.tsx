@@ -1,5 +1,6 @@
-import {useState} from "react";
+import React, { useState } from "react";
 import {EmailClient} from "../../generated-client.ts"; // Adjust path
+import {Link} from "react-router";
 
 const emailClient = new EmailClient("http://localhost:5000"); // Adjust base URL
 
@@ -36,20 +37,20 @@ export default function Footer() {
         <footer className="footer sm:footer-horizontal bg-base-200 text-base-content p-10">
             <nav>
                 <h6 className="footer-title">Company</h6>
-                <a className="link link-hover">About us</a>
-                <a className="link link-hover">Contact</a>
-                <a className="link link-hover">Career</a>
+                <Link className="link link-hover" to="/about">About us</Link>
+                <Link className="link link-hover" to="/contact-us">Contact</Link>
+                <Link className="link link-hover" to="/career">Career</Link>
             </nav>
             <nav>
                 <h6 className="footer-title">Services</h6>
-                <a className="link link-hover">Advertisement</a>
-                <a className="link link-hover">Marketing</a>
+                <Link className="link link-hover" to="/advertisement">Advertisement</Link>
+                <Link className="link link-hover" to="/marketing">Marketing</Link>
             </nav>
             <nav>
                 <h6 className="footer-title">Legal</h6>
-                <a className="link link-hover">Terms of use</a>
-                <a className="link link-hover">Privacy policy</a>
-                <a className="link link-hover">Cookie policy</a>
+                <Link className="link link-hover" to="/terms">Terms of use</Link>
+                <Link className="link link-hover" to="/privacy">Privacy policy</Link>
+                <Link className="link link-hover" to="/cookies">Cookie policy</Link>
             </nav>
 
             <form onSubmit={handleSubscribe}>
