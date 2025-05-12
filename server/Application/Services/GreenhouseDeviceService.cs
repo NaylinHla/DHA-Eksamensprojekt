@@ -28,7 +28,7 @@ public class GreenhouseDeviceService(
             return;
         }
 
-        MonitorService.Log.Debug($"Processing sensor data for DeviceId: {dto.DeviceId}");
+        MonitorService.Log.Debug("Processing sensor data for DeviceId: {DeviceId}", dto.DeviceId);
 
         var sensorHistory = new SensorHistory
         {
@@ -46,7 +46,7 @@ public class GreenhouseDeviceService(
         var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
 
         await repo.AddSensorHistory(sensorHistory);
-        MonitorService.Log.Debug($"Sensor data added to DB for DeviceId: {dto.DeviceId}");
+        MonitorService.Log.Debug("Sensor data added to DB for DeviceId: {DeviceId}", dto.DeviceId);
 
         var recentHistory = await repo.GetSensorHistoryByDeviceIdAsync(Guid.Parse(dto.DeviceId));
 
@@ -56,7 +56,7 @@ public class GreenhouseDeviceService(
         };
 
         await connectionManager.BroadcastToTopic(StringConstants.GreenhouseSensorData + "/" + dto.DeviceId, broadcast);
-        MonitorService.Log.Debug($"Broadcasted live data for DeviceId: {dto.DeviceId}");
+        MonitorService.Log.Debug("Broadcasted live data for DeviceId: {DeviceId}", dto.DeviceId);
     }
 
     public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceId(
@@ -65,7 +65,7 @@ public class GreenhouseDeviceService(
         DateTime? to,
         JwtClaims claims)
     {
-        MonitorService.Log.Debug($"Fetching sensor history for DeviceId: {deviceId} with user: {claims.Id}");
+        MonitorService.Log.Debug("Fetching sensor history for DeviceId: {DeviceId} with user: {UserId}", deviceId, claims.Id);
 
         var repo = services.CreateScope()
             .ServiceProvider
@@ -74,25 +74,25 @@ public class GreenhouseDeviceService(
         var deviceOwnerId = await repo.GetDeviceOwnerUserId(deviceId);
         if (deviceOwnerId != Guid.Parse(claims.Id))
         {
-            MonitorService.Log.Warning($"Unauthorized access attempt by user {claims.Id} on device {deviceId}");
+            MonitorService.Log.Warning("Unauthorized access attempt by user {UserId} on device {DeviceId}", claims.Id, deviceId);
             throw new UnauthorizedAccessException("You do not own this device.");
         }
 
-        MonitorService.Log.Debug($"Authorized access by user {claims.Id} to device {deviceId}");
+        MonitorService.Log.Debug("Authorized access by user {UserId} to device {DeviceId}", claims.Id, deviceId);
         return await repo.GetSensorHistoryByDeviceIdAsync(deviceId, from, to);
     }
 
     public async Task<GetRecentSensorDataForAllUserDeviceDto> GetRecentSensorDataForAllUserDevicesAsync(
         JwtClaims claims)
     {
-        MonitorService.Log.Debug($"Fetching recent sensor data for user: {claims.Id}");
+        MonitorService.Log.Debug("Fetching recent sensor data for user: {UserId}", claims.Id);
 
         using var scope = services.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
 
         var records = await repo.GetLatestSensorDataForUserDevicesAsync(Guid.Parse(claims.Id));
 
-        MonitorService.Log.Debug($"Fetched {records.Count} recent sensor data records for user {claims.Id}");
+        MonitorService.Log.Debug("Fetched {Count} recent sensor data records for user {UserId}", records.Count, claims.Id);
 
         return new GetRecentSensorDataForAllUserDeviceDto
         {
@@ -102,7 +102,7 @@ public class GreenhouseDeviceService(
 
     public async Task DeleteDataFromSpecificDeviceAndBroadcast(Guid deviceId, JwtClaims claims)
     {
-        MonitorService.Log.Debug($"User {claims.Id} requested to delete data for device {deviceId}");
+        MonitorService.Log.Debug("User {UserId} requested to delete data for device {DeviceId}", claims.Id, deviceId);
 
         var repo = services.CreateScope()
             .ServiceProvider
@@ -111,19 +111,19 @@ public class GreenhouseDeviceService(
         var deviceOwnerId = await repo.GetDeviceOwnerUserId(deviceId);
         if (deviceOwnerId != Guid.Parse(claims.Id))
         {
-            MonitorService.Log.Warning($"Unauthorized delete attempt by user {claims.Id} on device {deviceId}");
+            MonitorService.Log.Warning("Unauthorized delete attempt by user {UserId} on device {DeviceId}", claims.Id, deviceId);
             throw new UnauthorizedAccessException("You do not own this device.");
         }
 
         await repo.DeleteDataFromSpecificDevice(deviceId);
-        MonitorService.Log.Debug($"Deleted data for device {deviceId} by user {claims.Id}");
+        MonitorService.Log.Debug("Deleted data for device {DeviceId} by user {UserId}", deviceId, claims.Id);
 
         await connectionManager.BroadcastToTopic(
             StringConstants.Dashboard,
             new AdminHasDeletedData()
         );
 
-        MonitorService.Log.Debug($"Broadcasted AdminHasDeletedData event for device {deviceId}");
+        MonitorService.Log.Debug("Broadcasted AdminHasDeletedData event for device {DeviceId}", deviceId);
     }
 }
 
