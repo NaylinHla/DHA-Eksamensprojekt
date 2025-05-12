@@ -1,8 +1,8 @@
 ﻿using Serilog;
 
-namespace MonitorService;
+namespace Infrastructure.Logging;
 
-public class MonitorService
+public static class MonitorService
 {
     public static ILogger Log => Serilog.Log.Logger;
 
