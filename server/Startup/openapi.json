@@ -606,7 +606,7 @@
         "operationId": "Plant_EditPlant",
         "parameters": [
           {
-            "name": "userId",
+            "name": "plantId",
             "in": "query",
             "schema": {
               "type": "string",
@@ -615,21 +615,12 @@
             "x-position": 1
           },
           {
-            "name": "plantId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 2
-          },
-          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 4
+            "x-position": 3
           }
         ],
         "requestBody": {
@@ -642,7 +633,7 @@
             }
           },
           "required": true,
-          "x-position": 3
+          "x-position": 2
         },
         "responses": {
           "200": {
@@ -746,12 +737,21 @@
         "operationId": "Plant_WaterAllPlants",
         "parameters": [
           {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 1
+            "x-position": 2
           }
         ],
         "responses": {
@@ -1468,7 +1468,8 @@
             "type": "string"
           },
           "plantNotes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lastWatered": {
             "type": "string",
@@ -1842,7 +1843,8 @@
             "type": "string"
           },
           "plantNotes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "planted": {
             "type": "string",
