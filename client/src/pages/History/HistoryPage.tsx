@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { format } from 'date-fns';
 import {
     CategoryScale,
     Chart as ChartJS,
@@ -77,6 +78,13 @@ export default function HistoryPage() {
         humidity: "Humidity",
         airPressure: "Air Pressure",
         airQuality: "Air Quality",
+    };
+
+    const unit: Record<TabKey, string> = {
+        temperature: "°C",
+        humidity: "%",
+        airPressure: "hPa",
+        airQuality: "ppm",
     };
 
 
@@ -255,7 +263,7 @@ export default function HistoryPage() {
 
         // 3) Build point arrays
         const build = (key: keyof SensorHistoryDto): Point[] => sampled.map(r => ({
-            time: formatDateTimeForUserTZ(r.time)!,
+            time: format(new Date(r.time!), 'd MMM'),
             value: Number(r[key]) || 0,
         }));
 
@@ -286,11 +294,11 @@ export default function HistoryPage() {
     };
 
     // Re-Usable Chart
-    const ChartCard: React.FC<{ data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ data, label, chartRef }) => (
+    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => (
         data.length ? (
             <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden mb-6 px-4 pt-4">
                 <h3 className="text-lg font-semibold mb-3">{label}</h3>
-                <div className="h-40 w-full">
+                <div className="h-50 w-full">
                     <Line
                         ref={chartRef as any}
                         data={{
@@ -320,7 +328,15 @@ export default function HistoryPage() {
                                 },
                                 y: {
                                     grid: { display: false },
-                                    ticks: { display: false },
+                                    title: {
+                                        display: true,
+                                        text: `${label} (${unit[tabKey]})`,
+                                        padding: 4,
+                                    },
+                                    ticks: {
+                                        callback: (v: string | number) => `${v} ${unit[tabKey]}`,
+                                        autoSkip: true,
+                                    },
                                 },
                             },
                         }}
@@ -354,10 +370,13 @@ export default function HistoryPage() {
                                 <div className="flex justify-between mb-2">
                                     <h2 className="font-bold">Current Status</h2>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-1 text-sm">
                                     {fields.map(f => (
-                                        <div key={f} className="flex justify-between"><span
-                                            className="capitalize font-medium">{f}:</span><span>{(latest as any)[f]?.toFixed(2)} {unitMap[f]}</span>
+                                        <div key={f} className="flex">
+                                            <span className="capitalize font-medium">{f}:</span>
+                                            <span className="ml-1">
+                                                {(latest as any)[f]?.toFixed(2)}{unitMap[f]}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -450,6 +469,7 @@ export default function HistoryPage() {
                             </div>
                         ) : (
                             <ChartCard
+                                tabKey={tab}
                                 data={series[tab]}
                                 label={pretty[tab]}
                                 chartRef={chartRefs[tab]}
