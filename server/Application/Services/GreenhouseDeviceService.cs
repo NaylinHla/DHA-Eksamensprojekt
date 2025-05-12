@@ -33,7 +33,6 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
     {
         if (dto == null)
         {
-            _logger.LogWarning("Received null CreateSensorHistoryDto.");
             return;
         }
 
@@ -52,26 +51,8 @@ public class GreenhouseDeviceService : IGreenhouseDeviceService
         using var scope = _services.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
 
-        try
-        {
-            await repo.AddSensorHistory(sensorHistory);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding sensor history");
-            return;
-        }
-
-        List<GetAllSensorHistoryByDeviceIdDto> recentHistory;
-        try
-        {
-            recentHistory = await repo.GetSensorHistoryByDeviceIdAsync(Guid.Parse(dto.DeviceId));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching sensor history");
-            return;
-        }
+        await repo.AddSensorHistory(sensorHistory);
+        var recentHistory = await repo.GetSensorHistoryByDeviceIdAsync(Guid.Parse(dto.DeviceId));
 
         var broadcast = new ServerBroadcastsLiveDataToDashboard
         {
