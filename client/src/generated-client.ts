@@ -688,12 +688,8 @@ export class PlantClient {
         return Promise.resolve<PlantResponseDto>(null as any);
     }
 
-    editPlant(userId: string | undefined, plantId: string | undefined, dto: PlantEditDto, authorization: string | undefined): Promise<PlantEditDto> {
+    editPlant(plantId: string | undefined, dto: PlantEditDto, authorization: string | undefined): Promise<PlantEditDto> {
         let url_ = this.baseUrl + "/api/Plant/EditPlant?";
-        if (userId === null)
-            throw new Error("The parameter 'userId' cannot be null.");
-        else if (userId !== undefined)
-            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
         if (plantId === null)
             throw new Error("The parameter 'plantId' cannot be null.");
         else if (plantId !== undefined)

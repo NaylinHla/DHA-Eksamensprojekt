@@ -606,7 +606,7 @@
         "operationId": "Plant_EditPlant",
         "parameters": [
           {
-            "name": "userId",
+            "name": "plantId",
             "in": "query",
             "schema": {
               "type": "string",
@@ -615,21 +615,12 @@
             "x-position": 1
           },
           {
-            "name": "plantId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 2
-          },
-          {
             "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
             },
-            "x-position": 4
+            "x-position": 3
           }
         ],
         "requestBody": {
@@ -642,7 +633,7 @@
             }
           },
           "required": true,
-          "x-position": 3
+          "x-position": 2
         },
         "responses": {
           "200": {

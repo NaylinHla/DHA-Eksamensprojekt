@@ -71,7 +71,6 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     [HttpPatch]
     [Route(EditPlantRoute)]
     public async Task<ActionResult<PlantEditDto>> EditPlant(
-        Guid userId,
         Guid plantId,
         [FromBody] PlantEditDto dto,
         [FromHeader] string authorization)
