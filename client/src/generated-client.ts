@@ -55,7 +55,7 @@ export class AlertClient {
         return Promise.resolve<Alert[]>(null as any);
     }
 
-    createAlert(dto: AlertCreate, authorization: string | undefined): Promise<AlertResponseDto> {
+    createAlert(dto: AlertCreateDto, authorization: string | undefined): Promise<AlertResponseDto> {
         let url_ = this.baseUrl + "/api/Alert/CreateAlert";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1370,9 +1370,11 @@ export interface Alert {
     alertName?: string;
     alertDesc?: string;
     alertTime?: Date;
-    alertPlant?: string | undefined;
+    alertPlantConditionId?: string | undefined;
+    alertDeviceConditionId?: string | undefined;
     user?: User | undefined;
-    plant?: Plant | undefined;
+    conditionAlertPlant?: ConditionAlertPlant | undefined;
+    conditionAlertUserDevice?: ConditionAlertUserDevice | undefined;
 }
 
 export interface User {
@@ -1425,7 +1427,15 @@ export interface Plant {
     waterEvery?: number | undefined;
     isDead?: boolean;
     userPlants?: UserPlant[];
-    alerts?: Alert[];
+    conditionAlertPlants?: ConditionAlertPlant[];
+}
+
+export interface ConditionAlertPlant {
+    conditionAlertPlantId?: string;
+    conditionPlantId?: string;
+    waterNotify?: boolean;
+    plant?: Plant | undefined;
+    alerts?: Alert[] | undefined;
 }
 
 export interface UserDevice {
@@ -1437,6 +1447,7 @@ export interface UserDevice {
     waitTime?: string;
     user?: User | undefined;
     sensorHistories?: SensorHistory[];
+    conditionAlertUserDevices?: ConditionAlertUserDevice[];
 }
 
 export interface SensorHistory {
@@ -1450,18 +1461,29 @@ export interface SensorHistory {
     userDevice?: UserDevice | undefined;
 }
 
+export interface ConditionAlertUserDevice {
+    conditionAlertUserDeviceId?: string;
+    userDeviceId?: string;
+    sensorType?: string;
+    condition?: string;
+    userDevice?: UserDevice | undefined;
+    alerts?: Alert[] | undefined;
+}
+
 export interface AlertResponseDto {
     alertId?: string;
     alertName?: string;
     alertDesc?: string;
     alertTime?: Date;
-    alertPlant?: string | undefined;
+    alertPlantConditionId?: string | undefined;
+    alertDeviceConditionId?: string | undefined;
 }
 
-export interface AlertCreate {
+export interface AlertCreateDto {
     alertName?: string;
     alertDesc?: string;
-    alertPlant?: string | undefined;
+    alertConditionId?: string | undefined;
+    isPlantCondition?: boolean;
     alertUser?: string | undefined;
 }
 

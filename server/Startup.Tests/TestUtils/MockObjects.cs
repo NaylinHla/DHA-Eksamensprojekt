@@ -1,5 +1,7 @@
 using Application.Models.Enums;
 using Core.Domain.Entities;
+using Infrastructure.Postgres.Scaffolding;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Startup.Tests.TestUtils;
 
@@ -84,6 +86,56 @@ public static class MockObjects
 
         // Add the device to the user's list of devices
         user.UserDevices.Add(device);
+
+        return user;
+    }
+    
+    
+    /// <summary>
+    /// Seeds a User + Plant + Device + both ConditionAlerts
+    /// into the DB and returns the created User.
+    /// </summary>
+    public static async Task<User> SeedDbAsync(IServiceProvider services, string? role = null)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        var user = GetUser(role);
+        db.Users.Add(user);
+        
+        // Add a Plant for testing purposes
+        var plant = new Plant
+        {
+            PlantId = Guid.NewGuid(),
+            PlantName = "Testomato",
+            PlantType = "Flower",
+            Planted = DateTime.UtcNow.AddMonths(-2),
+            LastWatered = DateTime.UtcNow.AddDays(-3),
+            WaterEvery = 7,
+            IsDead = false,
+            PlantNotes = "Needs indirect sunlight and weekly watering"
+        };
+        
+        db.Plants.Add(plant);
+        // Associate condition alerts with the user's plant (for testing purposes)
+        user.UserPlants.Add(new UserPlant { UserId = user.UserId, PlantId = plant.PlantId });
+        
+        var cap = new ConditionAlertPlant {
+            ConditionAlertPlantId = Guid.NewGuid(),
+            ConditionPlantId = user.UserPlants.First().PlantId,
+            WaterNotify           = true
+        };
+        db.ConditionAlertPlant.Add(cap);
+        
+        var cad = new ConditionAlertUserDevice {
+            ConditionAlertUserDeviceId = Guid.NewGuid(),
+            UserDeviceId               = user.UserDevices.First().DeviceId,
+            SensorType                 = "Temperature",
+            Condition                  = "<=50"
+        };
+        db.ConditionAlertUserDevice.Add(cad);
+
+        await db.SaveChangesAsync();
 
         return user;
     }

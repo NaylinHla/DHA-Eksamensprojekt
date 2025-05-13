@@ -1,9 +1,15 @@
+// Startup.Tests/AlertTests/AlertControllerTests.cs
+
 using System.Net;
 using System.Net.Http.Json;
 using Api.Rest.Controllers;
 using Application.Models.Dtos.RestDtos;
+using Core.Domain.Entities;
+using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
@@ -12,55 +18,80 @@ namespace Startup.Tests.AlertTests;
 [TestFixture]
 public class AlertControllerTests : WebApplicationFactory<Program>
 {
-    [SetUp]
-    public void Setup()
-    {
-        _client = CreateClient();
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _client.Dispose();
-    }
-
     private HttpClient _client = null!;
+    private string _jwt = null!;
+    private User _testUser = null!;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
+        builder.ConfigureServices(services =>
+            services.DefaultTestConfig(makeMqttClient: false)
+        );
     }
+
+    [SetUp]
+    public async Task Setup()
+    {
+        _client = CreateClient();
+
+        // Seed the user and db with stuff
+        _testUser = await MockObjects.SeedDbAsync(Services);
+
+        // get JWT
+        var loginResp = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new { _testUser.Email, Password = "pass" }
+        );
+        loginResp.EnsureSuccessStatusCode();
+        var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
+        _jwt = authDto!.Jwt;
+        _client.DefaultRequestHeaders.Add("Authorization", _jwt);
+    }
+
+    [TearDown]
+    public void TearDown() => _client.Dispose();
 
     [Test]
     public async Task CreateAlert_ShouldPersistAndReturnAlert()
     {
-        // Arrange
-        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
 
-        var alertDto = new AlertCreate
+        // Create a scope to access the required DbContext
+        using var scope = Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        // Get the actual ConditionAlertPlant ID for the seeded test user
+        var capId = await ctx.ConditionAlertPlant
+            .Where(x => x.ConditionPlantId == _testUser.UserPlants.First().PlantId)
+            .Select(x => x.ConditionAlertPlantId)
+            .FirstAsync();
+
+        var alertDto = new AlertCreateDto
         {
             AlertName = "High Temp",
-            AlertDesc = "The temperature is too high"
+            AlertDesc = "Too hot!",
+            IsPlantCondition = true,
+            AlertConditionId = capId,
+            AlertUser = _testUser.UserId
         };
 
-        // Act
-        var response = await _client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", alertDto);
+        var resp = await _client.PostAsJsonAsync(
+            $"api/Alert/{AlertController.CreateAlertRoute}",
+            alertDto
+        );
 
-        // Assert
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-        var createdAlert = await response.Content.ReadFromJsonAsync<AlertResponseDto>();
-        Assert.That(createdAlert, Is.Not.Null);
-        Assert.That(createdAlert!.AlertName, Is.EqualTo(alertDto.AlertName));
-        Assert.That(createdAlert.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    
+        var created = await resp.Content.ReadFromJsonAsync<AlertResponseDto>();
+    
+        Assert.That(created, Is.Not.Null);
+        Assert.That(created!.AlertName, Is.EqualTo(alertDto.AlertName));
+        Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
+        Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
     }
 
     [Test]
     public async Task GetAlerts_ShouldReturnOnlyCurrentUserAlerts()
     {
-        // Arrange
-        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
-
         // Act
         var response = await _client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
 
@@ -74,13 +105,15 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     [Test]
     public async Task CreateAlert_NoJwt_ReturnsUnauthorized()
     {
-        var dto = new AlertCreate
+        var client = CreateClient(); // no JWT
+        
+        var dto = new AlertCreateDto
         {
             AlertName = "Overheat",
             AlertDesc = "Temp > 40℃"
         };
 
-        var resp = await _client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", dto);
+        var resp = await client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", dto);
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
             .Or.EqualTo(HttpStatusCode.BadRequest));
@@ -89,9 +122,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     [Test]
     public async Task CreateAlert_MissingName_ReturnsBadRequest()
     {
-        await ApiTestSetupUtilities.TestRegisterAndAddJwt(_client);
-
-        var badDto = new AlertCreate
+        var badDto = new AlertCreateDto
         {
             AlertName = null, // Missing name
             AlertDesc = "No name should fail"
@@ -105,7 +136,9 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     [Test]
     public async Task GetAlerts_NoJwt_ReturnsUnauthorized()
     {
-        var resp = await _client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
+        var client = CreateClient(); // no JWT
+        
+        var resp = await client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
             .Or.EqualTo(HttpStatusCode.BadRequest));

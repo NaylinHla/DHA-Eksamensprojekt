@@ -23,12 +23,8 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
     {
         _client = CreateClient();
 
-        // Seed test user
-        _testUser = MockObjects.GetUser();
-        using var seedScope = Services.CreateScope();
-        var seedDb = seedScope.ServiceProvider.GetRequiredService<MyDbContext>();
-        seedDb.Users.Add(_testUser);
-        await seedDb.SaveChangesAsync();
+        // Seed the user and db with stuff
+        _testUser = await MockObjects.SeedDbAsync(Services);
 
         // Login to get JWT
         var loginResp = await _client.PostAsJsonAsync(

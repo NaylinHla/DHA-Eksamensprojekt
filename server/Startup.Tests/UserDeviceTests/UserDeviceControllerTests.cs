@@ -23,14 +23,11 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
     {
         _client = CreateClient();
 
-        _testUser = MockObjects.GetUser();
+        // Seed the user and db with stuff
+        _testUser = await MockObjects.SeedDbAsync(Services);
+        
         var device = _testUser.UserDevices.First();
         _deviceId = device.DeviceId;
-
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-        db.Users.Add(_testUser);
-        await db.SaveChangesAsync();
 
         var loginResp =
             await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });

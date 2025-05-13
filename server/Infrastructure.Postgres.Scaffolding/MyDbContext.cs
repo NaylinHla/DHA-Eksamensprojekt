@@ -19,8 +19,10 @@ public partial class MyDbContext : DbContext
     public virtual DbSet<Alert> Alerts { get; set; }
     public virtual DbSet<SensorHistory> SensorHistories { get; set; }
     public virtual DbSet<UserDevice> UserDevices { get; set; }
-    public virtual DbSet<EmailList> EmailList { get; set; } // ✅ added
-
+    public virtual DbSet<EmailList> EmailList { get; set; }
+    public virtual DbSet<ConditionAlertPlant> ConditionAlertPlant { get; set; }
+    public virtual DbSet<ConditionAlertUserDevice> ConditionAlertUserDevice { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Ensure all DateTime values are stored with UTC kind
@@ -141,18 +143,25 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.AlertName).HasColumnName("AlertName");
             entity.Property(e => e.AlertDesc).HasColumnName("AlertDesc");
             entity.Property(e => e.AlertTime).HasColumnName("AlertTime");
-            entity.Property(e => e.AlertPlant).HasColumnName("AlertPlant");
+            entity.Property(e => e.AlertPlantConditionId).HasColumnName("AlertPlantConditionId");
+            entity.Property(e => e.AlertDeviceConditionId).HasColumnName("AlertDeviceConditionId");
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Alerts)
                 .HasForeignKey(e => e.AlertUserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(e => e.Plant)
+            entity.HasOne(e => e.ConditionAlertPlant)
                 .WithMany(p => p.Alerts)
-                .HasForeignKey(e => e.AlertPlant)
+                .HasForeignKey(e => e.AlertPlantConditionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ConditionAlertUserDevice)
+                .WithMany(d => d.Alerts)
+                .HasForeignKey(e => e.AlertDeviceConditionId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
+
 
         modelBuilder.Entity<SensorHistory>(entity =>
         {
@@ -198,7 +207,7 @@ public partial class MyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<EmailList>(entity => // ✅ Added EmailList
+        modelBuilder.Entity<EmailList>(entity =>
         {
             entity.HasKey(e => e.Id);
 
@@ -207,6 +216,40 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("Id");
             entity.Property(e => e.Email).HasColumnName("Email").IsRequired();
         });
+        
+        modelBuilder.Entity<ConditionAlertUserDevice>(entity =>
+        {
+            entity.HasKey(e => e.ConditionAlertUserDeviceId);
+
+            entity.ToTable("ConditionAlertUserDevice");
+
+            entity.Property(e => e.ConditionAlertUserDeviceId).HasColumnName("ConditionAlertUserDeviceId");
+            entity.Property(e => e.UserDeviceId).HasColumnName("UserDeviceId");
+            entity.Property(e => e.SensorType).HasColumnName("SensorType");
+            entity.Property(e => e.Condition).HasColumnName("Condition");
+
+            entity.HasOne(e => e.UserDevice)
+                .WithMany(d => d.ConditionAlertUserDevices)
+                .HasForeignKey(e => e.UserDeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        modelBuilder.Entity<ConditionAlertPlant>(entity =>
+        {
+            entity.HasKey(e => e.ConditionAlertPlantId);
+
+            entity.ToTable("ConditionAlertPlant");
+
+            entity.Property(e => e.ConditionAlertPlantId).HasColumnName("ConditionAlertPlantId");
+            entity.Property(e => e.ConditionPlantId).HasColumnName("ConditionPlantId");
+            entity.Property(e => e.WaterNotify).HasColumnName("WaterNotify");
+
+            entity.HasOne(e => e.Plant)
+                .WithMany(p => p.ConditionAlertPlants)
+                .HasForeignKey(e => e.ConditionPlantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

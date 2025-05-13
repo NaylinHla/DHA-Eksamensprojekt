@@ -29,7 +29,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         MonitorService.Log.Debug("Entered GetUserDevice method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var userDevice = await userDeviceService.GetUserDeviceAsync(userDeviceId, claims);
-        return userDevice is null ? NotFound() : Ok(ToDto(userDevice));
+        return Ok(ToDto(userDevice));
     }
 
     [HttpGet]
