@@ -5,8 +5,6 @@ import {PasswordField} from "../../components/utils/PasswordField/PasswordField.
 import {JwtAtom, useAtom} from "../../components/import";
 import toast from "react-hot-toast";
 import countries from "./countries.json";
-import { useSetAtom } from "jotai";
-import { UserSettingsAtom, UserSettings } from "../../atoms/UserSettingAtom.ts";
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -28,7 +26,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
     const [loggedIn, setLoggedIn] = useState(false);
     const [, setJwt] = useAtom(JwtAtom);
-    const setUserSettings = useSetAtom(UserSettingsAtom); // ADD THIS
 
     const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({});
     const errorClass = "border-red-500 focus:border-red-600";
@@ -36,6 +33,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const registerFormRef = useRef<HTMLFormElement>(null);
     const loginFormRef = useRef<HTMLFormElement>(null);
 
+    // ANIMATION ---
     useLayoutEffect(() => {
         const wrapper = wrapperRef.current;
         const register = registerFormRef.current;
@@ -82,6 +80,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const fade = (visible: boolean) =>
         visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none";
 
+
+    // HANDLERS ---
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -89,33 +89,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
         const password = formData.get("password") as string;
 
         try {
-            const loginDto: AuthLoginDto = {email, password};
+            const loginDto: AuthLoginDto = { email, password };
             const response = await authClient.login(loginDto);
-            const {jwt} = response;
+            const { jwt } = response;
 
+            console.log("Got JWT:", jwt);
             setJwt(jwt);
-            localStorage.setItem("jwt", jwt);
-
-            // FETCH USER SETTINGS
-            const res = await fetch("http://localhost:5000/api/usersettings", {
-                headers: { Authorization: `Bearer ${jwt}` },
-            });
-
-            if (!res.ok) throw new Error("Failed to load settings");
-            const settings: UserSettings = await res.json();
-
-            // SET USER SETTINGS ATOM
-            setUserSettings(settings);
-
-            // APPLY DARK THEME
-            document.documentElement.setAttribute("data-theme", settings.darkTheme ? "dark" : "light");
-            localStorage.setItem("theme", settings.darkTheme ? "dark" : "light");
-
-            setLoggedIn(true);
-            onLogin?.(); // navigation
-        } catch (error) {
-            console.error("Login failed", error);
-            toast.error("Login failed. Please check your credentials.");
+            onLogin?.();
+        } catch (err) {
+            toast.error("Login failed");
         }
     };
 
@@ -138,7 +120,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
         if (!country) errors.country = true;
         if (!password) errors.password = true;
         if (!confirmPassword) errors.confirmPassword = "required";
-        if (password && confirmPassword && password !== confirmPassword) {
+        if (
+            password &&
+            confirmPassword &&
+            password !== confirmPassword
+        ) {
             errors.confirmPassword = "mismatch";
         }
 
@@ -175,11 +161,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
 
     return (
         <main className="relative flex min-h-screen flex-col items-center bg-primary font-display text-base-100 py-50">
+            {/* Header */}
             <h1 className="absolute top-5 text-xl tracking-wider font-bold lg:text-3xl sm:text-3xl text-white">
                 Greenhouse Application
             </h1>
 
-            <section className="flex w-full max-w-1xl flex-col items-center justify-center gap-10 px-6 md:flex-row md:gap-20">
+            {/* Body */}
+            <section
+                className="flex w-full max-w-1xl flex-col items-center justify-center gap-10 px-6 md:flex-row md:gap-20">
                 <img
                     src={logo}
                     alt="Greenhouse"
@@ -192,7 +181,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                     className="relative text-white flex w-full max-w-xs flex-col items-center text-center md:max-w-sm overflow-visible transition-[height] duration-300 ease-in-out"
                 >
                     {/* Login / Register */}
-                    <div className={`flex flex-col items-center transition-transform duration-300 ${lift[mode === "login" ? "login" : "idle"]} ${mode === "register" ? "opacity-0 pointer-events-none" : ""}`}>
+                    <div
+                        className={`flex flex-col items-center transition-transform duration-300 ${
+                            lift[mode === "login" ? "login" : "idle"]
+                        } ${mode === "register" ? "opacity-0 pointer-events-none" : ""}`}
+                    >
                         <button
                             type="button"
                             className="text-xl font-medium"
@@ -203,7 +196,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                         <span className="mt-1 h-px w-32 bg-white"/>
                     </div>
 
-                    <div className={`flex flex-col items-center transition-transform duration-300 ${lift[mode === "register" ? "register" : "idle"]} ${mode === "login" ? "opacity-0 pointer-events-none" : ""}`}>
+                    <div
+                        className={`flex flex-col items-center transition-transform duration-300 ${
+                            lift[mode === "register" ? "register" : "idle"]
+                        } ${mode === "login" ? "opacity-0 pointer-events-none" : ""}`}
+                    >
                         <button
                             type="button"
                             className="text-xl font-medium"
@@ -218,7 +215,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                     <form
                         ref={loginFormRef}
                         onSubmit={handleLogin}
-                        className={`absolute top-0 w-full space-y-2 transition-opacity duration-300 ${fade(mode === "login")}`}
+                        className={`absolute top-0 w-full space-y-2 transition-opacity duration-300 ${fade(
+                            mode === "login",
+                        )}`}
                     >
                         <label className="label py-0 text-white">Email</label>
                         <input
@@ -229,7 +228,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                             required
                         />
                         <label className="label py-0 text-white">Password</label>
-                        <PasswordField name="password" placeholder="Password" required className={"bg-white"} />
+                        <PasswordField
+                            name="password"
+                            placeholder="Password"
+                            required
+                            className={"bg-white"}
+                        />
                         <button className="btn text-white border-white bg-transparent btn-sm w-full">Login</button>
                     </form>
 
@@ -238,65 +242,104 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                         ref={registerFormRef}
                         onSubmit={handleRegister}
                         noValidate
-                        className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${mode === "register" ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+                        className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${
+                            mode === "register" ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                        }`}
                     >
-                        {/* First / Last Name */}
+                        {/* First / Last name */}
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <label className="label py-0 text-white">First Name</label>
-                                <input name="firstName" placeholder="First Name"
-                                       className={`input input-bordered bg-white input-sm w-full text-black ${registerErrors.firstName && errorClass}`}/>
+                                <input
+                                    name="firstName"
+                                    placeholder="First Name"
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.firstName && errorClass
+                                    }`}
+                                />
                                 {requiredHint(registerErrors.firstName)}
                             </div>
 
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Last Name</label>
-                                <input name="lastName" placeholder="Last Name"
-                                       className={`input input-bordered bg-white input-sm w-full text-black ${registerErrors.lastName && errorClass}`}/>
+                                <input
+                                    name="lastName"
+                                    placeholder="Last Name"
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.lastName && errorClass
+                                    }`}
+                                />
                                 {requiredHint(registerErrors.lastName)}
                             </div>
                         </div>
 
+                        {/* Email */}
                         <label className="label py-0 text-white">Email</label>
-                        <input name="email" type="email" placeholder="Email"
-                               className={`input input-bordered bg-white input-sm w-full text-black ${registerErrors.email && errorClass}`}/>
+                        <input
+                            name="email"
+                            type="email"
+                            placeholder="Email"
+                            className={`input input-bordered bg-white input-sm w-full text-black ${
+                                registerErrors.email && errorClass
+                            }`}
+                        />
                         {requiredHint(registerErrors.email)}
 
+                        {/* Birthday / Country */}
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <label className="label py-0 text-white">Birthday</label>
-                                <input name="birthday" type="date"
-                                       className={`input input-bordered bg-white input-sm w-full text-black ${registerErrors.birthday && errorClass}`}/>
+                                <input
+                                    name="birthday"
+                                    type="date"
+                                    className={`input input-bordered bg-white input-sm w-full text-black ${
+                                        registerErrors.birthday && errorClass
+                                    }`}
+                                />
                                 {requiredHint(registerErrors.birthday)}
                             </div>
 
                             <div className="flex-1 relative overflow-visible">
                                 <label className="label py-0 text-white">Country</label>
-                                <select name="country"
-                                        className="select select-bordered bg-white select-sm w-full text-black"
-                                        required>
+                                <select
+                                    name="country"
+                                    className="select select-bordered bg-white select-sm w-full text-black"
+                                    required
+                                >
                                     <option value="">Select country</option>
                                     {countries.map((country) => (
-                                        <option key={country} value={country}>{country}</option>
+                                        <option
+                                            key={country}
+                                            value={country}
+                                        >
+                                            {country}
+                                        </option>
                                     ))}
                                 </select>
                                 {requiredHint(registerErrors.country)}
                             </div>
                         </div>
 
+                        {/* Password */}
                         <label className="label py-0 text-white">Password</label>
-                        <PasswordField name="password" placeholder="Password"
-                                       className={`bg-white ${registerErrors.password && errorClass}`}/>
+                        <PasswordField
+                            name="password"
+                            placeholder="Password"
+                            className={`bg-white ${registerErrors.password && errorClass}`}
+                        />
                         {requiredHint(registerErrors.password)}
 
+                        {/* Confirm password */}
                         <label className="label py-0 text-white">Confirm Password</label>
-                        <PasswordField name="confirmPassword" placeholder="Password"
-                                       className={`bg-white ${registerErrors.confirmPassword && errorClass}`}/>
+                        <PasswordField
+                            name="confirmPassword"
+                            placeholder="Password"
+                            className={`bg-white ${registerErrors.confirmPassword && errorClass}`}
+                        />
                         {requiredHint(registerErrors.confirmPassword)}
 
                         <div className="flex gap-2 pt-1">
-                            <button type="submit"
-                                    className="btn bg-transparent text-white border-white btn-xs flex-1">
+                            <button type="submit" className="btn bg-transparent text-white border-white btn-xs flex-1">
                                 Register
                             </button>
                         </div>
@@ -304,11 +347,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                 </div>
             </section>
 
-            {loggedIn && (
-                <p className="absolute bottom-4 text-xs italic opacity-60">
-                    You are now logged in (placeholder)
-                </p>
-            )}
+            {/* Logged-in Notice */
+            }
+            {
+                loggedIn && (
+                    <p className="absolute bottom-4 text-xs italic opacity-60">
+                        You are now logged in (placeholder)
+                    </p>
+                )}
         </main>
     );
 };
