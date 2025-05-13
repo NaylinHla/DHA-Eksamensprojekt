@@ -4,7 +4,7 @@ import {
     RandomUidAtom,
     SelectedDeviceIdAtom,
     SubscribedTopicsAtom,
-    UserSettingsAtom, // ⬅ Add this
+    UserSettingsAtom,
     useAtom
 } from "../../import";
 import { SignInRoute } from "../../../routeConstants";
@@ -17,7 +17,7 @@ export const useLogout = () => {
     const [, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [, setRandomUidAtom] = useAtom(RandomUidAtom);
     const [, setSelectedDeviceIdAtom] = useAtom(SelectedDeviceIdAtom);
-    const [, setUserSettings] = useAtom(UserSettingsAtom); // ✅ Add this
+    const [, setUserSettings] = useAtom(UserSettingsAtom);
     const { reset } = useUser();
     const navigate = useNavigate();
 
@@ -30,12 +30,12 @@ export const useLogout = () => {
         setGreenhouseSensorDataAtom([]);
         setRandomUidAtom("");
         setSelectedDeviceIdAtom("");
-        setUserSettings(null); // ✅ Reset settings atom
+        setUserSettings(null);
 
         // Clear localStorage
         localStorage.removeItem("jwt");
         localStorage.removeItem("randomUid");
-        localStorage.removeItem("theme"); // ✅ Reset theme override
+        localStorage.removeItem("theme");
 
         // Reset HTML theme attribute
         document.documentElement.setAttribute("data-theme", "light");

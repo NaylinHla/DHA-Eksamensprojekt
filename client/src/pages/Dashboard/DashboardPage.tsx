@@ -10,7 +10,7 @@ const DashboardPage = () => {
     const [jwt] = useAtom(JwtAtom);
     const setUserSettings = useSetAtom(UserSettingsAtom);
 
-    useApplyThemeFromSettings(); // ✅ theme now reacts to userSettings changes
+    useApplyThemeFromSettings();
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -29,7 +29,7 @@ const DashboardPage = () => {
                 }
 
                 const settings = await res.json();
-                setUserSettings(settings); // ✅ triggers theme application
+                setUserSettings(settings);
             } catch (err: any) {
                 toast.error("Failed to load user settings");
                 console.error(err);
