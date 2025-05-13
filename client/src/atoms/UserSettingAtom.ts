@@ -1,10 +1,10 @@
 import { atom } from 'jotai';
 
-export type UserSettings = {
-    confirmDialog: boolean;
-    fahrenheit: boolean;
+export interface UserSettings {
+    celsius: boolean;
     darkTheme: boolean;
-    //TODO: add secretmode
-};
+    confirmDialog: boolean;
+    secretMode: boolean;
+}
 
 export const UserSettingsAtom = atom<UserSettings | null>(null);

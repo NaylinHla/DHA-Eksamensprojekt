@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useAtom, useSetAtom } from "jotai";
-import { JwtAtom } from "../../atoms";
-import { UserSettingsAtom } from "../../atoms";
+import { JwtAtom, UserSettingsAtom } from "../../atoms";
 import toast from "react-hot-toast";
 import { TitleTimeHeader } from "../import";
-import { useApplyThemeFromSettings } from "./UseApplyThemeFromSettings.ts";
+import { useApplyThemeFromSettings } from "./UseApplyThemeFromSettings";
+import { UserSettingsClient } from "../../generated-client.ts";
 
 const DashboardPage = () => {
     const [jwt] = useAtom(JwtAtom);
@@ -17,19 +17,14 @@ const DashboardPage = () => {
             if (!jwt) return;
 
             try {
-                const res = await fetch("http://localhost:5000/api/usersettings", {
-                    headers: {
-                        Authorization: `Bearer ${jwt}`,
-                    },
+                const client = new UserSettingsClient("http://localhost:5000");
+                const settings = await client.getAllSettings(`Bearer ${jwt}`);
+                setUserSettings({
+                    celsius: settings.celsius ?? false,
+                    darkTheme: settings.darkTheme ?? false,
+                    confirmDialog: settings.confirmDialog ?? false,
+                    secretMode: settings.secretMode ?? false,
                 });
-
-                if (!res.ok) {
-                    const msg = await res.text();
-                    throw new Error(msg);
-                }
-
-                const settings = await res.json();
-                setUserSettings(settings);
             } catch (err: any) {
                 toast.error("Failed to load user settings");
                 console.error(err);
