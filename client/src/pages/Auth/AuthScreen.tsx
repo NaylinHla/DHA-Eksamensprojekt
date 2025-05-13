@@ -97,7 +97,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             localStorage.setItem("jwt", jwt);
 
             // FETCH USER SETTINGS
-            const res = await fetch("http://localhost:5000/api/usersettings/all", {
+            const res = await fetch("http://localhost:5000/api/usersettings", {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
 

@@ -28,19 +28,30 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
     [HttpGet]
     public ActionResult<UserSettingsResponseDto> GetAllSettings([FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
-        var claims = securityService.VerifyJwtOrThrow(authorization);
-
-        var settings = service.GetSettings(claims);
-
-        return Ok(new UserSettingsResponseDto
+        try
         {
-            Celsius = settings.Celsius,
-            DarkTheme = settings.DarkTheme,
-            ConfirmDialog = settings.ConfirmDialog,
-            SecretMode = settings.SecretMode
-        });
+            MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
+
+            var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
+            var claims = securityService.VerifyJwtOrThrow(token);
+
+            var settings = service.GetSettings(claims);
+
+            return Ok(new UserSettingsResponseDto
+            {
+                Celsius = settings.Celsius,
+                DarkTheme = settings.DarkTheme,
+                ConfirmDialog = settings.ConfirmDialog,
+                SecretMode = settings.SecretMode
+            });
+        }
+        catch (Exception ex)
+        {
+            MonitorService.Log.Error(ex, "Failed to fetch user settings");
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
 
 }
