@@ -20,8 +20,7 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
     {
         MonitorService.Log.Debug("Entered PatchSetting in UserSettingsController");
 
-        var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
-        var claims = securityService.VerifyJwtOrThrow(token);
+        var claims = securityService.VerifyJwtOrThrow(authorization);
 
         service.UpdateSetting(settingName, dto.Value, claims);
         return NoContent();
@@ -32,8 +31,7 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
     {
             MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
             
-            var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
-            var claims = securityService.VerifyJwtOrThrow(token);
+            var claims = securityService.VerifyJwtOrThrow(authorization);
 
             var settings = service.GetSettings(claims);
 
