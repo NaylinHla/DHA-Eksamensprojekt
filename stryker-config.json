@@ -1,0 +1,10 @@
+{
+  "stryker-config": {
+    "ignore-methods": [
+      "*Debug",
+      "*Error",
+      "*Warning"
+    ],
+    "additional-timeout": 5000
+  }
+}

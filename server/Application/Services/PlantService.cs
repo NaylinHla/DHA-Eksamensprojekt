@@ -51,12 +51,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     public async Task DeletePlantAsync(Guid plantId, JwtClaims claims)
     {
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        if (plantOwnerId != Guid.Parse(claims.Id))
-        {
-            MonitorService.Log.Error("User tried to delete plant that does not belong to them");
-            throw new AuthenticationException();
-        }
-
+        
         var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
         if (plantToDelete.Result == null)
         {
@@ -68,6 +63,11 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
             MonitorService.Log.Error("User tried to delete plant that is not dead");
             throw new ValidationException();
         }
+        if (plantOwnerId != Guid.Parse(claims.Id))
+        {
+            MonitorService.Log.Error("User tried to delete plant that does not belong to them");
+            throw new AuthenticationException();
+        }
         await plantRepo.DeletePlantAsync(plantId);
     }
 
@@ -75,18 +75,16 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     {
         MonitorService.Log.Debug("Entered Edit Plant Async method in PlantService");
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        if (plantOwnerId != Guid.Parse(claims.Id))
-        {
-            MonitorService.Log.Error("User tried to edit plant that does not belong to them");
-            throw new AuthenticationException();
-        }
-
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
-
         if (plant == null)
         {
             MonitorService.Log.Error(PlantNotFound);
             throw new KeyNotFoundException();
+        }
+        if (plantOwnerId != Guid.Parse(claims.Id))
+        {
+            MonitorService.Log.Error("User tried to edit plant that does not belong to them");
+            throw new AuthenticationException();
         }
         
         if (dto.PlantName is not null) plant.PlantName = dto.PlantName;
