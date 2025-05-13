@@ -5,6 +5,7 @@ using Application.Models;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -16,30 +17,36 @@ namespace Startup.Tests.EventTests;
 [TestFixture]
 public class MqttTriggeredTests
 {
+    private HttpClient _httpClient = null!;
+    private IServiceProvider _scopedServiceProvider = null!;
+
     [SetUp]
     public void Setup()
     {
+        // Point ASP.NET & our TestWsClient at port 8181
+        Environment.SetEnvironmentVariable("PORT", "8181");
+
         var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    services.DefaultTestConfig(makeMqttClient: true);
-                });
-            });
+                builder
+                    .UseKestrel()
+                    .UseUrls("http://localhost:8181")
+                    .ConfigureServices(s => s.DefaultTestConfig(makeMqttClient: true))
+            );
 
-        _httpClient = factory.CreateClient();
+        // HTTP client talks to Kestrel on 8181
+        _httpClient = factory.CreateClient(new WebApplicationFactoryClientOptions {
+            BaseAddress = new Uri("http://localhost:8181")
+        });
+        
         _scopedServiceProvider = factory.Services.CreateScope().ServiceProvider; // Create scope here for services
     }
 
     [TearDown]
     public void TearDown()
     {
-        _httpClient?.Dispose();
+        _httpClient.Dispose();
     }
-
-    private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
 
     [Test]
     public async Task WhenServerReceivesTimeSeriesData_ServerSavesInDbAndBroadcastsToClient()
@@ -47,6 +54,11 @@ public class MqttTriggeredTests
         // Arrange
         var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
         var wsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
+
+        // Wait until the WS client reports it's running
+        var startWait = DateTime.UtcNow;
+        while (!wsClient.WsClient.IsRunning && DateTime.UtcNow - startWait < TimeSpan.FromSeconds(5))
+            await Task.Delay(50);
 
         // Create a new scope to get access to DB context within the test
         using var scope = _scopedServiceProvider.CreateScope();
