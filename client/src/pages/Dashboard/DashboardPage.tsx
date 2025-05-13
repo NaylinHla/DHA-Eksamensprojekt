@@ -17,9 +17,9 @@ const DashboardPage = () => {
             if (!jwt) return;
 
             try {
-                const settings = await userSettingsClient.getAllSettings(`Bearer ${jwt ?? ""}`);
+                const settings = await userSettingsClient.getAllSettings(jwt);
                 setUserSettings({
-                    celsius: settings.celsius ?? false,
+                    celsius: settings.celsius ?? true,
                     darkTheme: settings.darkTheme ?? false,
                     confirmDialog: settings.confirmDialog ?? false,
                     secretMode: settings.secretMode ?? false,

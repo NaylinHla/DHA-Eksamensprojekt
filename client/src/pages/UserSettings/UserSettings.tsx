@@ -46,7 +46,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             if (!jwt) return;
             try {
                 if (!jwt) return;
-                const data = await userSettingsClient.getAllSettings(`Bearer ${jwt ?? ""}`);
+                const data = await userSettingsClient.getAllSettings(jwt);
                 setConfirmWater(data.confirmDialog ?? false);
                 setCelsius(data.celsius ?? false);
                 setDarkTheme(data.darkTheme ?? false);
@@ -62,7 +62,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function patchSetting(name: string, value: boolean) {
         try {
             if (!jwt) return;
-            await userSettingsClient.patchSetting(name, { value }, `Bearer ${jwt ?? ""}`);
+            await userSettingsClient.patchSetting(name, { value }, jwt);
         } catch (e: any) {
             console.error(e);
         }
@@ -71,7 +71,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleDelete() {
         try {
             setSaving(true);
-            await userClient.deleteUser(`Bearer ${jwt ?? ""}`);
+            if (!jwt) return;
+            await userClient.deleteUser(jwt);
             toast.success("Account deleted – goodbye!");
             localStorage.removeItem("jwt");
             setJwt("");
@@ -90,7 +91,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         }
         try {
             setSaving(true);
-            await userClient.patchUserPassword(`Bearer ${jwt ?? ""}`, {
+            if (!jwt) return;
+            await userClient.patchUserPassword(jwt, {
                 oldPassword: dto.oldPassword,
                 newPassword: dto.newPassword,
             });
@@ -106,7 +108,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleEmail(oldMail: string, newMail: string) {
         try {
             setSaving(true);
-            await userClient.patchUserEmail(`Bearer ${jwt ?? ""}`, {
+            if (!jwt) return;
+            await userClient.patchUserEmail(jwt, {
                 oldEmail: oldMail,
                 newEmail: newMail,
             });

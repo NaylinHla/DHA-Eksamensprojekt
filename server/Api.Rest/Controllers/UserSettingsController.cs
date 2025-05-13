@@ -20,9 +20,6 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
     {
         MonitorService.Log.Debug("Entered PatchSetting in UserSettingsController");
 
-        if (string.IsNullOrWhiteSpace(authorization))
-            return Unauthorized("Missing Authorization header");
-
         var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
         var claims = securityService.VerifyJwtOrThrow(token);
 
@@ -33,13 +30,8 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
     [HttpGet]
     public ActionResult<UserSettingsResponseDto> GetAllSettings([FromHeader] string authorization)
     {
-        try
-        {
             MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
-
-            if (string.IsNullOrWhiteSpace(authorization))
-                return Unauthorized("Missing Authorization header");
-
+            
             var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
             var claims = securityService.VerifyJwtOrThrow(token);
 
@@ -52,11 +44,5 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
                 ConfirmDialog = settings.ConfirmDialog,
                 SecretMode = settings.SecretMode
             });
-        }
-        catch (Exception ex)
-        {
-            MonitorService.Log.Error(ex, "Failed to fetch user settings");
-            return StatusCode(500, new { message = ex.Message });
-        }
     }
 }
