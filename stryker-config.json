@@ -1,0 +1,13 @@
+{
+  "stryker-config": {
+    "additional-timeout": 5000,
+    "since": {
+      "enabled": false,
+      "ignore-changes-in": [],
+      "target": "main"
+    },
+    "ignore-methods": [
+      "MonitorService.Log*"
+    ]
+  }
+}
