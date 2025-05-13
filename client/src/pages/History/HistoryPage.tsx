@@ -33,7 +33,7 @@ import { cssVar } from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
-type Point = { time: string; value: number; [key: string]: number | string };
+type Point = { time: string; display: string; value: number; };
 type TabKey = "temperature" | "humidity" | "airPressure" | "airQuality";
 
 export default function HistoryPage() {
@@ -126,12 +126,15 @@ export default function HistoryPage() {
 
         /* Push to charts (only if chart exists yet) */
         logs.forEach(r => {
-            const t = formatDateTimeForUserTZ(r.time);
-            if (!t) return;
-            appendPointToChart(chartRefs.temperature, { time: t, value: Number(r.temperature) });
-            appendPointToChart(chartRefs.humidity, { time: t, value: Number(r.humidity) });
-            appendPointToChart(chartRefs.airPressure, { time: t, value: Number(r.airPressure) });
-            appendPointToChart(chartRefs.airQuality, { time: t, value: Number(r.airQuality) });
+            const iso = 
+                r.time instanceof Date
+                    ? r.time.toISOString() 
+                    : String(r.time);
+            if (!iso) return;
+            appendPointToChart(chartRefs.temperature, { time: iso, value: Number(r.temperature) });
+            appendPointToChart(chartRefs.humidity, { time: iso, value: Number(r.humidity) });
+            appendPointToChart(chartRefs.airPressure, { time: iso, value: Number(r.airPressure) });
+            appendPointToChart(chartRefs.airQuality, { time: iso, value: Number(r.airQuality) });
         });
     }, 1000);
 
@@ -262,9 +265,13 @@ export default function HistoryPage() {
         const sampled = downSampleRecords(unique, 500);
 
         // 3) Build point arrays
-        const build = (key: keyof SensorHistoryDto): Point[] => sampled.map(r => ({
-            time: format(new Date(r.time!), 'd MMM'),
-            value: Number(r[key]) || 0,
+        const build = (key: keyof SensorHistoryDto): Point[] => 
+            sampled.map(r => ({
+                time: r.time instanceof Date 
+                    ? r.time.toISOString() 
+                    : String(r.time),
+                display: format(new Date(r.time!), 'd MMM'),
+                value: Number(r[key]) || 0,
         }));
 
         return {
@@ -319,12 +326,30 @@ export default function HistoryPage() {
                             devicePixelRatio: 1.5,
                             plugins: {
                                 legend: { display: false },
-                                tooltip: { enabled: true, intersect: false, mode: "index" },
+                                tooltip: { 
+                                    enabled: true, 
+                                    intersect: false, 
+                                    mode: "index",
+                                    callbacks: {
+                                        title: items => {
+                                            if (!items.length) return '';
+                                            const i = items[0].dataIndex;
+                                            return format(new Date(data[i].time), 'PPP HH:mm:ss');
+                                        }
+                                    }
+                                
+                                },
                             },
                             scales: {
                                 x: {
                                     grid: { display: false },
-                                    ticks: { maxTicksLimit: 12, autoSkip: true },
+                                    ticks: {
+                                        callback: (val: string | number) => {
+                                            const i = Number(val);
+                                            return data[i]?.display ?? '';
+                                        },
+                                        maxTicksLimit: 12, 
+                                        autoSkip: true },
                                 },
                                 y: {
                                     grid: { display: false },
@@ -369,9 +394,12 @@ export default function HistoryPage() {
                             <>
                                 <div className="flex justify-between mb-2">
                                     <h2 className="font-bold">Current Status</h2>
+                                    <span className="text-xs text-gray-500">
+                                    Last updated:&nbsp;{formatDateTimeForUserTZ(latest.time)}
+                                    </span>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-1 text-sm">
-                                    {fields.map(f => (
+                                {fields.map(f => (
                                         <div key={f} className="flex">
                                             <span className="capitalize font-medium">{f}:</span>
                                             <span className="ml-1">
