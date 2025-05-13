@@ -3,6 +3,7 @@ using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.RestDtos.SensorHistory;
 using Core.Domain.Entities;
 using Core.Domain.Exceptions;
+using Infrastructure.Logging;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,23 +14,36 @@ public class GreenhouseDeviceRepository(MyDbContext ctx) : IGreenhouseDeviceRepo
     // Fetch the recent sensor history logs
     public List<SensorHistory> GetRecentSensorHistory()
     {
+        MonitorService.Log.Debug("Fetching recent sensor history from the database");
+
         // Assuming we want the most recent history based on the timestamp
-        return ctx.SensorHistories.OrderByDescending(sh => sh.Time).ToList();
+        var sensorHistory = ctx.SensorHistories.OrderByDescending(sh => sh.Time).ToList();
+
+        MonitorService.Log.Debug("Fetched {Count} recent sensor history records", sensorHistory.Count);
+        return sensorHistory;
     }
 
     public async Task<Guid> GetDeviceOwnerUserId(Guid deviceId)
     {
+        MonitorService.Log.Debug("Fetching device owner for DeviceId: {DeviceId}", deviceId);
+
         var device = await ctx.UserDevices.FirstOrDefaultAsync(d => d.DeviceId == deviceId);
 
         if (device == null)
+        {
+            MonitorService.Log.Warning("Device with DeviceId: {DeviceId} not found", deviceId);
             throw new NotFoundException("Device not found");
+        }
 
+        MonitorService.Log.Debug("Found device with DeviceId: {DeviceId}, OwnerId: {UserId}", deviceId, device.UserId);
         return device.UserId;
     }
 
     public async Task<List<SensorHistoryWithDeviceDto>> GetLatestSensorDataForUserDevicesAsync(Guid userId)
     {
-        return await ctx.UserDevices
+        MonitorService.Log.Debug("Fetching latest sensor data for UserId: {UserId}", userId);
+
+        var records = await ctx.UserDevices
             .Where(device => device.UserId == userId)
             .Select(device => new SensorHistoryWithDeviceDto
             {
@@ -38,43 +52,32 @@ public class GreenhouseDeviceRepository(MyDbContext ctx) : IGreenhouseDeviceRepo
                 DeviceCreateDateTime = device.CreatedAt,
                 DeviceDesc = device.DeviceDescription,
                 DeviceWaitTime = device.WaitTime,
-                Temperature = device.SensorHistories
-                    .OrderByDescending(s => s.Time)
-                    .Select(s => s.Temperature)
-                    .FirstOrDefault(),
-                Humidity = device.SensorHistories
-                    .OrderByDescending(s => s.Time)
-                    .Select(s => s.Humidity)
-                    .FirstOrDefault(),
-                AirPressure = device.SensorHistories
-                    .OrderByDescending(s => s.Time)
-                    .Select(s => s.AirPressure)
-                    .FirstOrDefault(),
-                AirQuality = device.SensorHistories
-                    .OrderByDescending(s => s.Time)
-                    .Select(s => s.AirQuality)
-                    .FirstOrDefault(),
-                Time = device.SensorHistories
-                    .OrderByDescending(s => s.Time)
-                    .Select(s => s.Time)
-                    .FirstOrDefault()
+                Temperature = device.SensorHistories.OrderByDescending(s => s.Time).Select(s => s.Temperature).FirstOrDefault(),
+                Humidity = device.SensorHistories.OrderByDescending(s => s.Time).Select(s => s.Humidity).FirstOrDefault(),
+                AirPressure = device.SensorHistories.OrderByDescending(s => s.Time).Select(s => s.AirPressure).FirstOrDefault(),
+                AirQuality = device.SensorHistories.OrderByDescending(s => s.Time).Select(s => s.AirQuality).FirstOrDefault(),
+                Time = device.SensorHistories.OrderByDescending(s => s.Time).Select(s => s.Time).FirstOrDefault()
             })
             .ToListAsync();
+
+        MonitorService.Log.Debug("Fetched {Count} sensor data records for UserId: {UserId}", records.Count, userId);
+        return records;
     }
 
-    public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(Guid deviceId,
-        DateTime? from = null, DateTime? to = null)
+    public async Task<List<GetAllSensorHistoryByDeviceIdDto>> GetSensorHistoryByDeviceIdAsync(
+        Guid deviceId, DateTime? from = null, DateTime? to = null)
     {
+        MonitorService.Log.Debug("Fetching sensor history for DeviceId: {DeviceId}", deviceId);
+
         // Fetch device information
-        var device = await ctx.UserDevices
-            .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
-
+        var device = await ctx.UserDevices.FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
         if (device == null)
+        {
+            MonitorService.Log.Warning("Device with DeviceId: {DeviceId} not found", deviceId);
             throw new NotFoundException("Device not found");
+        }
 
-        var query = ctx.SensorHistories
-            .Where(sh => sh.DeviceId == deviceId);
-
+        var query = ctx.SensorHistories.Where(sh => sh.DeviceId == deviceId);
         if (from.HasValue)
             query = query.Where(sh => sh.Time >= from.Value);
 
@@ -93,7 +96,6 @@ public class GreenhouseDeviceRepository(MyDbContext ctx) : IGreenhouseDeviceRepo
             })
             .ToListAsync();
 
-        // Map into your response DTO
         var responseDto = new GetAllSensorHistoryByDeviceIdDto
         {
             DeviceId = device.DeviceId,
@@ -101,39 +103,59 @@ public class GreenhouseDeviceRepository(MyDbContext ctx) : IGreenhouseDeviceRepo
             SensorHistoryRecords = sensorHistoryRecords
         };
 
+        MonitorService.Log.Debug("Fetched {Count} records for DeviceId: {DeviceId}", sensorHistoryRecords.Count, deviceId);
         return new List<GetAllSensorHistoryByDeviceIdDto> { responseDto };
     }
-
 
     // Add a new sensor history log
     public async Task<SensorHistory> AddSensorHistory(SensorHistory sensorHistory)
     {
+        MonitorService.Log.Debug("Adding new sensor history to the database");
+
         ctx.SensorHistories.Add(sensorHistory);
         await ctx.SaveChangesAsync();
+
+        MonitorService.Log.Debug("Added new sensor history record for DeviceId: {DeviceId}", sensorHistory.DeviceId);
         return sensorHistory;
     }
 
-    // Fetch user by device ID (You can use this if you need to fetch user details)
+    // Fetch user by device ID
     public async Task<User> GetUserByDeviceId(Guid deviceId)
     {
-        // Assuming each device has a unique device ID, and a user is associated with it
-        var device = await ctx.UserDevices.Include(userDevice => userDevice.User)
+        MonitorService.Log.Debug("Fetching user for DeviceId: {DeviceId}", deviceId);
+
+        var device = await ctx.UserDevices
+            .Include(userDevice => userDevice.User)
             .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId);
 
         if (device == null)
+        {
+            MonitorService.Log.Warning("Device with DeviceId: {DeviceId} not found", deviceId);
             throw new NotFoundException("Device not found");
-        if (device.User == null) throw new NotFoundException("Device User not found");
+        }
+
+        if (device.User == null)
+        {
+            MonitorService.Log.Warning("User for DeviceId: {DeviceId} not found", deviceId);
+            throw new NotFoundException("Device User not found");
+        }
+
+        MonitorService.Log.Debug("Fetched user for DeviceId: {DeviceId}, UserId: {UserId}", deviceId, device.User.UserId);
         return device.User;
     }
 
     // Delete all sensor history data from a specific device
     public async Task DeleteDataFromSpecificDevice(Guid deviceId)
     {
+        MonitorService.Log.Debug("Deleting sensor data for DeviceId: {DeviceId}", deviceId);
+
         var deviceSensorHistory = await ctx.SensorHistories
             .Where(sh => sh.DeviceId == deviceId)
             .ToListAsync();
 
         ctx.SensorHistories.RemoveRange(deviceSensorHistory);
         await ctx.SaveChangesAsync();
+
+        MonitorService.Log.Debug("Deleted {Count} sensor history records for DeviceId: {DeviceId}", deviceSensorHistory.Count, deviceId);
     }
 }
