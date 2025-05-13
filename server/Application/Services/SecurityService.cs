@@ -16,8 +16,14 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRepository repository) : ISecurityService
+public class SecurityService(
+    IOptionsMonitor<AppOptions> optionsMonitor,
+    IUserRepository repository,
+    IUserSettingsRepository userSettingsRepository) : ISecurityService
 {
+    
+    private readonly IUserSettingsRepository _userSettingsRepository = userSettingsRepository;
+
     public AuthResponseDto Login(AuthLoginDto dto)
     {
         var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
@@ -40,20 +46,33 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
     {
         var player = repository.GetUserOrNull(dto.Email);
         if (player is not null) throw new ValidationException("User already exists");
+
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
+        var userId = Guid.NewGuid();
+
         var insertedPlayer = repository.AddUser(new User
         {
-            UserId = Guid.NewGuid(),
+            UserId = userId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            Birthday = DateTime.SpecifyKind(dto.Birthday, DateTimeKind.Utc), // Force Birthday to UTC
+            Birthday = DateTime.SpecifyKind(dto.Birthday, DateTimeKind.Utc),
             Country = dto.Country,
             Role = Constants.UserRole,
             Salt = salt,
             Hash = hash
         });
+        
+        _userSettingsRepository.Add(new UserSettings
+        {
+            UserId = userId,
+            Celsius = true,
+            DarkTheme = false,
+            ConfirmDialog = false,
+            SecretMode = false
+        });
+
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
@@ -65,6 +84,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
             })
         };
     }
+
 
     /// <summary>
     ///     Gives hex representation of SHA512 hash
