@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Security.Authentication;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
@@ -11,8 +12,6 @@ namespace Application.Services;
 
 public class PlantService(IPlantRepository plantRepo) : IPlantService
 {
-    private const string PlantNotFound = "Plant not found.";
-
     public async Task<Plant?> GetPlantByIdAsync(Guid plantId, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Get Plant By Id Async method in PlantService");
@@ -40,7 +39,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
             PlantName = dto.PlantName,
             PlantType = dto.PlantType,
             PlantNotes = dto.PlantNotes,
-            Planted = dto.Planted ?? DateTime.UtcNow,
+            Planted = dto.Planted,
             WaterEvery = dto.WaterEvery,
             IsDead = false
         };
@@ -53,12 +52,8 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         
         var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
-        if (plantToDelete.Result == null)
-        {
-            MonitorService.Log.Error(PlantNotFound);
-            throw new KeyNotFoundException();
-        }
-        if (!plantToDelete.Result.IsDead)
+
+        if (plantToDelete.Result is { IsDead: false })
         {
             MonitorService.Log.Error("User tried to delete plant that is not dead");
             throw new ValidationException();
@@ -76,24 +71,18 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         MonitorService.Log.Debug("Entered Edit Plant Async method in PlantService");
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
-        if (plant == null)
-        {
-            MonitorService.Log.Error(PlantNotFound);
-            throw new KeyNotFoundException();
-        }
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
             MonitorService.Log.Error("User tried to edit plant that does not belong to them");
             throw new AuthenticationException();
         }
-        
-        if (dto.PlantName is not null) plant.PlantName = dto.PlantName;
-        if (dto.PlantType is not null) plant.PlantType = dto.PlantType;
-        if (dto.PlantNotes is not null) plant.PlantNotes = dto.PlantNotes;
-        if (dto.Planted is not null) plant.Planted = dto.Planted;
-        if (dto.LastWatered is not null) plant.LastWatered = dto.LastWatered;
-        if (dto.WaterEvery is not null) plant.WaterEvery = dto.WaterEvery;
-        if (dto.IsDead is not null) plant.IsDead = dto.IsDead.Value;
+        plant.PlantName = dto.PlantName ?? plant.PlantName;
+        plant.PlantType = dto.PlantType ?? plant.PlantType;
+        plant.PlantNotes = dto.PlantNotes ?? plant.PlantNotes;
+        plant.Planted = dto.Planted ?? plant.Planted;
+        plant.LastWatered = dto.LastWatered ?? plant.LastWatered;
+        plant.WaterEvery = dto.WaterEvery ?? plant.WaterEvery;
+        plant.IsDead = dto.IsDead ?? plant.IsDead;
 
         await plantRepo.SaveChangesAsync();
         return plant;
@@ -103,15 +92,9 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     {
         MonitorService.Log.Debug("Entered Mark Plant As Dead Async method in PlantService");
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
-
-        if (plant == null)
-        {
-            MonitorService.Log.Error(PlantNotFound);
-            throw new KeyNotFoundException();
-        }
         
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.MarkPlantAsDeadAsync(plantId);
+        if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.MarkPlantAsDeadAsync(plant.PlantId);
         MonitorService.Log.Error("User tried to mark plant as dead that does not belong to them");
         throw new AuthenticationException();
 
@@ -121,14 +104,9 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     {
         MonitorService.Log.Debug("Entered Water Plant Async method in PlantService");
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
-        
-        if (plant == null)
-        {
-            MonitorService.Log.Error(PlantNotFound);
-            throw new KeyNotFoundException();
-        }
+
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.WaterPlantAsync(plantId);
+        if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.WaterPlantAsync(plant.PlantId);
         MonitorService.Log.Error("User tried to water plant that does not belong to them");
         throw new AuthenticationException();
 

@@ -109,9 +109,12 @@ public class PlantControllerTests : WebApplicationFactory<Program>
 
         // Act
         var resp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
-
+        resp.EnsureSuccessStatusCode();
+        
+        var checkDb = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={id}");
         // Assert
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(checkDb.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
     [Test]
@@ -173,7 +176,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         var patch = new PlantEditDto
         {
             PlantName = "Flat‑leaf Parsley",
-            PlantType = "Herb",
+            PlantType = "Fungus",
             PlantNotes = "Move to bigger pot"
         };
 
@@ -182,15 +185,27 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             $"api/Plant/{PlantController.EditPlantRoute}?plantId={plantId}",
             patch);
 
+        var getResp = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantId}");
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(getResp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        });
+        
         var updated = await resp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        var refetchedPlantFromDb = await getResp.Content.ReadFromJsonAsync<PlantResponseDto>();
         Assert.Multiple(() =>
         {
             Assert.That(updated!.PlantName, Is.EqualTo(patch.PlantName));
             Assert.That(updated.PlantNotes, Is.EqualTo(patch.PlantNotes));
-            Assert.That(updated.PlantType, Is.EqualTo(created.PlantType));
+            Assert.That(updated.PlantType, Is.EqualTo(patch.PlantType));
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(refetchedPlantFromDb!.PlantName, Is.EqualTo(patch.PlantName));
+            Assert.That(refetchedPlantFromDb.PlantNotes, Is.EqualTo(patch.PlantNotes));
+            Assert.That(refetchedPlantFromDb.PlantType, Is.EqualTo(patch.PlantType));
         });
     }
 
@@ -504,15 +519,26 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
-    public async Task GetAllPlants_NoJwt_ReturnsBadRequest()
+    public async Task GetAllPlants_NoJwt_ReturnsUnauthorized()
     {
+        //arrange
+        for (var i = 0; i < 2; i++)
+            await _client.PostAsJsonAsync(
+                $"api/Plant/{PlantController.CreatePlantRoute}",
+                new PlantCreateDto
+                {
+                    PlantName = $"Plant {i}",
+                    PlantType = "Test",
+                    PlantNotes = "",
+                    Planted = DateTime.UtcNow.Date
+                });
         // Act
         using var anonClient = CreateClient();
-        var resp = await anonClient.GetAsync(
-            $"api/Plant/{PlantController.GetPlantsRoute}?userId={_testUser.UserId}");
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(anonClient);
+        var resp = await anonClient.GetAsync($"api/Plant/{PlantController.GetPlantsRoute}?userId={_testUser.UserId}");
 
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
     
     [Test]
@@ -555,7 +581,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     }
     
     [Test]
-    public async Task MarkPlantAsDead_FlagSomeoneElsesPlant_ShouldReturnUnauthorized()
+    public async Task MarkPlantAsDead_FlagAnotherPersonsPlant_ShouldReturnUnauthorized()
     { 
         // Arrange
         var create = await _client.PostAsJsonAsync(

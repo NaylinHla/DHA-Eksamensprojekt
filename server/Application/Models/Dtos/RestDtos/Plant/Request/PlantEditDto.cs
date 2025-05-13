@@ -15,5 +15,5 @@ public class PlantEditDto
 
     [Range(1, 365)] public int? WaterEvery { get; set; }
 
-    public bool? IsDead { get; set; } = false;
+    public bool? IsDead { get; set; }
 }
