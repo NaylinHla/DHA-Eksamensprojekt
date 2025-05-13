@@ -10,17 +10,8 @@ using Infrastructure.Logging;
 
 namespace Application.Services;
 
-public class AlertService : IAlertService
+public class AlertService(IAlertRepository alertRepo, IConnectionManager ws) : IAlertService
 {
-    private readonly IAlertRepository _alertRepo;
-    private readonly IConnectionManager _ws;
-
-    public AlertService(IAlertRepository alertRepo, IConnectionManager ws)
-    {
-        _alertRepo = alertRepo;
-        _ws = ws;
-    }
-
     public async Task<Alert> CreateAlertAsync(Guid userId, AlertCreateDto dto)
     {
         MonitorService.Log.Debug("Entered CreateAlertAsync method in AlertService");
@@ -44,12 +35,12 @@ public class AlertService : IAlertService
 
         MonitorService.Log.Debug("Creating alert for user " + userId + " with name " + dto.AlertName);
 
-        var savedAlert = await _alertRepo.AddAlertAsync(alert);
+        var savedAlert = await alertRepo.AddAlertAsync(alert);
 
         string topic = "alerts-" + userId;
         MonitorService.Log.Debug("Broadcasting alert " + alert.AlertId + " to topic " + topic);
 
-        await _ws.BroadcastToTopic(topic, new
+        await ws.BroadcastToTopic(topic, new
         {
             type = "alert",
             data = new
@@ -71,6 +62,6 @@ public class AlertService : IAlertService
     public async Task<List<AlertResponseDto>> GetAlertsAsync(Guid userId, int? year = null)
     {
         MonitorService.Log.Debug("Entered GetAlertsAsync method in AlertService for user " + userId + " and year " + year);
-        return await _alertRepo.GetAlertsAsync(userId, year);
+        return await alertRepo.GetAlertsAsync(userId, year);
     }
 }

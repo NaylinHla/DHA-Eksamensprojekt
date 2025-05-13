@@ -1519,7 +1519,7 @@
             "type": "string",
             "format": "guid"
           },
-          "conditionPlantId": {
+          "plantId": {
             "type": "string",
             "format": "guid"
           },
@@ -1702,7 +1702,8 @@
         "additionalProperties": false,
         "properties": {
           "alertName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100
           },
           "alertDesc": {
             "type": "string"

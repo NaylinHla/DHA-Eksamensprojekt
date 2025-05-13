@@ -122,7 +122,7 @@ public static class MockObjects
         
         var cap = new ConditionAlertPlant {
             ConditionAlertPlantId = Guid.NewGuid(),
-            ConditionPlantId = user.UserPlants.First().PlantId,
+            PlantId = user.UserPlants.First().PlantId,
             WaterNotify           = true
         };
         db.ConditionAlertPlant.Add(cap);

@@ -105,6 +105,6 @@ CREATE TABLE IF NOT EXISTS meetyourplants."ConditionAlertUserDevice" (
 -- AlertPlant (NextWatering condition)
 CREATE TABLE IF NOT EXISTS meetyourplants."ConditionAlertPlant" (
                                                            "ConditionAlertPlantId" UUID PRIMARY KEY,
-                                                           "ConditionPlantId" UUID REFERENCES meetyourplants."Plant"("PlantId") ON DELETE CASCADE,
+                                                           "PlantId" UUID REFERENCES meetyourplants."Plant"("PlantId") ON DELETE CASCADE,
                                                            "WaterNotify" BOOLEAN
 );

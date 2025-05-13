@@ -1432,7 +1432,7 @@ export interface Plant {
 
 export interface ConditionAlertPlant {
     conditionAlertPlantId?: string;
-    conditionPlantId?: string;
+    plantId?: string;
     waterNotify?: boolean;
     plant?: Plant | undefined;
     alerts?: Alert[] | undefined;

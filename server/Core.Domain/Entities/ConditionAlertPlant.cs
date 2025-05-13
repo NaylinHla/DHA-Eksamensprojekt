@@ -3,7 +3,7 @@
 public class ConditionAlertPlant
 {
     public required Guid ConditionAlertPlantId { get; set; }
-    public required Guid ConditionPlantId { get; set; }
+    public required Guid PlantId { get; set; }
     public required bool WaterNotify { get; set; }
 
     public Plant? Plant { get; set; }

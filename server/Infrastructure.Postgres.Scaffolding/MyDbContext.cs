@@ -241,12 +241,12 @@ public partial class MyDbContext : DbContext
             entity.ToTable("ConditionAlertPlant");
 
             entity.Property(e => e.ConditionAlertPlantId).HasColumnName("ConditionAlertPlantId");
-            entity.Property(e => e.ConditionPlantId).HasColumnName("ConditionPlantId");
+            entity.Property(e => e.PlantId).HasColumnName("PlantId");
             entity.Property(e => e.WaterNotify).HasColumnName("WaterNotify");
 
             entity.HasOne(e => e.Plant)
                 .WithMany(p => p.ConditionAlertPlants)
-                .HasForeignKey(e => e.ConditionPlantId)
+                .HasForeignKey(e => e.PlantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

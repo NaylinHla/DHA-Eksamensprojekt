@@ -3,6 +3,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Api.Rest.Controllers;
+using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
@@ -21,12 +23,21 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     private HttpClient _client = null!;
     private string _jwt = null!;
     private User _testUser = null!;
+    private Mock<IConnectionManager> _connManagerMock = null!;
+
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
-            services.DefaultTestConfig(makeMqttClient: false)
-        );
+        {
+            _connManagerMock = new Mock<IConnectionManager>();
+            services.DefaultTestConfig(makeMqttClient: false);
+
+            // Remove and replace the IWs service with a mock
+            var wsDesc = services.SingleOrDefault(d => d.ServiceType == typeof(IConnectionManager));
+            if (wsDesc != null) services.Remove(wsDesc);
+            services.AddSingleton<IConnectionManager>(_ => _connManagerMock.Object);
+        });
     }
 
     [SetUp]
@@ -51,8 +62,36 @@ public class AlertControllerTests : WebApplicationFactory<Program>
     [TearDown]
     public void TearDown() => _client.Dispose();
 
+    // -------------------- GET: Get User Alerts --------------------
+    
     [Test]
-    public async Task CreateAlert_ShouldPersistAndReturnAlert()
+    public async Task GetAlerts_NoJwt_ReturnsUnauthorized()
+    {
+        var client = CreateClient(); // no JWT
+        
+        var resp = await client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
+
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
+            .Or.EqualTo(HttpStatusCode.BadRequest));
+    }
+    
+    [Test]
+    public async Task GetAlerts_ShouldReturnOnlyCurrentUserAlerts()
+    {
+        // Act
+        var response = await _client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
+
+        // Assert
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var alerts = await response.Content.ReadFromJsonAsync<List<AlertResponseDto>>();
+        Assert.That(alerts, Is.Not.Null);
+    }
+    
+    // -------------------- POST: Create User Alerts --------------------
+    
+    [Test]
+    public async Task CreateAlertWithPlat_ShouldPersistAndReturnAlert()
     {
 
         // Create a scope to access the required DbContext
@@ -61,7 +100,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         
         // Get the actual ConditionAlertPlant ID for the seeded test user
         var capId = await ctx.ConditionAlertPlant
-            .Where(x => x.ConditionPlantId == _testUser.UserPlants.First().PlantId)
+            .Where(x => x.PlantId == _testUser.UserPlants.First().PlantId)
             .Select(x => x.ConditionAlertPlantId)
             .FirstAsync();
 
@@ -88,18 +127,43 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
         Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
     }
-
+    
     [Test]
-    public async Task GetAlerts_ShouldReturnOnlyCurrentUserAlerts()
+    public async Task CreateAlertWithUserDevice_ShouldPersistAndReturnAlert()
     {
-        // Act
-        var response = await _client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
 
-        // Assert
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        // Create a scope to access the required DbContext
+        using var scope = Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        // Get the actual ConditionAlertPlant ID for the seeded test user
+        var cadId = await ctx.ConditionAlertUserDevice
+            .Where(x => x.UserDeviceId == _testUser.UserDevices.First().DeviceId)
+            .Select(x => x.ConditionAlertUserDeviceId)
+            .FirstAsync();
 
-        var alerts = await response.Content.ReadFromJsonAsync<List<AlertResponseDto>>();
-        Assert.That(alerts, Is.Not.Null);
+        var alertDto = new AlertCreateDto
+        {
+            AlertName = "Low Temp",
+            AlertDesc = "Too cold!",
+            IsPlantCondition = false,
+            AlertConditionId = cadId,
+            AlertUser = _testUser.UserId
+        };
+
+        var resp = await _client.PostAsJsonAsync(
+            $"api/Alert/{AlertController.CreateAlertRoute}",
+            alertDto
+        );
+
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    
+        var created = await resp.Content.ReadFromJsonAsync<AlertResponseDto>();
+    
+        Assert.That(created, Is.Not.Null);
+        Assert.That(created!.AlertName, Is.EqualTo(alertDto.AlertName));
+        Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
+        Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
     }
 
     [Test]
@@ -133,14 +197,10 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
-    [Test]
-    public async Task GetAlerts_NoJwt_ReturnsUnauthorized()
-    {
-        var client = CreateClient(); // no JWT
-        
-        var resp = await client.GetAsync($"api/Alert/{AlertController.GetAlertsRoute}");
 
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized)
-            .Or.EqualTo(HttpStatusCode.BadRequest));
-    }
+
+
+
+
+
 }

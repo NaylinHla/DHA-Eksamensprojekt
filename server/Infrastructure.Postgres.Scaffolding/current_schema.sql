@@ -43,10 +43,10 @@ CREATE TABLE meetyourplants."User" (
 
 CREATE TABLE meetyourplants."ConditionAlertPlant" (
     "ConditionAlertPlantId" uuid NOT NULL,
-    "ConditionPlantId" uuid NOT NULL,
+    "PlantId" uuid NOT NULL,
     "WaterNotify" boolean NOT NULL,
     CONSTRAINT "PK_ConditionAlertPlant" PRIMARY KEY ("ConditionAlertPlantId"),
-    CONSTRAINT "FK_ConditionAlertPlant_Plant_ConditionPlantId" FOREIGN KEY ("ConditionPlantId") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE CASCADE
+    CONSTRAINT "FK_ConditionAlertPlant_Plant_PlantId" FOREIGN KEY ("PlantId") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE CASCADE
 );
 
 
@@ -138,7 +138,7 @@ CREATE INDEX "IX_Alert_AlertPlantConditionId" ON meetyourplants."Alert" ("AlertP
 CREATE INDEX "IX_Alert_AlertUserId" ON meetyourplants."Alert" ("AlertUserId");
 
 
-CREATE INDEX "IX_ConditionAlertPlant_ConditionPlantId" ON meetyourplants."ConditionAlertPlant" ("ConditionPlantId");
+CREATE INDEX "IX_ConditionAlertPlant_PlantId" ON meetyourplants."ConditionAlertPlant" ("PlantId");
 
 
 CREATE INDEX "IX_ConditionAlertUserDevice_UserDeviceId" ON meetyourplants."ConditionAlertUserDevice" ("UserDeviceId");

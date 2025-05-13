@@ -1,14 +1,19 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Api.Rest.Controllers;
+using Application.Interfaces.Infrastructure.Websocket;
+using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.UserDevice.Response;
+using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 using UserDevice = Core.Domain.Entities.UserDevice;
@@ -21,6 +26,8 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
     [SetUp]
     public async Task Setup()
     {
+        _connManagerMock = new Mock<IConnectionManager>();
+        
         _client = CreateClient();
 
         // Seed the user and db with stuff
@@ -46,10 +53,20 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
     private HttpClient _client = null!;
     private User _testUser = null!;
     private string _jwt = null!;
-
+    private Mock<IConnectionManager> _connManagerMock = null!;
+    
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(s => s.DefaultTestConfig());
+        builder.ConfigureServices(services =>
+        {
+            // First apply your default test config (seeds real DB, etc.)
+            services.DefaultTestConfig();
+
+            // Then replace IConnectionManager with our mock
+            _connManagerMock = new Mock<IConnectionManager>();
+            services.RemoveAll<IConnectionManager>();
+            services.AddSingleton(_connManagerMock.Object);
+        });
     }
 
     // -------------------- GET: GetSensorDataByDeviceId --------------------
@@ -164,6 +181,9 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
 
         // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(Newtonsoft.Json.Linq.JObject.Parse(await response.Content.ReadAsStringAsync())["title"]?.ToString(),
+            Is.EqualTo("You do not own this device."));
+
     }
 
     [Test]
@@ -351,6 +371,8 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
 
         // Assert: should be forbidden
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(Newtonsoft.Json.Linq.JObject.Parse(await response.Content.ReadAsStringAsync())["title"]?.ToString(),
+            Is.EqualTo("You do not own this device."));
     }
     
     [Test]
@@ -364,7 +386,77 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
+    
+    [Test]
+    public async Task DeleteData_ShouldBroadcastAdminHasDeletedData_WhenAuthorized()
+    {
+        // Arrange: seed some sensor data so delete does something
+        var deviceId = _testUser.UserDevices.First().DeviceId;
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            db.SensorHistories.Add(new SensorHistory
+            {
+                SensorHistoryId = Guid.NewGuid(),
+                DeviceId = deviceId,
+                Humidity = 10,
+                Temperature = 20,
+                Time = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
 
+        // Act
+        var resp = await _client.DeleteAsync(
+            $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={deviceId}"
+        );
+
+        // Assert HTTP
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Assert broadcast
+        _connManagerMock.Verify(cm =>
+                cm.BroadcastToTopic(
+                    StringConstants.Dashboard,
+                    It.Is<AdminHasDeletedData>(e => e.eventType == nameof(AdminHasDeletedData))
+                ),
+            Times.Once);
+    }
+    
+    [Test]
+    public async Task DeleteData_ShouldNotBroadcastAndReturnForbidden_WhenNotOwner()
+    {
+        // Arrange: create foreign device for another user
+        var other = MockObjects.GetUser();
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            db.Users.Add(other);
+            db.UserDevices.Add(new UserDevice
+            {
+                DeviceId = Guid.NewGuid(),
+                UserId = other.UserId,
+                DeviceName = "Foreign",
+                CreatedAt = DateTime.UtcNow,
+                WaitTime = "600",
+                DeviceDescription = "x"
+            });
+            await db.SaveChangesAsync();
+        }
+        var foreignId = other.UserDevices.First().DeviceId;
+
+        // Act
+        var resp = await _client.DeleteAsync(
+            $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={foreignId}"
+        );
+
+        // Assert
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        // no broadcast
+        _connManagerMock.Verify(cm =>
+                cm.BroadcastToTopic(It.IsAny<string>(), It.IsAny<AdminHasDeletedData>()),
+            Times.Never);
+    }
 
     // -------------------- Helper Class --------------------
 
