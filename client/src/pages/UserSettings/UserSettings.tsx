@@ -4,17 +4,14 @@ import toast from "react-hot-toast";
 import { useAtom } from "jotai";
 import { JwtAtom } from "../../atoms";
 import { useNavigate } from "react-router";
-import EmailModal from "../../components/Modals/EmailModal.tsx";
-import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal.tsx";
-import DeleteAccountModal from "../../components/Modals/DeleteAccountModal.tsx";
+import EmailModal from "../../components/Modals/EmailModal";
+import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal";
+import DeleteAccountModal from "../../components/Modals/DeleteAccountModal";
 import { TitleTimeHeader, useLogout } from "../../components";
-import { UserClient, UserSettingsClient } from "../../generated-client.ts";
-
-const LOCAL_KEY = "theme";
-const userClient = new UserClient("http://localhost:5000");
-const settingsClient = new UserSettingsClient("http://localhost:5000");
+import { userClient, userSettingsClient } from "../../apiControllerClients";
 
 type Props = { onChange?: () => void };
+const LOCAL_KEY = "theme";
 
 const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
@@ -48,7 +45,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         async function fetchSettings() {
             if (!jwt) return;
             try {
-                const data = await settingsClient.getAllSettings(`Bearer ${jwt}`);
+                if (!jwt) return;
+                const data = await userSettingsClient.getAllSettings(`Bearer ${jwt ?? ""}`);
                 setConfirmWater(data.confirmDialog ?? false);
                 setCelsius(data.celsius ?? false);
                 setDarkTheme(data.darkTheme ?? false);
@@ -63,7 +61,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     async function patchSetting(name: string, value: boolean) {
         try {
-            await settingsClient.patchSetting(name, { value }, `Bearer ${jwt}`);
+            if (!jwt) return;
+            await userSettingsClient.patchSetting(name, { value }, `Bearer ${jwt ?? ""}`);
         } catch (e: any) {
             console.error(e);
         }
@@ -72,7 +71,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleDelete() {
         try {
             setSaving(true);
-            await userClient.deleteUser(jwt ?? undefined);
+            await userClient.deleteUser(`Bearer ${jwt ?? ""}`);
             toast.success("Account deleted – goodbye!");
             localStorage.removeItem("jwt");
             setJwt("");
@@ -91,7 +90,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         }
         try {
             setSaving(true);
-            await userClient.patchUserPassword(jwt ?? undefined, {
+            await userClient.patchUserPassword(`Bearer ${jwt ?? ""}`, {
                 oldPassword: dto.oldPassword,
                 newPassword: dto.newPassword,
             });
@@ -107,7 +106,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     async function handleEmail(oldMail: string, newMail: string) {
         try {
             setSaving(true);
-            await userClient.patchUserEmail(jwt ?? undefined, {
+            await userClient.patchUserEmail(`Bearer ${jwt ?? ""}`, {
                 oldEmail: oldMail,
                 newEmail: newMail,
             });
@@ -127,37 +126,48 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 <aside className="w-72 shrink-0 border-r border-gray-200 p-6 flex flex-col gap-4">
                     <h2 className="text-xl font-semibold">Settings</h2>
                     <div className="flex flex-col gap-3">
-                        <button onClick={() => setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">Change e-mail</button>
-                        <button onClick={() => setOpenPassword(true)} className="btn btn-neutral bg-transparent btn-sm">Change password</button>
+                        <button onClick={() => setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">
+                            Change e-mail
+                        </button>
+                        <button onClick={() => setOpenPassword(true)} className="btn btn-neutral bg-transparent btn-sm">
+                            Change password
+                        </button>
                         <button onClick={() => setOpenDelete(true)} className="btn btn-error btn-sm flex items-center gap-1">
                             <Trash2 size={14} /> Delete my account
                         </button>
                     </div>
+
                     <div className="divider my-1" />
                     <ul className="flex-1 flex flex-col gap-2 pr-1 overflow-y-auto">
                         <li className="flex justify-between items-center">
-                            <span>Confirm Water Dialog</span>
-                            <input type="checkbox" className="toggle toggle-sm" checked={confirmWater} onChange={(e) => {
-                                const value = e.target.checked;
-                                setConfirmWater(value);
-                                patchSetting("confirmdialog", value);
-                            }} />
-                        </li>
-                        <li className="flex justify-between items-center">
                             <span>Celsius</span>
-                            <input type="checkbox" className="toggle toggle-sm" checked={celsius} onChange={(e) => {
-                                const value = e.target.checked;
-                                setCelsius(value);
-                                patchSetting("celsius", value);
-                            }} />
+                            <input type="checkbox" className="toggle toggle-sm"
+                                   checked={celsius}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setCelsius(value);
+                                       patchSetting("celsius", value);
+                                   }} />
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Dark Theme</span>
-                            <input type="checkbox" className="toggle toggle-sm" checked={darkTheme} onChange={(e) => {
-                                const value = e.target.checked;
-                                setDarkTheme(value);
-                                patchSetting("darktheme", value);
-                            }} />
+                            <input type="checkbox" className="toggle toggle-sm"
+                                   checked={darkTheme}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setDarkTheme(value);
+                                       patchSetting("darktheme", value);
+                                   }} />
+                        </li>
+                        <li className="flex justify-between items-center">
+                            <span>Confirm Water Dialog</span>
+                            <input type="checkbox" className="toggle toggle-sm"
+                                   checked={confirmWater}
+                                   onChange={(e) => {
+                                       const value = e.target.checked;
+                                       setConfirmWater(value);
+                                       patchSetting("confirmdialog", value);
+                                   }} />
                         </li>
                     </ul>
                 </aside>
@@ -172,12 +182,25 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             </section>
 
             {openPassword && (
-                <PasswordModal open={openPassword} loading={saving} onClose={() => setOpenPassword(false)} onSubmit={handlePasswordDto} />
+                <PasswordModal
+                    open={openPassword}
+                    loading={saving}
+                    onClose={() => setOpenPassword(false)}
+                    onSubmit={handlePasswordDto}
+                />
             )}
-
-            <EmailModal open={openEmail} loading={saving} onClose={() => setOpenEmail(false)} onSubmit={handleEmail} />
-
-            <DeleteAccountModal open={openDelete} loading={saving} onCancel={() => setOpenDelete(false)} onConfirm={handleDelete} />
+            <EmailModal
+                open={openEmail}
+                loading={saving}
+                onClose={() => setOpenEmail(false)}
+                onSubmit={handleEmail}
+            />
+            <DeleteAccountModal
+                open={openDelete}
+                loading={saving}
+                onCancel={() => setOpenDelete(false)}
+                onConfirm={handleDelete}
+            />
         </div>
     );
 };

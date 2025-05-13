@@ -19,18 +19,26 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
         [FromHeader] string authorization)
     {
         MonitorService.Log.Debug("Entered PatchSetting in UserSettingsController");
-        var claims = securityService.VerifyJwtOrThrow(authorization);
+
+        if (string.IsNullOrWhiteSpace(authorization))
+            return Unauthorized("Missing Authorization header");
+
+        var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
+        var claims = securityService.VerifyJwtOrThrow(token);
 
         service.UpdateSetting(settingName, dto.Value, claims);
         return NoContent();
     }
-    
+
     [HttpGet]
     public ActionResult<UserSettingsResponseDto> GetAllSettings([FromHeader] string authorization)
     {
         try
         {
             MonitorService.Log.Debug("Entered GetAllSettings in UserSettingsController");
+
+            if (string.IsNullOrWhiteSpace(authorization))
+                return Unauthorized("Missing Authorization header");
 
             var token = authorization.StartsWith("Bearer ") ? authorization.Substring(7) : authorization;
             var claims = securityService.VerifyJwtOrThrow(token);
@@ -51,7 +59,4 @@ public class UserSettingsController(IUserSettingsService service, ISecurityServi
             return StatusCode(500, new { message = ex.Message });
         }
     }
-
-
-
 }

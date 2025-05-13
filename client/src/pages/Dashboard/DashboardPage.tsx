@@ -4,7 +4,7 @@ import { JwtAtom, UserSettingsAtom } from "../../atoms";
 import toast from "react-hot-toast";
 import { TitleTimeHeader } from "../import";
 import { useApplyThemeFromSettings } from "./UseApplyThemeFromSettings";
-import { UserSettingsClient } from "../../generated-client.ts";
+import { userSettingsClient } from "../../apiControllerClients";
 
 const DashboardPage = () => {
     const [jwt] = useAtom(JwtAtom);
@@ -17,8 +17,7 @@ const DashboardPage = () => {
             if (!jwt) return;
 
             try {
-                const client = new UserSettingsClient("http://localhost:5000");
-                const settings = await client.getAllSettings(`Bearer ${jwt}`);
+                const settings = await userSettingsClient.getAllSettings(`Bearer ${jwt ?? ""}`);
                 setUserSettings({
                     celsius: settings.celsius ?? false,
                     darkTheme: settings.darkTheme ?? false,
