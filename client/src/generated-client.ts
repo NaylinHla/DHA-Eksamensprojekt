@@ -1639,13 +1639,11 @@ export interface PlantCreateDto {
 }
 
 export interface PlantEditDto {
-    plantName: string;
-    plantType: string;
+    plantName?: string | undefined;
+    plantType?: string | undefined;
     plantNotes?: string | undefined;
-    planted?: Date | undefined;
     lastWatered?: Date | undefined;
     waterEvery?: number | undefined;
-    isDead?: boolean | undefined;
 }
 
 export interface ChangeSubscriptionDto {
@@ -1725,14 +1723,6 @@ export interface MemberLeftNotification extends BaseDto {
     topic?: string;
 }
 
-export interface ExampleClientDto extends BaseDto {
-    somethingTheClientSends?: string;
-}
-
-export interface ExampleServerResponse extends BaseDto {
-    somethingTheServerSends?: string;
-}
-
 export interface Ping extends BaseDto {
 }
 
@@ -1748,8 +1738,6 @@ export enum StringConstants {
     AdminHasDeletedData = "AdminHasDeletedData",
     ServerBroadcastsLiveDataToDashboard = "ServerBroadcastsLiveDataToDashboard",
     MemberLeftNotification = "MemberLeftNotification",
-    ExampleClientDto = "ExampleClientDto",
-    ExampleServerResponse = "ExampleServerResponse",
     Ping = "Ping",
     Pong = "Pong",
     ServerSendsErrorMessage = "ServerSendsErrorMessage",
