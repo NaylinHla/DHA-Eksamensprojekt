@@ -89,16 +89,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
         const password = formData.get("password") as string;
 
         try {
-            const loginDto: AuthLoginDto = {email, password};
+            const loginDto: AuthLoginDto = { email, password };
             const response = await authClient.login(loginDto);
-            const {jwt} = response;
+            const { jwt } = response;
+
+            console.log("Got JWT:", jwt);
             setJwt(jwt);
-            localStorage.setItem("jwt", jwt);
-            setLoggedIn(true);
             onLogin?.();
-        } catch (error) {
-            console.error("Login failed", error);
-            toast.error("Login failed. Please check your credentials.");
+        } catch (err) {
+            toast.error("Login failed");
         }
     };
 

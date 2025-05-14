@@ -1245,6 +1245,88 @@
           }
         }
       }
+    },
+    "/api/UserSettings/{settingName}": {
+      "patch": {
+        "tags": [
+          "UserSettings"
+        ],
+        "operationId": "UserSettings_PatchSetting",
+        "parameters": [
+          {
+            "name": "settingName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSettingDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserSettings": {
+      "get": {
+        "tags": [
+          "UserSettings"
+        ],
+        "operationId": "UserSettings_GetAllSettings",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettingsResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2200,6 +2282,33 @@
           "interval": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "UpdateUserSettingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UserSettingsResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "celsius": {
+            "type": "boolean"
+          },
+          "darkTheme": {
+            "type": "boolean"
+          },
+          "confirmDialog": {
+            "type": "boolean"
+          },
+          "secretMode": {
+            "type": "boolean"
           }
         }
       },

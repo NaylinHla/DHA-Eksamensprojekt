@@ -32,10 +32,8 @@ export default function ApplicationRoutes() {
         const [jwt] = useAtom(JwtAtom);
 
         if (!jwt || jwt.length < 1) {
-            toast("Please sign in to continue");
             return <Navigate to={SignInRoute} replace/>;
         }
-
         return <Outlet/>;
     }
 
