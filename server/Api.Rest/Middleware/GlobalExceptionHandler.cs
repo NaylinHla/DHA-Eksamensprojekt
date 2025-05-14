@@ -25,6 +25,7 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             FileNotFoundException => StatusCodes.Status404NotFound,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             NotFoundException => StatusCodes.Status404NotFound,
+            InvalidOperationException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
 

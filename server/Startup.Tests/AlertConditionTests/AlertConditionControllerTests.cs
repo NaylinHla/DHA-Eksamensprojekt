@@ -89,7 +89,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
     [Test]
     public async Task GetConditionAlertPlant_OtherUsersPlant_ShouldReturnUnauthorized()
     {
-        // Arrange: seed another user's plant + alert
+        // Arrange
         var otherUser = MockObjects.GetUser();
         var otherPlant = new Plant
         {
@@ -119,9 +119,12 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             $"/api/AlertCondition/{AlertConditionController.GetConditionAlertPlantRoute}?plantId={otherPlant.PlantId}");
 
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
-        var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            var body = resp.Content.ReadAsStringAsync().Result;
+            Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        });
     }
 
     [Test]
@@ -140,8 +143,12 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         // Assert
         resp.EnsureSuccessStatusCode();
         var dto = await resp.Content.ReadFromJsonAsync<ConditionAlertPlantResponseDto>();
-        Assert.That(dto, Is.Not.Null);
-        Assert.That(dto!.ConditionAlertPlantId, Is.EqualTo(seededCondition.ConditionAlertPlantId));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dto, Is.Not.Null);
+            Assert.That(dto!.ConditionAlertPlantId, Is.EqualTo(seededCondition.ConditionAlertPlantId));
+        });
     }
 
     // --- GetConditionAlertPlants ---
@@ -171,9 +178,12 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             $"/api/AlertCondition/{AlertConditionController.GetConditionAlertPlantsRoute}?userId={user2.UserId}");
 
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
-        var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            var body = resp.Content.ReadAsStringAsync().Result;
+            Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        });
     }
 
     [Test]
@@ -213,7 +223,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         resp.EnsureSuccessStatusCode();
         var list = await resp.Content.ReadFromJsonAsync<List<ConditionAlertPlantResponseDto>>();
         Assert.That(list, Is.Not.Null);
-        Assert.That(list!.Count, Is.EqualTo(2));
+        Assert.That(list, Has.Count.EqualTo(2));
     }
 
     // --- CreateConditionAlertPlant ---
@@ -243,13 +253,15 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", invalidDto);
 
-        // Assert: Check the status code
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        
-        var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain("The PlantId is required."));
+        // Assert:
+        await Assert.MultipleAsync(async () =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            var body = await resp.Content.ReadAsStringAsync();
+            Assert.That(body, Does.Contain("The PlantId is required."));
+        });
     }
-    
+
     [Test]
     public async Task CreateConditionAlertPlant_AsUser1_ForUser2Plant_ShouldReturnForbidden()
     {
@@ -273,12 +285,73 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", conditionDto);
 
-        // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
-
-        var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        await Assert.MultipleAsync(async () =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            var body = await resp.Content.ReadAsStringAsync();
+            Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        });
     }
+    
+    [Test]
+    public async Task CreateConditionAlertPlant_DuplicateCondition_ShouldReturnConflict()
+    {
+        // Arrange
+        var plant = _testUser.UserPlants.First().PlantId;
+        var dto = new ConditionAlertPlantCreateDto { PlantId = plant };
+        
+        // Act
+        var resp = await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", dto);
+
+        // Assert
+        await Assert.MultipleAsync(async () =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+            var body = await resp.Content.ReadAsStringAsync();
+            Assert.That(body, Does.Contain("A water notification already exists for this plant."));
+        });
+
+    }
+
+    
+    [Test]
+    public async Task CreateConditionAlertPlant_ValidDto_ShouldPersist()
+    {
+        var newPlant = new Plant
+        {
+            PlantId = Guid.NewGuid(),
+            PlantName = "Lapis",
+            PlantType = "Herb",
+            Planted = DateTime.UtcNow.AddMonths(-1),
+            LastWatered = DateTime.UtcNow,
+            WaterEvery = 5,
+            IsDead = false,
+            PlantNotes = "Test notes"
+        };
+        _ctx.Plants.Add(newPlant);
+        _ctx.UserPlants.Add(new UserPlant { UserId = _testUser.UserId, PlantId = newPlant.PlantId });
+
+        await _ctx.SaveChangesAsync();
+
+        var dto = new ConditionAlertPlantCreateDto { PlantId = newPlant.PlantId };
+
+        // Act
+        var resp = await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", dto);
+
+        resp.EnsureSuccessStatusCode();
+        var created = await resp.Content.ReadFromJsonAsync<ConditionAlertPlantResponseDto>();
+
+        // Assert
+        await Assert.MultipleAsync(async () =>
+        {
+            var inDb = await _ctx.ConditionAlertPlant.FindAsync(created!.ConditionAlertPlantId);
+            Assert.That(inDb, Is.Not.Null);
+            Assert.That(inDb!.PlantId, Is.EqualTo(newPlant.PlantId));
+        });
+    }
+
 
     // --- DeleteConditionAlertPlant ---
 
@@ -305,10 +378,12 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var resp = await _client.DeleteAsync(
             $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={Guid.NewGuid()}");
 
-        // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-        var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(AlertConditionNotFound));
+        Assert.Multiple(async () =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            var body = await resp.Content.ReadAsStringAsync();
+            Assert.That(body, Does.Contain(AlertConditionNotFound));
+        });
     }
 
     [Test]
@@ -331,10 +406,44 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         // Assert
         Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
 
-        var body = await deleteResponse.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        await Assert.MultipleAsync(async () =>
+        {
+            Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            var body = await deleteResponse.Content.ReadAsStringAsync();
+            Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        });
     }
 
+    [Test]
+    public async Task DeleteConditionAlertPlant_SecondDelete_ShouldReturnNotFound()
+    {
+        // Arrange
+        var userPlant = _testUser.UserPlants.FirstOrDefault();
+        if (userPlant?.Plant == null)
+            throw new Exception("Test user has no associated plant.");
+
+        var conditionAlert = userPlant.Plant.ConditionAlertPlants.FirstOrDefault();
+        if (conditionAlert == null)
+            throw new Exception("Plant has no associated condition alert.");
+
+        var plantConditionId = conditionAlert.ConditionAlertPlantId;
+
+        // Act
+        var deleteResp1 = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={plantConditionId}");
+        
+        var deleteResp2 = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={plantConditionId}");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleteResp1.StatusCode, Is.EqualTo(HttpStatusCode.OK), "First delete should succeed");
+            Assert.That(deleteResp2.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "Second delete should return 404");
+            var body = deleteResp2.Content.ReadAsStringAsync().Result;
+            Assert.That(body, Does.Contain(AlertConditionNotFound), "Should return appropriate not-found message");
+        });
+    }
     
     [Test]
     public async Task DeleteConditionAlertPlant_ValidId_ShouldSoftDelete()
@@ -435,7 +544,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         resp.EnsureSuccessStatusCode();
         var list = await resp.Content.ReadFromJsonAsync<List<ConditionAlertUserDeviceResponseDto>>();
         Assert.That(list, Is.Not.Null);
-        Assert.That(list!.Count, Is.EqualTo(1));
+        Assert.That(list!, Has.Count.EqualTo(1));
         var dto = list.First();
         Assert.That(dto.ConditionAlertUserDeviceId, Is.EqualTo(seededCondition.ConditionAlertUserDeviceId));
     }
@@ -515,7 +624,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var list = await resp.Content.ReadFromJsonAsync<List<ConditionAlertUserDeviceResponseDto>>();
 
         // Assert
-        Assert.That(list!.Count, Is.EqualTo(3));
+        Assert.That(list!, Has.Count.EqualTo(3));
     }
 
     // --- CreateConditionAlertUserDevice ---
@@ -571,10 +680,40 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", conditionDto);
 
-        // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            var body = resp.Content.ReadAsStringAsync().Result;
+            Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+        });
+    }
+    
+    [Test]
+    public async Task CreateConditionAlertUserDevice_DuplicateCondition_ShouldReturnConflict()
+    {
+        // Arrange
+        var dev = _testUser.UserDevices.First().DeviceId;
+        var dto = new ConditionAlertUserDeviceCreateDto
+        {
+            UserDeviceId = dev.ToString(),
+            SensorType = "AirPressure",
+            Condition = "=>5"
+        };
+
+        // Act
+        await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", dto);
+        var resp = await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", dto);
+
         var body = await resp.Content.ReadAsStringAsync();
-        Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+            Assert.That(body, Does.Contain(AlertDupeConditionDevice));
+        });
     }
 
     [Test]
@@ -633,7 +772,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
-    public async Task UpdateConditionAlertUserDevice_AsUser1_ForUser2Condition_ShouldReturnForbidden()
+    public async Task EditConditionAlertUserDevice_AsUser1_ForUser2Condition_ShouldReturnForbidden()
     {
         // Arrange
         var testUser2 = await MockObjects.SeedDbAsync(Services);
@@ -663,6 +802,46 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
         var body = await resp.Content.ReadAsStringAsync();
         Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+    }
+
+    [Test]
+    public async Task EditConditionAlertUserDevice_DuplicateCondition_ShouldReturnConflict()
+    {
+        // Arrange
+        var dev = _testUser.UserDevices.First().DeviceId;
+
+        var createDto = new ConditionAlertUserDeviceCreateDto
+        {
+            UserDeviceId = dev.ToString(),
+            SensorType = "AirPressure",
+            Condition = "=>5"
+        };
+
+        var createResp = await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", createDto);
+        createResp.EnsureSuccessStatusCode();
+
+        var created = await createResp.Content.ReadFromJsonAsync<ConditionAlertUserDeviceResponseDto>();
+
+        var duplicateDto = new ConditionAlertUserDeviceEditDto
+        {
+            ConditionAlertUserDeviceId = created!.ConditionAlertUserDeviceId.ToString(),
+            UserDeviceId = dev.ToString(),
+            SensorType = "AirPressure",
+            Condition = "=>5"
+        };
+
+        // Act
+        var editResp = await _client.PatchAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.EditConditionAlertUserDeviceRoute}", duplicateDto);
+
+        // Assert
+        await Assert.MultipleAsync(async () =>
+        {
+            var body = await editResp.Content.ReadAsStringAsync();
+            Assert.That(editResp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+            Assert.That(body, Does.Contain(AlertDupeConditionDevice));
+        });
     }
 
     // --- DeleteConditionAlertUserDevice ---
@@ -716,6 +895,31 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
 
         var body = await deleteResponse.Content.ReadAsStringAsync();
         Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
+    }
+    
+    [Test]
+    public async Task DeleteConditionAlertUserDevice_SecondDelete_ShouldReturnNotFound()
+    {
+        // Arrange: Seed user and DB state
+        var conditionId = _testUser.UserDevices
+            .First().ConditionAlertUserDevices
+            .First().ConditionAlertUserDeviceId;
+
+        // Act
+        var deleteResp1 = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertUserDeviceRoute}?conditionId={conditionId}");
+
+        var deleteResp2 = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertUserDeviceRoute}?conditionId={conditionId}");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleteResp1.StatusCode, Is.EqualTo(HttpStatusCode.OK), "First delete should succeed");
+            Assert.That(deleteResp2.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "Second delete should return 404");
+            var body = deleteResp2.Content.ReadAsStringAsync().Result;
+            Assert.That(body, Does.Contain(AlertConditionNotFound), "Should return appropriate not-found message");
+        });
     }
 
     [Test]
