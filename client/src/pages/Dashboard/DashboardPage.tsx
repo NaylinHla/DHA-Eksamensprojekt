@@ -23,6 +23,8 @@ import {
 } from "../../apiControllerClients.ts";
 import { cssVar } from "../../components/utils/Theme/theme.ts";
 ChartJS.register(CategoryScale, LinearScale, Legend, Tooltip);
+import { CardPlant } from "../../components/Modals/PlantCard";
+import PlantCarousel from "../../components/Modals/PlantCarousel.tsx";
 
 // Helpers
 const greeting = () => {
@@ -33,7 +35,7 @@ const greeting = () => {
     return "evening";
 };
 
-type PlantStatus = { id: string; name: string; needsWater: boolean };
+type PlantStatus = CardPlant & { needsWater: boolean };
 
 export default function DashboardPage() {
     // Atoms
@@ -123,7 +125,9 @@ export default function DashboardPage() {
                     const days = p.lastWatered
                         ? Math.floor((Date.now() - new Date(p.lastWatered).getTime()) / 86_400_000)
                         : Number.MAX_SAFE_INTEGER;
-                    return { id: p.plantId!, name: p.plantName!, needsWater: p.waterEvery != null && days >= p.waterEvery };
+                    const next = p.waterEvery != null ? Math.max(p.waterEvery - days, 0) : 0;
+                    return {id: p.plantId!, name: p.plantName!, nextWaterInDays: next, isDead: p.isDead ?? false, needsWater: next === 0,
+                } as PlantStatus;
                 }));
             } catch { toast.error("Plant fetch failed"); }
             finally  { setLP(false); }
@@ -160,10 +164,10 @@ export default function DashboardPage() {
             </div>
 
             {/* main row */}
-            <main className="flex-1 flex flex-col lg:flex-row gap-6 px-6 py-6 overflow-y-auto">
+            <main className="flex-1 flex flex-col lg:flex-row lg:items-start gap-6 px-6 py-6 overflow-y-auto">
 
                 {/* circle card */}
-                <div className="flex-1 card rounded-xl bg-[var(--color-surface)] shadow">
+                <div className="card w-full lg:flex-1 lg:basis-0 rounded-xl bg-[var(--color-surface)] shadow">
                     <div className="card-body">
                         <h3 className="text-lg font-semibold mb-6 text-center">Your Device:</h3>
 
@@ -171,10 +175,14 @@ export default function DashboardPage() {
                             <p className="text-center">Loading…</p>
                         ) : live ? (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 place-items-center">
-                                <CircleStat label="Temperature"   unit="°C"  color={cssVar("--color-primary")}  value={circleReadings.temperature}/>
-                                <CircleStat label="Humidity"    unit="%"   color={cssVar("--color-success")} value={circleReadings.humidity}/>
-                                <CircleStat label="Pressure"  unit="hPa" color={cssVar("--color-info")}    value={circleReadings.pressure}/>
-                                <CircleStat label="Air Quality"  unit="ppm" color={cssVar("--color-warning")} value={circleReadings.quality}/>
+                                <CircleStat label="Temperature" unit="°C" color={cssVar("--color-primary")}
+                                            value={circleReadings.temperature}/>
+                                <CircleStat label="Humidity" unit="%" color={cssVar("--color-success")}
+                                            value={circleReadings.humidity}/>
+                                <CircleStat label="Pressure" unit="hPa" color={cssVar("--color-info")}
+                                            value={circleReadings.pressure}/>
+                                <CircleStat label="Air Quality" unit="ppm" color={cssVar("--color-warning")}
+                                            value={circleReadings.quality}/>
                             </div>
                         ) : (
                             <p className="text-center text-gray-500">
@@ -185,14 +193,14 @@ export default function DashboardPage() {
                 </div>
 
                 {/* plant carousel */}
-                <PlantCarousel plants={(plants.some(p => p.needsWater) ? plants.filter(p => p.needsWater) : plants).slice(0,2)}/>
+                <PlantCarousel className="lg:flex-1 lg:basis-0" plants={plants}/>
             </main>
         </div>
     );
 }
 
 // Sub Components
-const StatCard: React.FC<{ title:string; loading:boolean; value:string; cls?:string; }> =
+const StatCard: React.FC<{ title: string; loading: boolean; value:string; cls?:string; }> =
     ({ title, loading, value, cls="" }) => (
         <div className="card shadow rounded-xl bg-[var(--color-surface)]">
             <div className="card-body text-center">
@@ -213,36 +221,3 @@ const CircleStat: React.FC<{ label:string; value:number|null; unit:string; color
             <p className="mt-2 text-sm text-center text-gray-500">{label}</p>
         </div>
     );
-
-const PlantCarousel: React.FC<{ plants: PlantStatus[] }> = ({ plants }) => {
-    if (!plants.length)
-        return (
-            <div className="w-full lg:w-80 card bg-base-100 shadow flex items-center justify-center">
-                <p className="text-gray-500">No plants</p>
-            </div>
-        );
-
-    return (
-        <div className="w-full lg:w-80 card rounded-xl bg-[var(--color-surface)] shadow flex flex-col">
-            <div className="card-body pb-4">
-                <h3 className="text-lg font-semibold text-center">Plants</h3>
-                <div className="carousel w-full">
-                    {plants.map((p,i) => (
-                        <div key={p.id} id={`p-${i}`}
-                             className="carousel-item w-full flex flex-col items-center">
-                            <p className="text-xl font-medium mt-4 mb-1">{p.name}</p>
-                            <p className={`text-2xl font-bold ${p.needsWater ? "text-error":"text-success"}`}>{p.needsWater ? "Needs water" : "Okay"}</p>
-                        </div>
-                    ))}
-                </div>
-                {plants.length > 1 && (
-                    <div className="flex justify-center gap-2 mt-2">
-                        {plants.map((_,i) => (
-                            <a key={i} href={`#p-${i}`} className="btn btn-xs btn-circle">{i+1}</a>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}

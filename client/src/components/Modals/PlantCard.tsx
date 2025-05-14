@@ -24,9 +24,10 @@ interface PlantCardProps {
     onClick?: (plant: CardPlant) => void;
     onRemoved?: () => void;
     showDead?: boolean;
+    hideDelete?: boolean;
 }
 
-const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved, showDead = false,}) => {
+const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved, showDead = false, hideDelete = false}) => {
     const [jwt] = useAtom(JwtAtom);
 
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -60,13 +61,15 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
         <>
             <button
                 onClick={() => onClick?.(plant)}
-                className={`cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow ${deadStyle}`}
+                className={`cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card border bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow ${deadStyle}`}
             >
                 {/* Delete ‑*/}
-                <X
-                    onClick={openConfirm}
-                    className="absolute right-2 top-2 h-4 w-4 text-muted-foreground"
-                />
+                {!hideDelete && (
+                    <X
+                        onClick={openConfirm}
+                        className="absolute right-2 top-2 h-4 w-4 text-muted-foreground"
+                    />
+                )}
 
                 {/* placeholder image */}
                 <div className="flex-1 flex items-center justify-center">
