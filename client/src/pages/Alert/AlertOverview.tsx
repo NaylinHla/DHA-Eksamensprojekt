@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import useAlertsRest, {Alert} from "../../hooks/useAlertsRest.tsx";
-import {TitleTimeHeader} from "../../components";
+import {formatDateTimeForUserTZ, TitleTimeHeader} from "../import";
 
 const getYear = (dateString: string) => new Date(dateString).getFullYear();
 
@@ -13,6 +13,17 @@ const AlertOverview = () => {
     const filteredAlerts = selectedYear
         ? alerts.filter((a) => getYear(a.alertTime) === selectedYear)
         : alerts;
+
+    // Handler for alert click (check if it's related to a plant or a device)
+    const handleAlertClick = (alert: Alert) => {
+        if (alert.alertPlantId) {
+            console.log(`Alert related to Plant with ID: ${alert.alertPlantId}`);
+        } else if (alert.alertUserDeviceId) {
+            console.log(`Alert related to Device with ID: ${alert.alertUserDeviceId}`);
+        } else {
+            console.log(`Alert ID: ${alert.alertId}`);
+        }
+    };
 
     return (
         <div className="flex flex-col min-h-screen bg-[--color-background] text-[--color-primary] font-display">
@@ -62,9 +73,11 @@ const AlertOverview = () => {
                         filteredAlerts.map((alert: Alert, index: number) => (
                             <div key={index}>
                                 <div className="text-xs text-gray-500 mb-1">
-                                    {new Date(alert.alertTime).toLocaleDateString()}
+                                    {formatDateTimeForUserTZ(alert.alertTime)}
                                 </div>
-                                <div className="bg-white text-black p-4 rounded-xl shadow-md whitespace-pre-line">
+                                <div className="bg-white text-black p-4 rounded-xl shadow-md whitespace-pre-line cursor-pointer"
+                                    onClick={() => handleAlertClick(alert)}
+                                >
                                     {alert.alertDesc}
                                 </div>
                             </div>

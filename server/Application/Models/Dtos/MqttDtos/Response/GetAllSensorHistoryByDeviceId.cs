@@ -4,7 +4,7 @@ public class GetAllSensorHistoryByDeviceIdDto
 {
     // Device information
     public Guid DeviceId { get; set; }
-    public string DeviceName { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = null!;
 
     // Array of sensor history readings
     public List<SensorHistoryDto> SensorHistoryRecords { get; set; } = new();

@@ -70,7 +70,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AlertCreate"
+                "$ref": "#/components/schemas/AlertCreateDto"
               }
             }
           },
@@ -1353,7 +1353,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "alertPlant": {
+          "alertPlantConditionId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "alertDeviceConditionId": {
             "type": "string",
             "format": "guid",
             "nullable": true
@@ -1366,11 +1371,19 @@
               }
             ]
           },
-          "plant": {
+          "conditionAlertPlant": {
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/Plant"
+                "$ref": "#/components/schemas/ConditionAlertPlant"
+              }
+            ]
+          },
+          "conditionAlertUserDevice": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConditionAlertUserDevice"
               }
             ]
           }
@@ -1572,8 +1585,40 @@
               "$ref": "#/components/schemas/UserPlant"
             }
           },
+          "conditionAlertPlants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionAlertPlant"
+            }
+          }
+        }
+      },
+      "ConditionAlertPlant": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "conditionAlertPlantId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "plantId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "waterNotify": {
+            "type": "boolean"
+          },
+          "plant": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Plant"
+              }
+            ]
+          },
           "alerts": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/Alert"
             }
@@ -1617,6 +1662,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SensorHistory"
+            }
+          },
+          "conditionAlertUserDevices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionAlertUserDevice"
             }
           }
         }
@@ -1663,6 +1714,41 @@
           }
         }
       },
+      "ConditionAlertUserDevice": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "conditionAlertUserDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "sensorType": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "userDevice": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserDevice"
+              }
+            ]
+          },
+          "alerts": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            }
+          }
+        }
+      },
       "AlertResponseDto": {
         "type": "object",
         "additionalProperties": false,
@@ -1681,27 +1767,36 @@
             "type": "string",
             "format": "date-time"
           },
-          "alertPlant": {
+          "alertPlantConditionId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "alertDeviceConditionId": {
             "type": "string",
             "format": "guid",
             "nullable": true
           }
         }
       },
-      "AlertCreate": {
+      "AlertCreateDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "alertName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100
           },
           "alertDesc": {
             "type": "string"
           },
-          "alertPlant": {
+          "alertConditionId": {
             "type": "string",
             "format": "guid",
             "nullable": true
+          },
+          "isPlantCondition": {
+            "type": "boolean"
           },
           "alertUser": {
             "type": "string",

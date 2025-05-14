@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {JwtAtom} from "../atoms/atoms.ts";
+import {JwtAtom} from "../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
 import {alertClient} from "../apiControllerClients";
@@ -9,7 +9,8 @@ export interface Alert {
     alertName: string;
     alertDesc: string;
     alertTime: string;
-    alertPlant?: string;
+    alertPlantId?: string;
+    alertUserDeviceId?: string;
 }
 
 export default function useAlertsRest() {
@@ -32,7 +33,8 @@ export default function useAlertsRest() {
                     alertName: a.alertName ?? "",
                     alertDesc: a.alertDesc ?? "",
                     alertTime: a.alertTime?.toString() ?? "",
-                    alertPlant: a.alertPlant
+                    alertPlantId: a.alertPlantConditionId ?? "",
+                    alertUserDeviceId: a.alertDeviceConditionId ?? "",
                 }));
                 setAlerts(mapped);
             })
@@ -43,5 +45,5 @@ export default function useAlertsRest() {
             .finally(() => setLoading(false));
     }, [jwt]);
 
-    return {alerts, loading};
+    return { alerts, loading };
 }

@@ -10,9 +10,9 @@ public class SensorHistoryWithDeviceDto
 {
     // Device information
     public Guid DeviceId { get; set; }
-    public string DeviceName { get; set; } = string.Empty;
-    public string DeviceDesc { get; set; } = string.Empty;
-    public string DeviceWaitTime { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = null!;
+    public string DeviceDesc { get; set; } = null!;
+    public string DeviceWaitTime { get; set; } = null!;
     public DateTime DeviceCreateDateTime { get; set; }
 
     // Sensor readings

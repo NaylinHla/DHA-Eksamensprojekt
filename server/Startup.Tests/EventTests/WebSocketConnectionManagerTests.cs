@@ -322,4 +322,71 @@ public class WebSocketConnectionManagerTests
     {
         Assert.Throws<NotFoundException>(() => _connectionManager.GetSocketFromClientId("nonexistent"));
     }
+    
+    [Test]
+    public void BroadcastToTopic_ShouldDoNothingIfTopicNotFound()
+    {
+        // Arrange
+        var message = new { msg = "hello" };
+
+        // Act & Assert (should not throw or send anything)
+        Assert.DoesNotThrowAsync(() => _connectionManager.BroadcastToTopic("nonexistent-topic", message));
+    }
+    
+    [Test]
+    public async Task BroadcastToTopic_ShouldSkipUnavailableSockets()
+    {
+        var topic = "test/topic";
+        var clientId = "client1";
+        var socketMock = new Mock<IWebSocketConnection>();
+        var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
+
+        connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock.Object);
+        socketMock.Setup(s => s.IsAvailable).Returns(false); // Make socket unavailable
+
+        await _connectionManager.OnOpen(socketMock.Object, clientId);
+        await _connectionManager.AddToTopic(topic, clientId);
+
+        // Act
+        await _connectionManager.BroadcastToTopic(topic, new { msg = "skip" });
+
+        // Assert that Send was never called
+        socketMock.Verify(s => s.Send(It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task BroadcastToTopic_ShouldSendOnlyToAvailableSockets()
+    {
+        var topic = "group/topic";
+        var client1 = "client1";
+        var client2 = "client2";
+
+        // Client 1 - Available
+        var socketMock1 = new Mock<IWebSocketConnection>();
+        var connectionInfoMock1 = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock1.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock1.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock1.Object);
+        socketMock1.Setup(s => s.IsAvailable).Returns(true);
+
+        // Client 2 - Unavailable
+        var socketMock2 = new Mock<IWebSocketConnection>();
+        var connectionInfoMock2 = new Mock<IWebSocketConnectionInfo>();
+        connectionInfoMock2.Setup(c => c.Id).Returns(Guid.NewGuid());
+        socketMock2.Setup(s => s.ConnectionInfo).Returns(connectionInfoMock2.Object);
+        socketMock2.Setup(s => s.IsAvailable).Returns(false);
+
+        await _connectionManager.OnOpen(socketMock1.Object, client1);
+        await _connectionManager.OnOpen(socketMock2.Object, client2);
+
+        await _connectionManager.AddToTopic(topic, client1);
+        await _connectionManager.AddToTopic(topic, client2);
+
+        // Act
+        await _connectionManager.BroadcastToTopic(topic, new { msg = "hi" });
+
+        // Assert
+        socketMock1.Verify(s => s.Send(It.IsAny<string>()), Times.Once);
+        socketMock2.Verify(s => s.Send(It.IsAny<string>()), Times.Never);
+    }
 }
