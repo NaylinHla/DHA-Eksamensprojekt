@@ -2283,38 +2283,6 @@
           }
         }
       },
-      "ExampleClientDto": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseDto"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "somethingTheClientSends": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "ExampleServerResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseDto"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "somethingTheServerSends": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
       "Ping": {
         "allOf": [
           {
@@ -2360,8 +2328,6 @@
           "AdminHasDeletedData",
           "ServerBroadcastsLiveDataToDashboard",
           "MemberLeftNotification",
-          "ExampleClientDto",
-          "ExampleServerResponse",
           "Ping",
           "Pong",
           "ServerSendsErrorMessage",
