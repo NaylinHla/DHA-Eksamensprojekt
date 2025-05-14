@@ -195,7 +195,7 @@ public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionReposito
         if (entity is null)
         {
             MonitorService.Log.Error("ConditionAlertUserDevice not found for Id: {Id}", dto.ConditionAlertUserDeviceId);
-            throw new InvalidOperationException("Alert Condition Not Found");
+            throw new NotFoundException(AlertConditionNotFound);
         }
 
         if (!string.IsNullOrWhiteSpace(dto.SensorType)) entity.SensorType = dto.SensorType;

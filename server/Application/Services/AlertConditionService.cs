@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
@@ -23,16 +24,16 @@ namespace Application.Services
             if (plantOwnerId != Guid.Parse(claims.Id))
             {
                 MonitorService.Log.Debug(
-                    "Unauthorized access attempt for Alert Condition Plant with PlantId: {plantId} by UserId: {UserId}",
+                    "Unauthorized access attempt for Alert Condition Plant with PlantId: {PlantId} by UserId: {UserId}",
                     plantId, claims.Id);
                 throw new UnauthorizedAccessException(UnauthorizedAlertConditionAccess);
             }
             
-            MonitorService.Log.Debug("Fetching PlantId: {plantId}´Alert Condition", plantId);
+            MonitorService.Log.Debug("Fetching PlantId: {PlantId}´Alert Condition", plantId);
             var conditionAlertPlant = await alertConditionRepo.GetConditionAlertPlantByIdAsync(plantId)
                                       ?? throw new NotFoundException(AlertConditionNotFound);
 
-            MonitorService.Log.Debug("Fetched Alert Condition Plant with PlantId: {plantId} successfully", plantId);
+            MonitorService.Log.Debug("Fetched Alert Condition Plant with PlantId: {PlantId} successfully", plantId);
             return conditionAlertPlant;
         }
 
@@ -61,6 +62,11 @@ namespace Application.Services
             MonitorService.Log.Debug(
                 "Creating new alert condition plant with ConditionAlertPlantId: {ConditionAlertPlantId}",
                 dto.PlantId);
+
+            if (dto.PlantId == Guid.Empty)
+            {
+                throw new ValidationException("The PlantId is required.");
+            }
 
             var plant = await plantRepository.GetPlantByIdAsync(dto.PlantId);
             if (plant == null)
@@ -129,7 +135,7 @@ namespace Application.Services
                 ?? throw new NotFoundException(AlertConditionNotFound);
 
 
-            MonitorService.Log.Debug("Fetched Alert Condition User Device with UserDeviceId: {userDeviceId} successfully", userDeviceId);
+            MonitorService.Log.Debug("Fetched Alert Condition User Device with UserDeviceId: {UserDeviceId} successfully", userDeviceId);
             return conditionAlertUserDevice;
         }
 
