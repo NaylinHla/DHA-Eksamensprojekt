@@ -60,6 +60,7 @@ const PlantCarousel: React.FC<Props> = ({ plants, className = "" }) => {
                                 plant={p}
                                 showDead
                                 hideDelete
+                                hideWater
                             />
                         ))}
                     </div>

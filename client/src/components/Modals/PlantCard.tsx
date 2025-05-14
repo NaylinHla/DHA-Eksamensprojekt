@@ -25,9 +25,10 @@ interface PlantCardProps {
     onRemoved?: () => void;
     showDead?: boolean;
     hideDelete?: boolean;
+    hideWater?: boolean;
 }
 
-const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved, showDead = false, hideDelete = false}) => {
+const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved, showDead = false, hideDelete = false, hideWater = false}) => {
     const [jwt] = useAtom(JwtAtom);
 
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -79,11 +80,13 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
                 {/* Footer */}
                 <div className="flex items-center justify-between text-sm mt-1">
                     <span className="font-medium truncate max-w-[60%]">{plant.name}</span>
-                    <Droplet onClick={e => {
-                        e.stopPropagation();
-                        onWater?.();
-                    }}
-                             className="h-4 w-4 cursor-pointer text-blue-500"/>
+
+                    {!hideWater &&
+                        <Droplet onClick={e => {
+                            e.stopPropagation();
+                            onWater?.();
+                        }}  className="h-4 w-4 cursor-pointer text-blue-500"/>
+                    }
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{dueText}</p>
             </button>
