@@ -227,6 +227,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.UserDeviceId).HasColumnName("UserDeviceId");
             entity.Property(e => e.SensorType).HasColumnName("SensorType");
             entity.Property(e => e.Condition).HasColumnName("Condition");
+            entity.Property(e => e.IsDeleted).HasColumnName("IsDeleted");
 
             entity.HasOne(e => e.UserDevice)
                 .WithMany(d => d.ConditionAlertUserDevices)
@@ -243,6 +244,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.ConditionAlertPlantId).HasColumnName("ConditionAlertPlantId");
             entity.Property(e => e.PlantId).HasColumnName("PlantId");
             entity.Property(e => e.WaterNotify).HasColumnName("WaterNotify");
+            entity.Property(e => e.IsDeleted).HasColumnName("IsDeleted");
 
             entity.HasOne(e => e.Plant)
                 .WithMany(p => p.ConditionAlertPlants)

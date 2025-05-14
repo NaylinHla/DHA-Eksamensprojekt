@@ -6,20 +6,20 @@ namespace Application.Interfaces;
 
 public interface IAlertConditionService
 {
-    Task<ConditionAlertPlant?> GetConditionAlertPlantByIdAsync(Guid conditionAlertPlantId, JwtClaims claims);
-    Task<List<ConditionAlertPlant>> GetAllConditionAlertPlantsAsync(Guid userId, JwtClaims claims);
-    Task<ConditionAlertPlant> CreateConditionAlertPlantAsync(Guid conditionAlertPlantId, JwtClaims claims);
+    Task<ConditionAlertPlantResponseDto?> GetConditionAlertPlantByIdAsync(Guid plantId, JwtClaims claims);
+    Task<List<ConditionAlertPlantResponseDto>> GetAllConditionAlertPlantsAsync(Guid userId, JwtClaims claims);
+    Task<ConditionAlertPlantResponseDto> CreateConditionAlertPlantAsync(ConditionAlertPlantCreateDto dto, JwtClaims claims);
     Task DeleteConditionAlertPlantAsync(Guid conditionAlertPlantId, JwtClaims claims);
 
-    Task<ConditionAlertUserDevice?> GetConditionAlertUserDeviceByIdAsync(Guid conditionAlertUserDeviceId,
+    Task<List<ConditionAlertUserDeviceResponseDto>> GetConditionAlertUserDeviceByIdAsync(Guid userDeviceId,
         JwtClaims claims);
 
-    Task<List<ConditionAlertUserDevice>> GetAllConditionAlertUserDevicesAsync(Guid userId, JwtClaims claims);
+    Task<List<ConditionAlertUserDeviceResponseDto>> GetAllConditionAlertUserDevicesAsync(Guid userId, JwtClaims claims);
 
-    Task<ConditionAlertUserDevice> CreateConditionAlertUserDeviceAsync(ConditionAlertUserDeviceCreateDto dto,
+    Task<ConditionAlertUserDeviceResponseDto> CreateConditionAlertUserDeviceAsync(ConditionAlertUserDeviceCreateDto dto,
         JwtClaims claims);
 
-    Task<ConditionAlertUserDevice> EditConditionAlertUserDeviceAsync(ConditionAlertUserDeviceEditDto dto,
+    Task<ConditionAlertUserDeviceResponseDto> EditConditionAlertUserDeviceAsync(ConditionAlertUserDeviceEditDto dto,
         JwtClaims claims);
 
     Task DeleteConditionAlertUserDeviceAsync(Guid conditionAlertUserDeviceId, JwtClaims claims);

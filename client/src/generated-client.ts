@@ -9,6 +9,369 @@ import { BaseDto } from 'ws-request-hook';
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
+export class AlertConditionClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getConditionAlertPlant(plantId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertPlant?";
+        if (plantId === null)
+            throw new Error("The parameter 'plantId' cannot be null.");
+        else if (plantId !== undefined)
+            url_ += "plantId=" + encodeURIComponent("" + plantId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetConditionAlertPlant(_response);
+        });
+    }
+
+    protected processGetConditionAlertPlant(response: Response): Promise<ConditionAlertPlantResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertPlantResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertPlantResponseDto>(null as any);
+    }
+
+    getConditionAlertPlants(userId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto[]> {
+        let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertPlants?";
+        if (userId === null)
+            throw new Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetConditionAlertPlants(_response);
+        });
+    }
+
+    protected processGetConditionAlertPlants(response: Response): Promise<ConditionAlertPlantResponseDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertPlantResponseDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertPlantResponseDto[]>(null as any);
+    }
+
+    createConditionAlertPlant(dto: ConditionAlertPlantCreateDto, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/CreateConditionAlertPlant";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateConditionAlertPlant(_response);
+        });
+    }
+
+    protected processCreateConditionAlertPlant(response: Response): Promise<ConditionAlertPlantResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertPlantResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertPlantResponseDto>(null as any);
+    }
+
+    deleteConditionAlertPlant(conditionId: string | undefined, authorization: string | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/AlertCondition/DeleteConditionAlertPlant?";
+        if (conditionId === null)
+            throw new Error("The parameter 'conditionId' cannot be null.");
+        else if (conditionId !== undefined)
+            url_ += "conditionId=" + encodeURIComponent("" + conditionId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteConditionAlertPlant(_response);
+        });
+    }
+
+    protected processDeleteConditionAlertPlant(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    getConditionAlertUserDevice(userDeviceId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertUserDevice?";
+        if (userDeviceId === null)
+            throw new Error("The parameter 'userDeviceId' cannot be null.");
+        else if (userDeviceId !== undefined)
+            url_ += "userDeviceId=" + encodeURIComponent("" + userDeviceId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetConditionAlertUserDevice(_response);
+        });
+    }
+
+    protected processGetConditionAlertUserDevice(response: Response): Promise<ConditionAlertUserDeviceResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertUserDeviceResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertUserDeviceResponseDto>(null as any);
+    }
+
+    getConditionAlertUserDevices(userId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto[]> {
+        let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertUserDevices?";
+        if (userId === null)
+            throw new Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetConditionAlertUserDevices(_response);
+        });
+    }
+
+    protected processGetConditionAlertUserDevices(response: Response): Promise<ConditionAlertUserDeviceResponseDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertUserDeviceResponseDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertUserDeviceResponseDto[]>(null as any);
+    }
+
+    createConditionAlertUserDevice(dto: ConditionAlertUserDeviceCreateDto, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/CreateConditionAlertUserDevice";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateConditionAlertUserDevice(_response);
+        });
+    }
+
+    protected processCreateConditionAlertUserDevice(response: Response): Promise<ConditionAlertUserDeviceResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertUserDeviceResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertUserDeviceResponseDto>(null as any);
+    }
+
+    editConditionAlertUserDevice(dto: ConditionAlertUserDeviceEditDto, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/EditConditionAlertUserDevice";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PATCH",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processEditConditionAlertUserDevice(_response);
+        });
+    }
+
+    protected processEditConditionAlertUserDevice(response: Response): Promise<ConditionAlertUserDeviceResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConditionAlertUserDeviceResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConditionAlertUserDeviceResponseDto>(null as any);
+    }
+
+    deleteConditionAlertUserDevice(conditionId: string | undefined, authorization: string | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/AlertCondition/DeleteConditionAlertUserDevice?";
+        if (conditionId === null)
+            throw new Error("The parameter 'conditionId' cannot be null.");
+        else if (conditionId !== undefined)
+            url_ += "conditionId=" + encodeURIComponent("" + conditionId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteConditionAlertUserDevice(_response);
+        });
+    }
+
+    protected processDeleteConditionAlertUserDevice(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+}
+
 export class AlertClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -1455,6 +1818,36 @@ export class UserSettingsClient {
     }
 }
 
+export interface ConditionAlertPlantResponseDto {
+    conditionAlertPlantId?: string;
+    plantId?: string;
+    waterNotify?: boolean;
+}
+
+export interface ConditionAlertPlantCreateDto {
+    plantId: string;
+}
+
+export interface ConditionAlertUserDeviceResponseDto {
+    conditionAlertUserDeviceId?: string;
+    userDeviceId?: string;
+    sensorType?: string;
+    condition?: string;
+}
+
+export interface ConditionAlertUserDeviceCreateDto {
+    userDeviceId: string;
+    sensorType: string;
+    condition: string;
+}
+
+export interface ConditionAlertUserDeviceEditDto {
+    conditionAlertUserDeviceId: string;
+    userDeviceId: string;
+    sensorType?: string;
+    condition?: string;
+}
+
 export interface Alert {
     alertId?: string;
     alertUserId?: string;
@@ -1525,6 +1918,7 @@ export interface ConditionAlertPlant {
     conditionAlertPlantId?: string;
     plantId?: string;
     waterNotify?: boolean;
+    isDeleted?: boolean;
     plant?: Plant | undefined;
     alerts?: Alert[] | undefined;
 }
@@ -1557,6 +1951,7 @@ export interface ConditionAlertUserDevice {
     userDeviceId?: string;
     sensorType?: string;
     condition?: string;
+    isDeleted?: boolean;
     userDevice?: UserDevice | undefined;
     alerts?: Alert[] | undefined;
 }

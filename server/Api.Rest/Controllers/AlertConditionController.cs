@@ -25,34 +25,34 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
 
     [HttpGet]
     [Route(GetConditionAlertPlantRoute)]
-    public async Task<ActionResult<ConditionAlertPlantResponseDto>> GetConditionAlertPlant(Guid conditionId,
+    public async Task<ActionResult<ConditionAlertPlantResponseDto>> GetConditionAlertPlant(Guid plantId,
         [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered GetConditionAlertPlant");
+        MonitorService.Log.Debug("Entered GetConditionAlertPlant in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var result = await alertConditionService.GetConditionAlertPlantByIdAsync(conditionId, claims);
+        var result = await alertConditionService.GetConditionAlertPlantByIdAsync(plantId, claims);
         return Ok(result);
     }
 
     [HttpGet]
     [Route(GetConditionAlertPlantsRoute)]
-    public async Task<ActionResult<IEnumerable<ConditionAlertPlantResponseDto>>> GetConditionAlertPlants(Guid plantId,
+    public async Task<ActionResult<IEnumerable<ConditionAlertPlantResponseDto>>> GetConditionAlertPlants(Guid userId,
         [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered GetConditionAlertPlants");
+        MonitorService.Log.Debug("Entered GetConditionAlertPlants in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var result = await alertConditionService.GetAllConditionAlertPlantsAsync(plantId, claims);
+        var result = await alertConditionService.GetAllConditionAlertPlantsAsync(userId, claims);
         return Ok(result);
     }
 
     [HttpPost]
     [Route(CreateConditionAlertPlantRoute)]
-    public async Task<ActionResult<ConditionAlertPlantResponseDto>> CreateConditionAlertPlant([FromBody] Guid plantId,
+    public async Task<ActionResult<ConditionAlertPlantResponseDto>> CreateConditionAlertPlant([FromBody] ConditionAlertPlantCreateDto dto,
         [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered CreateConditionAlertPlant");
+        MonitorService.Log.Debug("Entered CreateConditionAlertPlant in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var created = await alertConditionService.CreateConditionAlertPlantAsync(plantId, claims);
+        var created = await alertConditionService.CreateConditionAlertPlantAsync(dto, claims);
         return Ok(created);
     }
 
@@ -60,7 +60,7 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
     [Route(DeleteConditionAlertPlantRoute)]
     public async Task<IActionResult> DeleteConditionAlertPlant(Guid conditionId, [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered DeleteConditionAlertPlant");
+        MonitorService.Log.Debug("Entered DeleteConditionAlertPlant in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         await alertConditionService.DeleteConditionAlertPlantAsync(conditionId, claims);
         return Ok();
@@ -70,23 +70,23 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
 
     [HttpGet]
     [Route(GetConditionAlertUserDeviceRoute)]
-    public async Task<ActionResult<ConditionAlertUserDeviceResponseDto>> GetConditionAlertUserDevice(Guid conditionId,
+    public async Task<ActionResult<ConditionAlertUserDeviceResponseDto>> GetConditionAlertUserDevice(Guid userDeviceId,
         [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered GetConditionAlertUserDevice");
+        MonitorService.Log.Debug("Entered GetConditionAlertUserDevice in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var result = await alertConditionService.GetConditionAlertUserDeviceByIdAsync(conditionId, claims);
+        var result = await alertConditionService.GetConditionAlertUserDeviceByIdAsync(userDeviceId, claims);
         return Ok(result);
     }
 
     [HttpGet]
     [Route(GetConditionAlertUserDevicesRoute)]
     public async Task<ActionResult<IEnumerable<ConditionAlertUserDeviceResponseDto>>> GetConditionAlertUserDevices(
-        Guid userDeviceId, [FromHeader] string authorization)
+        Guid userId, [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered GetConditionAlertUserDevices");
+        MonitorService.Log.Debug("Entered GetConditionAlertUserDevices in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var result = await alertConditionService.GetAllConditionAlertUserDevicesAsync(userDeviceId, claims);
+        var result = await alertConditionService.GetAllConditionAlertUserDevicesAsync(userId, claims);
         return Ok(result);
     }
 
@@ -95,7 +95,7 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
     public async Task<ActionResult<ConditionAlertUserDeviceResponseDto>> CreateConditionAlertUserDevice(
         [FromBody] ConditionAlertUserDeviceCreateDto dto, [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered CreateConditionAlertUserDevice");
+        MonitorService.Log.Debug("Entered CreateConditionAlertUserDevice in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var created = await alertConditionService.CreateConditionAlertUserDeviceAsync(dto, claims);
         return Ok(created);
@@ -103,10 +103,10 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
 
     [HttpPatch]
     [Route(EditConditionAlertUserDeviceRoute)]
-    public async Task<ActionResult<ConditionAlertUserDeviceResponseDto>> EditConditionAlertUserDevice(Guid conditionId,
+    public async Task<ActionResult<ConditionAlertUserDeviceResponseDto>> EditConditionAlertUserDevice(
         [FromBody] ConditionAlertUserDeviceEditDto dto, [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered EditConditionAlertUserDevice");
+        MonitorService.Log.Debug("Entered EditConditionAlertUserDevice in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var updated = await alertConditionService.EditConditionAlertUserDeviceAsync(dto, claims);
         return Ok(updated);
@@ -116,7 +116,7 @@ public class AlertConditionController(IAlertConditionService alertConditionServi
     [Route(DeleteConditionAlertUserDeviceRoute)]
     public async Task<IActionResult> DeleteConditionAlertUserDevice(Guid conditionId, [FromHeader] string authorization)
     {
-        MonitorService.Log.Debug("Entered DeleteConditionAlertUserDevice");
+        MonitorService.Log.Debug("Entered DeleteConditionAlertUserDevice in AlertConditionController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         await alertConditionService.DeleteConditionAlertUserDeviceAsync(conditionId, claims);
         return Ok();
