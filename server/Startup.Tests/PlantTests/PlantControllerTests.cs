@@ -167,6 +167,8 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                 PlantName = "Parsley",
                 PlantType = "Herb",
                 PlantNotes = "",
+                WaterEvery = 3,
+                IsDead = false,
                 Planted = DateTime.UtcNow.Date
             });
 
@@ -177,7 +179,9 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         {
             PlantName = "Flat‑leaf Parsley",
             PlantType = "Fungus",
-            PlantNotes = "Move to bigger pot"
+            PlantNotes = "Move to bigger pot",
+            WaterEvery = 5,
+            LastWatered = DateTime.UtcNow.Date.AddDays(2)
         };
 
         // Act
@@ -200,15 +204,70 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             Assert.That(updated!.PlantName, Is.EqualTo(patch.PlantName));
             Assert.That(updated.PlantNotes, Is.EqualTo(patch.PlantNotes));
             Assert.That(updated.PlantType, Is.EqualTo(patch.PlantType));
+            Assert.That(updated.WaterEvery, Is.EqualTo(patch.WaterEvery));
+            Assert.That(updated.LastWatered, Is.EqualTo(patch.LastWatered));
         });
         Assert.Multiple(() =>
         {
             Assert.That(refetchedPlantFromDb!.PlantName, Is.EqualTo(patch.PlantName));
             Assert.That(refetchedPlantFromDb.PlantNotes, Is.EqualTo(patch.PlantNotes));
             Assert.That(refetchedPlantFromDb.PlantType, Is.EqualTo(patch.PlantType));
+            Assert.That(refetchedPlantFromDb.WaterEvery, Is.EqualTo(patch.WaterEvery));
+            Assert.That(refetchedPlantFromDb.LastWatered, Is.EqualTo(patch.LastWatered));
         });
     }
 
+    [Test]
+    public async Task EditPlant_NullValueInFields_ShouldReturnSuccessfully()
+    {
+        // Arrange
+        var createResp = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName = "Parsley",
+                PlantType = "Herb",
+                PlantNotes = "",
+                WaterEvery = 3,
+                IsDead = false,
+                Planted = DateTime.UtcNow.Date
+            });
+
+        var created = await createResp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        var plantId = created!.PlantId;
+
+        var patch = new PlantEditDto
+        {
+            PlantName = null,
+            PlantType = null,
+            PlantNotes = null,
+            WaterEvery = null,
+        };
+
+        // Act
+        var resp = await _client.PatchAsJsonAsync(
+            $"api/Plant/{PlantController.EditPlantRoute}?plantId={plantId}",
+            patch);
+
+        // Assert
+
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
+        var updated = await resp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        
+        Assert.That(updated, Is.Not.EqualTo(null));
+       
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.PlantName, Is.Not.EqualTo(patch.PlantName));
+            Assert.That(updated.PlantNotes, Is.Not.EqualTo(patch.PlantNotes));
+            Assert.That(updated.PlantType, Is.Not.EqualTo(patch.PlantType));
+            Assert.That(updated.WaterEvery, Is.Not.EqualTo(patch.WaterEvery));
+            Assert.That(updated.LastWatered, Is.EqualTo(created.LastWatered));
+            
+        });
+    }
+    
     [Test]
     public async Task GetPlant_ReturnsSinglePlant()
     {

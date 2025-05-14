@@ -79,10 +79,8 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         plant.PlantName = dto.PlantName ?? plant.PlantName;
         plant.PlantType = dto.PlantType ?? plant.PlantType;
         plant.PlantNotes = dto.PlantNotes ?? plant.PlantNotes;
-        plant.Planted = dto.Planted ?? plant.Planted;
         plant.LastWatered = dto.LastWatered ?? plant.LastWatered;
         plant.WaterEvery = dto.WaterEvery ?? plant.WaterEvery;
-        plant.IsDead = dto.IsDead ?? plant.IsDead;
 
         await plantRepo.SaveChangesAsync();
         return plant;
