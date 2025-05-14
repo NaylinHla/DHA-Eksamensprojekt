@@ -3,11 +3,14 @@
 using System.Net;
 using System.Net.Http.Json;
 using Api.Rest.Controllers;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.RestDtos;
+using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -196,10 +199,66 @@ public class AlertControllerTests : WebApplicationFactory<Program>
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
+    
+    [Test]
+    public async Task CreateAlertEndpoint_ReturnsErrorMessage_WhenConditionIdIsNull()
+    {
+        // Arrange
+        var dto = new AlertCreateDto
+        {
+            AlertName        = "X",
+            AlertDesc        = "Y",
+            IsPlantCondition = true,
+            AlertConditionId = null
+        };
 
+        // Act
+        var resp = await _client.PostAsJsonAsync("api/Alert/CreateAlert", dto);
 
+        // Assert only on the error message
+        var pd = await resp.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.That(pd, Is.Not.Null, "Expected a ProblemDetails JSON payload");
+        Assert.That(pd.Title, Is.EqualTo("AlertConditionId cannot be null"));
+    }
 
+    [Test]
+    public async Task CreateAlertWithPlant_ShouldBroadcastAlert()
+    {
+        // Arrange
+        using var scope = Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
+        var capId = await ctx.ConditionAlertPlant
+            .Where(x => x.PlantId == _testUser.UserPlants.First().PlantId)
+            .Select(x => x.ConditionAlertPlantId)
+            .FirstAsync();
+
+        var alertDto = new AlertCreateDto
+        {
+            AlertName = "Humidity High",
+            AlertDesc = "Alert test broadcast",
+            IsPlantCondition = true,
+            AlertConditionId = capId,
+            AlertUser = _testUser.UserId
+        };
+
+        // Act
+        var resp = await _client.PostAsJsonAsync(
+            $"api/Alert/{AlertController.CreateAlertRoute}",
+            alertDto);
+
+        // Assert HTTP
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Verify: Broadcast was called once with type == "alert"
+        var expectedTopic = $"alerts-{_testUser.UserId}";
+        _connManagerMock.Verify(ws => ws.BroadcastToTopic(
+            expectedTopic,
+            It.Is<object>(o =>
+                o.GetType().GetProperty("type")!.GetValue(o)!.ToString() == "alert"
+            )
+        ), Times.Once);
+    }
 
 
 

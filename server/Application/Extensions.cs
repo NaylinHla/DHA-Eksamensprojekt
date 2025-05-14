@@ -17,6 +17,7 @@ public static class Extensions
         services.AddScoped<IPlantService, PlantService>();
         services.AddScoped<IUserDeviceService, UserDeviceService>();
         services.AddScoped<IUserSettingsService, UserSettingsService>();
+        services.AddScoped<IAlertConditionService, AlertConditionService>();
         return services;
     }
 }
