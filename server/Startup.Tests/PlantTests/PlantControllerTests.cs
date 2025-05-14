@@ -6,6 +6,7 @@ using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
@@ -83,13 +84,15 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             Assert.That(dto.WaterEvery, Is.EqualTo(createDto.WaterEvery));
             Assert.That(dto.Planted, Is.EqualTo(createDto.Planted));
         });
+        var checkDb = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={dto.PlantId}");
+        Assert.That(checkDb.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
     [Test]
     public async Task DeletePlant_ReturnsOk()
     {
         // Arrange
-        var create = await _client.PostAsJsonAsync(
+        var createA = await _client.PostAsJsonAsync(
             $"api/Plant/{PlantController.CreatePlantRoute}",
             new PlantCreateDto
             {
@@ -99,19 +102,49 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                 Planted = DateTime.UtcNow.Date
             });
 
-        create.EnsureSuccessStatusCode();
-        var id = (await create.Content
-            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+        createA.EnsureSuccessStatusCode();
+        var plantA = (await createA.Content.ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
 
         var markAsDead = await _client.PatchAsync(
-            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
+            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={plantA}", null);
         markAsDead.EnsureSuccessStatusCode();
+        
+        var createB = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName = "Mint",
+                PlantType = "Herb",
+                PlantNotes = "",
+                Planted = DateTime.UtcNow.Date
+            });
+        createB.EnsureSuccessStatusCode();
+        var plantB = (await createB.Content.ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
 
         // Act
-        var resp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
-
+        var deleteResp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={plantA}");
+        deleteResp.EnsureSuccessStatusCode();
+        
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var getA = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantA}");
+        var getB = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantB}");
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleteResp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(getA.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(getB.StatusCode, Is.EqualTo(HttpStatusCode.OK));;
+        });
+
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        await Assert.MultipleAsync(async() =>
+        {
+            Assert.That(await db.UserPlants.AnyAsync(up => up.PlantId == plantA), Is.False);
+            Assert.That(await db.UserPlants.AnyAsync(up => up.PlantId == plantB), Is.True);
+            Assert.That(await db.Plants.AnyAsync(p => p.PlantId == plantA), Is.False);
+        });
     }
 
     [Test]
@@ -164,6 +197,8 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                 PlantName = "Parsley",
                 PlantType = "Herb",
                 PlantNotes = "",
+                WaterEvery = 3,
+                IsDead = false,
                 Planted = DateTime.UtcNow.Date
             });
 
@@ -173,8 +208,70 @@ public class PlantControllerTests : WebApplicationFactory<Program>
         var patch = new PlantEditDto
         {
             PlantName = "Flat‑leaf Parsley",
-            PlantType = "Herb",
-            PlantNotes = "Move to bigger pot"
+            PlantType = "Fungus",
+            PlantNotes = "Move to bigger pot",
+            WaterEvery = 5,
+            LastWatered = DateTime.UtcNow.Date.AddDays(2)
+        };
+
+        // Act
+        var resp = await _client.PatchAsJsonAsync(
+            $"api/Plant/{PlantController.EditPlantRoute}?plantId={plantId}",
+            patch);
+
+        var getResp = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantId}");
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(getResp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        });
+        
+        var updated = await resp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        var refetchedPlantFromDb = await getResp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated!.PlantName, Is.EqualTo(patch.PlantName));
+            Assert.That(updated.PlantNotes, Is.EqualTo(patch.PlantNotes));
+            Assert.That(updated.PlantType, Is.EqualTo(patch.PlantType));
+            Assert.That(updated.WaterEvery, Is.EqualTo(patch.WaterEvery));
+            Assert.That(updated.LastWatered, Is.EqualTo(patch.LastWatered));
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(refetchedPlantFromDb!.PlantName, Is.EqualTo(patch.PlantName));
+            Assert.That(refetchedPlantFromDb.PlantNotes, Is.EqualTo(patch.PlantNotes));
+            Assert.That(refetchedPlantFromDb.PlantType, Is.EqualTo(patch.PlantType));
+            Assert.That(refetchedPlantFromDb.WaterEvery, Is.EqualTo(patch.WaterEvery));
+            Assert.That(refetchedPlantFromDb.LastWatered, Is.EqualTo(patch.LastWatered));
+        });
+    }
+
+    [Test]
+    public async Task EditPlant_NullValueInFields_ShouldReturnSuccessfully()
+    {
+        // Arrange
+        var createResp = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName = "Parsley",
+                PlantType = "Herb",
+                PlantNotes = "",
+                WaterEvery = 3,
+                IsDead = false,
+                Planted = DateTime.UtcNow.Date
+            });
+
+        var created = await createResp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        var plantId = created!.PlantId;
+
+        var patch = new PlantEditDto
+        {
+            PlantName = null,
+            PlantType = null,
+            PlantNotes = null,
+            WaterEvery = null,
         };
 
         // Act
@@ -183,17 +280,24 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             patch);
 
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
         var updated = await resp.Content.ReadFromJsonAsync<PlantResponseDto>();
+        
+        Assert.That(updated, Is.Not.EqualTo(null));
+       
         Assert.Multiple(() =>
         {
-            Assert.That(updated!.PlantName, Is.EqualTo(patch.PlantName));
-            Assert.That(updated.PlantNotes, Is.EqualTo(patch.PlantNotes));
-            Assert.That(updated.PlantType, Is.EqualTo(created.PlantType));
+            Assert.That(updated.PlantName, Is.Not.EqualTo(patch.PlantName));
+            Assert.That(updated.PlantNotes, Is.Not.EqualTo(patch.PlantNotes));
+            Assert.That(updated.PlantType, Is.Not.EqualTo(patch.PlantType));
+            Assert.That(updated.WaterEvery, Is.Not.EqualTo(patch.WaterEvery));
+            Assert.That(updated.LastWatered, Is.EqualTo(created.LastWatered));
+            
         });
     }
-
+    
     [Test]
     public async Task GetPlant_ReturnsSinglePlant()
     {
@@ -271,6 +375,19 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                     Planted = DateTime.UtcNow.Date
                 });
 
+        var otherUserClient = CreateClient();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(otherUserClient);
+        
+        for (var i = 0; i < 2; ++i)
+            await otherUserClient.PostAsJsonAsync(
+                $"api/Plant/{PlantController.CreatePlantRoute}",
+                new PlantCreateDto
+                {
+                    PlantName = $"Plant {i}",
+                    PlantType = "Test",
+                    Planted = DateTime.UtcNow.Date
+                });
+        
         // Act
         var resp = await _client.PatchAsync(
             $"api/Plant/{PlantController.WaterAllPlantsRoute}?userId={_testUser.UserId}", null);
@@ -504,15 +621,26 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
-    public async Task GetAllPlants_NoJwt_ReturnsBadRequest()
+    public async Task GetAllPlants_NoJwt_ReturnsUnauthorized()
     {
+        //arrange
+        for (var i = 0; i < 2; i++)
+            await _client.PostAsJsonAsync(
+                $"api/Plant/{PlantController.CreatePlantRoute}",
+                new PlantCreateDto
+                {
+                    PlantName = $"Plant {i}",
+                    PlantType = "Test",
+                    PlantNotes = "",
+                    Planted = DateTime.UtcNow.Date
+                });
         // Act
         using var anonClient = CreateClient();
-        var resp = await anonClient.GetAsync(
-            $"api/Plant/{PlantController.GetPlantsRoute}?userId={_testUser.UserId}");
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(anonClient);
+        var resp = await anonClient.GetAsync($"api/Plant/{PlantController.GetPlantsRoute}?userId={_testUser.UserId}");
 
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
     
     [Test]
@@ -555,7 +683,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     }
     
     [Test]
-    public async Task MarkPlantAsDead_FlagSomeoneElsesPlant_ShouldReturnUnauthorized()
+    public async Task MarkPlantAsDead_FlagAnotherPersonsPlant_ShouldReturnUnauthorized()
     { 
         // Arrange
         var create = await _client.PostAsJsonAsync(

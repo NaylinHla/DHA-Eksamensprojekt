@@ -14,5 +14,5 @@ public sealed class PlantCreateDto
 
     [Range(1, 365)] public int? WaterEvery { get; set; }
 
-    public bool IsDead { get; set; } = false;
+    public bool IsDead { get; set; }
 }
