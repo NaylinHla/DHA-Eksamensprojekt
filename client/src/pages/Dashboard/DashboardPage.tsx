@@ -164,10 +164,10 @@ export default function DashboardPage() {
             </div>
 
             {/* main row */}
-            <main className="flex-1 flex flex-col lg:flex-row lg:items-start gap-6 px-6 py-6 overflow-y-auto">
+            <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-6 px-6 py-6 overflow-y-auto">
 
                 {/* circle card */}
-                <div className="card w-full lg:flex-1 lg:basis-0 rounded-xl bg-[var(--color-surface)] shadow">
+                <div className="card w-full lg:flex-1 lg:basis-0 rounded-xl bg-[var(--color-surface)] shadow flex flex-col">
                     <div className="card-body">
                         <h3 className="text-lg font-semibold mb-6 text-center">Your Device:</h3>
 
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* plant carousel */}
-                <PlantCarousel className="lg:flex-1 lg:basis-0" plants={plants}/>
+                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col" plants={plants}/>
             </main>
         </div>
     );
