@@ -41,7 +41,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
             PlantNotes = dto.PlantNotes,
             Planted = dto.Planted,
             WaterEvery = dto.WaterEvery,
-            IsDead = false
+            IsDead = dto.IsDead
         };
 
         return await plantRepo.AddPlantAsync(userId, plant);
@@ -52,8 +52,8 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         
         var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
-
-        if (plantToDelete.Result is { IsDead: false })
+        
+        if (!plantToDelete.Result.IsDead)
         {
             MonitorService.Log.Error("User tried to delete plant that is not dead");
             throw new ValidationException();
