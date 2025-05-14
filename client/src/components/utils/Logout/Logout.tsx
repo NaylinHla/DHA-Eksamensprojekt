@@ -4,10 +4,12 @@ import {
     RandomUidAtom,
     SelectedDeviceIdAtom,
     SubscribedTopicsAtom,
+    UserSettingsAtom,
     useAtom
 } from "../../import";
-import {SignInRoute} from "../../../routeConstants";
-import {useNavigate} from "react-router";
+import { SignInRoute } from "../../../routeConstants";
+import { useNavigate } from "react-router";
+import { useUser } from "../../../UserContext.tsx";
 
 export const useLogout = () => {
     const [, setJwt] = useAtom(JwtAtom);
@@ -15,21 +17,32 @@ export const useLogout = () => {
     const [, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [, setRandomUidAtom] = useAtom(RandomUidAtom);
     const [, setSelectedDeviceIdAtom] = useAtom(SelectedDeviceIdAtom);
+    const [, setUserSettings] = useAtom(UserSettingsAtom);
+    const { reset } = useUser();
     const navigate = useNavigate();
 
     const logout = () => {
-        // Reset JWT and subscribed topics
-        setJwt("");
+
+        setJwt(null);
+        localStorage.removeItem("jwt");
+
         setSubscribedTopics([]);
         setGreenhouseSensorDataAtom([]);
         setRandomUidAtom("");
         setSelectedDeviceIdAtom("");
+        setUserSettings(null);
 
-        // Remove the JWT and randomUid from localStorage
+        // Clear localStorage
         localStorage.removeItem("jwt");
         localStorage.removeItem("randomUid");
+        localStorage.removeItem("theme");
 
+        // Reset HTML theme attribute
+        document.documentElement.setAttribute("data-theme", "light");
+
+        reset();
         navigate(SignInRoute);
     };
-    return {logout};
+
+    return { logout };
 };

@@ -1,24 +1,21 @@
-import {AlertResponseDto, atom, atomWithStorage} from "./import";
+import { AlertResponseDto, atom, atomWithStorage } from "./import";
 
-
-const getInitialJwt = () => {
+const getInitialJwt = (): string | null => {
     if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('jwt');
-        return stored ?? '';
+        return localStorage.getItem('jwt');
     }
-    return ''; // fallback for SSR
+    return null;
 };
 
-export const JwtAtom = typeof window !== 'undefined'
-    ? atomWithStorage<string>('jwt', getInitialJwt())
-    : atom(''); // SSR fallback
+export const JwtAtom = atomWithStorage<string | null>('jwt', null);
 
 export const AlertsAtom = atom<AlertResponseDto[]>([]);
 
 export const RandomUidAtom = atom<string>(getOrGenerateUid());
 
-
 function getOrGenerateUid(): string {
+    if (typeof window === 'undefined') return '';
+
     const existing = localStorage.getItem('randomUid');
     if (existing) return existing;
 
