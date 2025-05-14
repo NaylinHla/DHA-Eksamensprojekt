@@ -58,7 +58,7 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
             .ToListAsync();
         ctx.UserPlants.RemoveRange(links);
 
-        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
+        var plant = await GetPlantByIdAsync(plantId);
         ctx.Plants.Remove(plant);
 
         await ctx.SaveChangesAsync();
@@ -73,7 +73,7 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public async Task<Plant> MarkPlantAsDeadAsync(Guid plantId)
     {
         MonitorService.Log.Debug("Entered Mark Plant as Dead method in PlantRepository");
-        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
+        var plant = await GetPlantByIdAsync(plantId);
         plant.IsDead = true;
         await ctx.SaveChangesAsync();
         return plant;
@@ -82,7 +82,7 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public async Task<Plant> WaterPlantAsync(Guid plantId)
     {
         MonitorService.Log.Debug("Entered Water Plant method in PlantRepository");
-        var plant = await GetPlantByIdAsync(plantId) ?? throw new KeyNotFoundException();
+        var plant = await GetPlantByIdAsync(plantId);
         plant.LastWatered = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
         return plant;

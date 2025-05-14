@@ -89,11 +89,12 @@ public class EmailSenderServiceTest
     }
 
     [Test]
-    public async Task SendEmailAsync_ShouldNotSend_WhenDisabled()
+    public Task SendEmailAsync_ShouldNotSend_WhenDisabled()
     {
         _emailRepo.Setup(r => r.GetAllEmails()).Returns(new List<string> { "user1@example.com" });
 
         Assert.DoesNotThrowAsync(() => _service.SendEmailAsync("Subject", "Body"));
+        return Task.CompletedTask;
     }
 
     [Test]
