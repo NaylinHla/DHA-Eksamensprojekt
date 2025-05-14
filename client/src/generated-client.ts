@@ -1548,13 +1548,11 @@ export interface PlantCreateDto {
 }
 
 export interface PlantEditDto {
-    plantName: string;
-    plantType: string;
+    plantName?: string | undefined;
+    plantType?: string | undefined;
     plantNotes?: string | undefined;
-    planted?: Date | undefined;
     lastWatered?: Date | undefined;
     waterEvery?: number | undefined;
-    isDead?: boolean | undefined;
 }
 
 export interface ChangeSubscriptionDto {

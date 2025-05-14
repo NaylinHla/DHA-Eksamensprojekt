@@ -1909,29 +1909,20 @@
       "PlantEditDto": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "plantName",
-          "plantType"
-        ],
         "properties": {
           "plantName": {
             "type": "string",
             "maxLength": 100,
-            "minLength": 1
+            "nullable": true
           },
           "plantType": {
             "type": "string",
             "maxLength": 100,
-            "minLength": 1
+            "nullable": true
           },
           "plantNotes": {
             "type": "string",
             "maxLength": 1000,
-            "nullable": true
-          },
-          "planted": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           },
           "lastWatered": {
@@ -1944,10 +1935,6 @@
             "format": "int32",
             "maximum": 365.0,
             "minimum": 1.0,
-            "nullable": true
-          },
-          "isDead": {
-            "type": "boolean",
             "nullable": true
           }
         }

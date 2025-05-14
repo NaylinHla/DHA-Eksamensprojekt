@@ -6,6 +6,7 @@ using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
@@ -83,13 +84,15 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             Assert.That(dto.WaterEvery, Is.EqualTo(createDto.WaterEvery));
             Assert.That(dto.Planted, Is.EqualTo(createDto.Planted));
         });
+        var checkDb = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={dto.PlantId}");
+        Assert.That(checkDb.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
     [Test]
     public async Task DeletePlant_ReturnsOk()
     {
         // Arrange
-        var create = await _client.PostAsJsonAsync(
+        var createA = await _client.PostAsJsonAsync(
             $"api/Plant/{PlantController.CreatePlantRoute}",
             new PlantCreateDto
             {
@@ -99,22 +102,49 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                 Planted = DateTime.UtcNow.Date
             });
 
-        create.EnsureSuccessStatusCode();
-        var id = (await create.Content
-            .ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
+        createA.EnsureSuccessStatusCode();
+        var plantA = (await createA.Content.ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
 
         var markAsDead = await _client.PatchAsync(
-            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={id}", null);
+            $"api/Plant/{PlantController.PlantIsDeadRoute}?plantId={plantA}", null);
         markAsDead.EnsureSuccessStatusCode();
+        
+        var createB = await _client.PostAsJsonAsync(
+            $"api/Plant/{PlantController.CreatePlantRoute}",
+            new PlantCreateDto
+            {
+                PlantName = "Mint",
+                PlantType = "Herb",
+                PlantNotes = "",
+                Planted = DateTime.UtcNow.Date
+            });
+        createB.EnsureSuccessStatusCode();
+        var plantB = (await createB.Content.ReadFromJsonAsync<PlantResponseDto>())!.PlantId;
 
         // Act
-        var resp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={id}");
-        resp.EnsureSuccessStatusCode();
+        var deleteResp = await _client.DeleteAsync($"api/Plant/{PlantController.DeletePlantRoute}?plantId={plantA}");
+        deleteResp.EnsureSuccessStatusCode();
         
-        var checkDb = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={id}");
         // Assert
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        Assert.That(checkDb.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var getA = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantA}");
+        var getB = await _client.GetAsync($"api/Plant/{PlantController.GetPlantRoute}?plantId={plantB}");
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleteResp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(getA.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(getB.StatusCode, Is.EqualTo(HttpStatusCode.OK));;
+        });
+
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        await Assert.MultipleAsync(async() =>
+        {
+            Assert.That(await db.UserPlants.AnyAsync(up => up.PlantId == plantA), Is.False);
+            Assert.That(await db.UserPlants.AnyAsync(up => up.PlantId == plantB), Is.True);
+            Assert.That(await db.Plants.AnyAsync(p => p.PlantId == plantA), Is.False);
+        });
     }
 
     [Test]
@@ -345,6 +375,19 @@ public class PlantControllerTests : WebApplicationFactory<Program>
                     Planted = DateTime.UtcNow.Date
                 });
 
+        var otherUserClient = CreateClient();
+        await ApiTestSetupUtilities.TestRegisterAndAddJwt(otherUserClient);
+        
+        for (var i = 0; i < 2; ++i)
+            await otherUserClient.PostAsJsonAsync(
+                $"api/Plant/{PlantController.CreatePlantRoute}",
+                new PlantCreateDto
+                {
+                    PlantName = $"Plant {i}",
+                    PlantType = "Test",
+                    Planted = DateTime.UtcNow.Date
+                });
+        
         // Act
         var resp = await _client.PatchAsync(
             $"api/Plant/{PlantController.WaterAllPlantsRoute}?userId={_testUser.UserId}", null);
