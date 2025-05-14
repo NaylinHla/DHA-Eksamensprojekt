@@ -1,13 +1,17 @@
 import { AlertResponseDto, atom, atomWithStorage } from "./import";
 
-const getInitialJwt = (): string | null => {
+
+const getInitialJwt = () => {
     if (typeof window !== 'undefined') {
-        return localStorage.getItem('jwt');
+        const stored = localStorage.getItem('jwt');
+        return stored ?? '';
     }
-    return null;
+    return ''; // fallback for SSR
 };
 
-export const JwtAtom = atomWithStorage<string | null>('jwt', null);
+export const JwtAtom = typeof window !== 'undefined'
+    ? atomWithStorage<string>('jwt', getInitialJwt())
+    : atom(''); // SSR fallback
 
 export const AlertsAtom = atom<AlertResponseDto[]>([]);
 
