@@ -13,6 +13,7 @@ import {
 import { Line } from "react-chartjs-2";
 import toast from "react-hot-toast";
 import { useAtom } from "jotai";
+import { UserSettingsAtom } from "../../atoms";
 import {
     formatDateTimeForUserTZ,
     GetRecentSensorDataForAllUserDeviceDto,
@@ -55,6 +56,8 @@ export default function HistoryPage() {
     const [rangeFrom, setRangeFrom] = useState(isoMonthAgo);
     const [rangeTo, setRangeTo] = useState(isoToday);
     const [tab, setTab] = useState<TabKey>("temperature");
+    const [userSettings] = useAtom(UserSettingsAtom);
+    const useCelsius = userSettings?.celsius ?? true;
 
     const chartRefs = {
         temperature: useRef<ChartJS | null>(null),
@@ -80,14 +83,6 @@ export default function HistoryPage() {
         airQuality: "Air Quality",
     };
 
-    const unit: Record<TabKey, string> = {
-        temperature: "°C",
-        humidity: "%",
-        airPressure: "hPa",
-        airQuality: "ppm",
-    };
-
-
     //  Chart Helpers
     function appendPointToChart(
         chartRef: React.RefObject<ChartJS | null>,
@@ -112,6 +107,11 @@ export default function HistoryPage() {
         }
 
         chart.update("none");
+    }
+
+    // Helper function to convert Celsius to Fahrenheit
+    function convertCToF(celsius: number): number {
+        return celsius * 9 / 5 + 32;
     }
 
     const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
@@ -265,14 +265,18 @@ export default function HistoryPage() {
         const sampled = downSampleRecords(unique, 500);
 
         // 3) Build point arrays
-        const build = (key: keyof SensorHistoryDto): Point[] => 
-            sampled.map(r => ({
-                time: r.time instanceof Date 
-                    ? r.time.toISOString() 
-                    : String(r.time),
-                display: format(new Date(r.time!), 'd MMM'),
-                value: Number(r[key]) || 0,
-        }));
+        const build = (key: keyof SensorHistoryDto): Point[] =>
+            sampled.map(r => {
+                const raw = Number(r[key]) || 0;
+                const value = key === "temperature" && !useCelsius ? convertCToF(raw) : raw;
+                return {
+                    time: r.time instanceof Date
+                        ? r.time.toISOString()
+                        : String(r.time),
+                    display: format(new Date(r.time!), 'd MMM'),
+                    value,
+                };
+            });
 
         return {
             temperature: build("temperature"),
@@ -293,12 +297,14 @@ export default function HistoryPage() {
         </div>
     );
 
-    const unitMap: Record<string, string> = {
-        temperature: "°C",
+    const unitMap: Record<TabKey, string> = {
+        temperature: useCelsius ? "°C" : "°F",
         humidity: "%",
         airPressure: "hPa",
         airQuality: "ppm",
     };
+
+    const unit = unitMap;
 
     // Re-Usable Chart
     const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => (
@@ -399,20 +405,29 @@ export default function HistoryPage() {
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-1 text-sm">
-                                {fields.map(f => (
-                                        <div key={f} className="flex">
-                                            <span className="capitalize font-medium">{f}:</span>
-                                            <span className="ml-1">
-                                                {(latest as any)[f]?.toFixed(2)}{unitMap[f]}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {fields.map(f => {
+                                        const key = f as TabKey;
+                                        let value = (latest as any)[f];
+
+                                        if (key === "temperature" && !useCelsius && typeof value === "number") {
+                                            value = convertCToF(value);
+                                        }
+
+                                        return (
+                                            <div key={f} className="flex">
+                                                <span className="capitalize font-medium">{f}:</span>
+                                                <span className="ml-1">
+                                                    {typeof value === "number" ? value.toFixed(2) : "–"}{unitMap[key]}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+
                                 </div>
                             </>
                         );
                     })()}
                 </div>
-                
             </div>
 
             {/* Charts */}
