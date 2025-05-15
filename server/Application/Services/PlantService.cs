@@ -1,16 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Authentication;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
+using FluentValidation;
 using Infrastructure.Logging;
+using ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 
 namespace Application.Services;
 
-public class PlantService(IPlantRepository plantRepo) : IPlantService
+public class PlantService(
+    IPlantRepository plantRepo,
+    IValidator<PlantCreateDto> plantCreateValidator,
+    IValidator<PlantEditDto> plantEditValidator) : IPlantService
 {
     public async Task<Plant?> GetPlantByIdAsync(Guid plantId, JwtClaims claims)
     {
@@ -33,6 +37,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     public async Task<Plant> CreatePlantAsync(Guid userId, PlantCreateDto dto)
     {
         MonitorService.Log.Debug("Entered Create Plant Async method in PlantService");
+        await plantCreateValidator.ValidateAndThrowAsync(dto);
         var plant = new Plant
         {
             PlantId = Guid.NewGuid(),
@@ -69,6 +74,7 @@ public class PlantService(IPlantRepository plantRepo) : IPlantService
     public async Task<Plant> EditPlantAsync(Guid plantId, PlantEditDto dto, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Edit Plant Async method in PlantService");
+        await plantEditValidator.ValidateAndThrowAsync(dto);
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
         if (plantOwnerId != Guid.Parse(claims.Id))

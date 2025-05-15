@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,26 +7,30 @@ using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Enums;
 using Core.Domain.Entities;
+using FluentValidation;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Options;
+using ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 
 namespace Application.Services;
 
 public class SecurityService(
     IOptionsMonitor<AppOptions> optionsMonitor,
     IUserRepository repository,
-    IUserSettingsRepository userSettingsRepository) : ISecurityService
+    IUserSettingsRepository userSettingsRepository,
+    IValidator<AuthLoginDto> loginValidator,
+    IValidator<AuthRegisterDto> registerValidator) : ISecurityService
 {
     
-    private readonly IUserSettingsRepository _userSettingsRepository = userSettingsRepository;
-
     public AuthResponseDto Login(AuthLoginDto dto)
     {
+        loginValidator.ValidateAndThrow(dto);
         var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
         VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
+        
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
@@ -44,6 +47,7 @@ public class SecurityService(
 
     public AuthResponseDto Register(AuthRegisterDto dto)
     {
+        registerValidator.ValidateAndThrow(dto);
         var player = repository.GetUserOrNull(dto.Email);
         if (player is not null) throw new ValidationException("User already exists");
 
@@ -64,7 +68,7 @@ public class SecurityService(
             Hash = hash
         });
         
-        _userSettingsRepository.Add(new UserSettings
+        userSettingsRepository.Add(new UserSettings
         {
             UserId = userId,
             Celsius = true,
