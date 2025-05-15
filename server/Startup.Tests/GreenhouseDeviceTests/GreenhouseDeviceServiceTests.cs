@@ -1,8 +1,10 @@
+using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.BroadcastModels;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
+using Application.Models.Dtos.RestDtos;
 using Application.Services;
 using Core.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,10 +25,16 @@ namespace Startup.Tests.GreenhouseDeviceTests
             // Mock the repository and connection manager
             _repositoryMock = new Mock<IGreenhouseDeviceRepository>();
             _connectionManagerMock = new Mock<IConnectionManager>();
+            var alertServiceMock = new Mock<IAlertService>();
             
-            
-            var services = new ServiceCollection(); 
+            alertServiceMock
+                .Setup(a => a.TriggerUserDeviceConditionAsync(It.IsAny<IsAlertUserDeviceConditionMeetDto>()))
+                .Returns(Task.CompletedTask);
+
+            var services = new ServiceCollection();
+
             services.AddSingleton(_repositoryMock.Object);
+            services.AddSingleton(alertServiceMock.Object);
             services.AddLogging();
 
             var serviceProvider = services.BuildServiceProvider();

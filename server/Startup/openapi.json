@@ -459,6 +459,80 @@
         }
       }
     },
+    "/api/Alert/trigger-user-device-condition": {
+      "post": {
+        "tags": [
+          "Alert"
+        ],
+        "operationId": "Alert_TriggerUserDeviceCondition",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IsAlertUserDeviceConditionMeetDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Alert/check-scheduled-plant-alerts": {
+      "post": {
+        "tags": [
+          "Alert"
+        ],
+        "operationId": "Alert_CheckScheduledPlantAlerts",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/Login": {
       "post": {
         "tags": [
@@ -2288,6 +2362,40 @@
           }
         }
       },
+      "IsAlertUserDeviceConditionMeetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userDeviceId"
+        ],
+        "properties": {
+          "userDeviceId": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          },
+          "temperature": {
+            "type": "number",
+            "format": "double"
+          },
+          "humidity": {
+            "type": "number",
+            "format": "double"
+          },
+          "airPressure": {
+            "type": "number",
+            "format": "double"
+          },
+          "airQuality": {
+            "type": "number",
+            "format": "double"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AuthResponseDto": {
         "type": "object",
         "additionalProperties": false,
@@ -2768,6 +2876,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
           "celsius": {
             "type": "boolean"
           },
@@ -2805,6 +2917,55 @@
         "properties": {
           "eventType": {
             "type": "string"
+          }
+        }
+      },
+      "ServerBroadcastsLiveAlertToAlertView": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApplicationBaseDto"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "alerts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AlertDto"
+                }
+              },
+              "eventType": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "AlertDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "alertId": {
+            "type": "string"
+          },
+          "alertName": {
+            "type": "string"
+          },
+          "alertDesc": {
+            "type": "string"
+          },
+          "alertTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "alertPlantConditionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "alertDeviceConditionId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -2904,6 +3065,7 @@
         "description": "Available eventType and string constants",
         "enum": [
           "AdminHasDeletedData",
+          "ServerBroadcastsLiveAlertToAlertView",
           "ServerBroadcastsLiveDataToDashboard",
           "MemberLeftNotification",
           "Ping",

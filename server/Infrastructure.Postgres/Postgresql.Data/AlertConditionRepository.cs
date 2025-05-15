@@ -21,6 +21,19 @@ public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionReposito
         return await ctx.ConditionAlertPlant
             .FirstOrDefaultAsync(d => d.ConditionAlertPlantId == conditionAlertPlantId && !d.IsDeleted);
     }
+    
+    public async Task<List<ConditionAlertPlantResponseDto>> GetAllConditionAlertPlantForAllUserAsync()
+    {
+        return await ctx.ConditionAlertPlant
+            .Where(d => !d.IsDeleted)
+            .Select(d => new ConditionAlertPlantResponseDto
+            {
+                ConditionAlertPlantId = d.ConditionAlertPlantId,
+                PlantId = d.PlantId,
+                WaterNotify = d.WaterNotify
+            })
+            .ToListAsync();
+    }
 
     public async Task<ConditionAlertPlantResponseDto?> GetConditionAlertPlantByIdAsync(Guid plantId)
     {
@@ -242,6 +255,115 @@ public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionReposito
         MonitorService.Log.Debug("Deleted Alert Condition User Device with Id: {ConditionAlertUserDeviceId}", conditionAlertUserDeviceId);
     }
 
+    public async Task<List<string>> IsAlertUserDeviceConditionMeet(IsAlertUserDeviceConditionMeetDto dto)
+    {
+
+        try
+        {
+            if (dto == null)
+            {
+                MonitorService.Log.Error("IsAlertUserDeviceConditionMeet called with null dto");
+                throw new ArgumentNullException(nameof(dto));
+            }
+
+            if (string.IsNullOrEmpty(dto.UserDeviceId))
+            {
+                MonitorService.Log.Error("IsAlertUserDeviceConditionMeet called with empty UserDeviceId");
+                throw new ArgumentException("UserDeviceId is required.");
+            }
+
+            if (!Guid.TryParse(dto.UserDeviceId, out var deviceId))
+            {
+                MonitorService.Log.Error("Invalid UserDeviceId format: {UserDeviceId}", dto.UserDeviceId);
+                throw new ArgumentException("UserDeviceId must be a valid GUID.");
+            }
+
+            MonitorService.Log.Debug("Checking alert conditions for UserDeviceId: {UserDeviceId}", dto.UserDeviceId);
+
+            var deviceExists = await ctx.UserDevices.AnyAsync(d => d.DeviceId == deviceId);
+            if (!deviceExists)
+            {
+                MonitorService.Log.Debug("Device not found for UserDeviceId: {UserDeviceId}", dto.UserDeviceId);
+                return []; // Device not found, no alerts
+            }
+
+            var allConditions = await ctx.ConditionAlertUserDevice
+                .Where(c => c.UserDeviceId == deviceId && !c.IsDeleted)
+                .ToListAsync();
+
+            if (allConditions.Count == 0)
+            {
+                MonitorService.Log.Debug("No active alert conditions for UserDeviceId: {UserDeviceId}", dto.UserDeviceId);
+                return [];
+            }
+
+            var matchedConditionIds = new List<string>();
+
+            foreach (var alert in allConditions)
+            {
+                var sensorValue = alert.SensorType switch
+                {
+                    "Temperature" => dto.Temperature,
+                    "Humidity" => dto.Humidity,
+                    "AirPressure" => dto.AirPressure,
+                    "AirQuality" => dto.AirQuality,
+                    _ => null
+                };
+
+                if (sensorValue == null)
+                {
+                    MonitorService.Log.Debug("Skipping alert with unsupported SensorType: {SensorType}", alert.SensorType);
+                    continue;
+                }
+
+                var conditionStr = alert.Condition.Trim();
+                string? op;
+                string? numberPart;
+
+                if (conditionStr.StartsWith("<="))
+                {
+                    op = "<=";
+                    numberPart = conditionStr[2..];
+                }
+                else if (conditionStr.StartsWith("=>"))
+                {
+                    op = ">="; // treat "=>" as ">="
+                    numberPart = conditionStr[2..];
+                }
+                else
+                {
+                    MonitorService.Log.Debug("Skipping alert with unsupported condition format: {Condition}", alert.Condition);
+                    continue;
+                }
+
+                if (!float.TryParse(numberPart, out var threshold))
+                {
+                    MonitorService.Log.Debug("Skipping alert with invalid threshold: {Threshold}", numberPart);
+                    continue;
+                }
+
+                var match = op switch
+                {
+                    "<=" => sensorValue <= threshold,
+                    ">=" => sensorValue >= threshold,
+                    _ => false
+                };
+
+                if (!match) continue;
+                MonitorService.Log.Debug("Alert condition matched: ConditionId {ConditionId} for UserDeviceId {UserDeviceId}", alert.ConditionAlertUserDeviceId, dto.UserDeviceId);
+                matchedConditionIds.Add(alert.ConditionAlertUserDeviceId.ToString());
+            }
+
+            MonitorService.Log.Debug("Total matched conditions for UserDeviceId {UserDeviceId}: {Count}", dto.UserDeviceId, matchedConditionIds.Count);
+
+            return matchedConditionIds;
+        }
+        catch (Exception ex)
+        {
+            MonitorService.Log.Error(ex, "Error in IsAlertUserDeviceConditionMeet for UserDeviceId: {UserDeviceId}", dto?.UserDeviceId);
+            throw;
+        }
+    }
 
     // ---- Save Changes ----
 

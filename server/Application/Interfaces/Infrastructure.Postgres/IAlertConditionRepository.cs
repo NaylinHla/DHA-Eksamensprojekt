@@ -8,6 +8,7 @@ public interface IAlertConditionRepository
     // ---- ConditionAlertPlant ----
     Task<ConditionAlertPlant?> GetConditionAlertPlantIdByConditionAlertIdAsync(Guid conditionAlertPlantId);
     Task<ConditionAlertPlantResponseDto?> GetConditionAlertPlantByIdAsync(Guid plantId);
+    Task<List<ConditionAlertPlantResponseDto>> GetAllConditionAlertPlantForAllUserAsync();
     Task<List<ConditionAlertPlantResponseDto>> GetAllConditionAlertPlantsAsync(Guid userId);
     Task<ConditionAlertPlantResponseDto> AddConditionAlertPlantAsync(Guid plantId);
     Task DeleteConditionAlertPlantAsync(Guid conditionAlertPlantId);
@@ -20,5 +21,6 @@ public interface IAlertConditionRepository
     Task<ConditionAlertUserDeviceResponseDto> EditConditionAlertUserDeviceAsync(ConditionAlertUserDeviceEditDto dto);
     Task DeleteConditionAlertUserDeviceAsync(Guid conditionAlertUserDeviceId);
 
+    Task<List<string>> IsAlertUserDeviceConditionMeet(IsAlertUserDeviceConditionMeetDto dto);
     Task SaveChangesAsync();
 }

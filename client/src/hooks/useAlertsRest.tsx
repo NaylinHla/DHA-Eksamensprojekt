@@ -1,8 +1,10 @@
-import {useEffect, useState} from "react";
-import {JwtAtom} from "../atoms";
+import {useEffect, useRef, useState} from "react";
+import {JwtAtom, StringConstants} from "../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
 import {alertClient} from "../apiControllerClients";
+import {useTopicManager, useWebSocketMessage} from "./index";
+import {useWsClient} from "ws-request-hook";
 
 export interface Alert {
     alertId: string;
@@ -17,6 +19,9 @@ export default function useAlertsRest() {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [jwt] = useAtom(JwtAtom);
+    const prevTopic = useRef<string | null>(null);
+    const { subscribe, unsubscribe } = useTopicManager();
+    const {readyState} = useWsClient();
 
     useEffect(() => {
         if (!jwt) {
@@ -44,6 +49,41 @@ export default function useAlertsRest() {
             })
             .finally(() => setLoading(false));
     }, [jwt]);
+
+    // subscribe to topic changes
+    useEffect(() => {
+        const userId = "6d620123-a859-40a1-a520-1f0f445db9f9"; // hardcoded user ID
+        const topic = `alerts-${userId}`;
+
+        if (prevTopic.current && prevTopic.current !== topic) {
+            unsubscribe(prevTopic.current).catch(() => {});
+        }
+
+        subscribe(topic).catch(() => {});
+        prevTopic.current = topic;
+
+        return () => {
+            unsubscribe(topic).catch(() => {});
+        };
+    }, [readyState]); // empty deps so runs only once
+
+    useWebSocketMessage(StringConstants.ServerBroadcastsLiveAlertToAlertView, (dto: any) => {
+
+        const alertMessages: Alert[] = dto.alerts || [];
+        if (!alertMessages.length) return;
+
+        setAlerts(prevAlerts => {
+            // Optional: merge new alerts, avoiding duplicates by alertId
+            const existingIds = new Set(prevAlerts.map(a => a.alertId));
+            const newAlerts = alertMessages.filter(a => !existingIds.has(a.alertId));
+            if (!newAlerts.length) return prevAlerts;
+
+            return [...newAlerts, ...prevAlerts];
+        });
+
+    });
+
+
 
     return { alerts, loading };
 }

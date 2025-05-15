@@ -8,6 +8,7 @@ using Application.Models;
 using Application.Services;
 using Infrastructure.MQTT;
 using Infrastructure.Postgres;
+using Infrastructure.Scheduling;
 using Infrastructure.Websocket;
 using Microsoft.Extensions.Options;
 using NSwag.Generation;
@@ -33,6 +34,8 @@ public class Program
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
         services.RegisterApplicationServices();
+        services.AddScheduledInfrastructure();
+
         services.AddDataSourceAndRepositories();
 
         services.AddTransient<IEmailSender, EmailSenderService>();
