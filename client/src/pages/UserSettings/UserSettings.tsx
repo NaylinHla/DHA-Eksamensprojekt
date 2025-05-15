@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAtom } from "jotai";
+import {useAtom, useSetAtom} from "jotai";
 import { JwtAtom } from "../../atoms";
 import { useNavigate } from "react-router";
 import EmailModal from "../../components/Modals/EmailModal";
@@ -9,6 +9,7 @@ import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModa
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal";
 import { TitleTimeHeader, useLogout } from "../../components";
 import { userClient, userSettingsClient } from "../../apiControllerClients";
+import { UserSettingsAtom } from '../../atoms'
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
@@ -23,6 +24,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
+    const [settings] = useAtom(UserSettingsAtom);
 
     const navigate = useNavigate();
     const { logout } = useLogout();
@@ -41,22 +43,38 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         }
     }, [jwt]);
 
-    useEffect(() => {
-        async function fetchSettings() {
-            if (!jwt) return;
-            try {
-                if (!jwt) return;
-                const data = await userSettingsClient.getAllSettings(jwt);
-                setConfirmWater(data.confirmDialog ?? false);
-                setCelsius(data.celsius ?? false);
-                setDarkTheme(data.darkTheme ?? false);
-            } catch (e: any) {
-                toast.error("Could not load user settings");
-                console.error(e);
-            }
-        }
+    // I put a fake timeout on it, cause it loads without a jwt token if you don't :(
+    const setUserSettings = useSetAtom(UserSettingsAtom);
 
-        fetchSettings();
+    useEffect(() => {
+        if (!jwt || jwt.trim() === "") return;
+
+        const timeout = setTimeout(() => {
+            const fetchSettings = async () => {
+                try {
+                    const data = await userSettingsClient.getAllSettings(jwt);
+
+                    // Update local component state (optional)
+                    setConfirmWater(data.confirmDialog ?? false);
+                    setCelsius(data.celsius ?? false);
+                    setDarkTheme(data.darkTheme ?? false);
+
+                    setUserSettings({
+                        celsius: data.celsius ?? false,
+                        darkTheme: data.darkTheme ?? false,
+                        confirmDialog: data.confirmDialog ?? false,
+                        secretMode: data.secretMode ?? false,
+                    });
+                } catch (e: any) {
+                    toast.error("Could not load user settings");
+                    console.error(e);
+                }
+            };
+
+            fetchSettings();
+        }, 500);
+
+        return () => clearTimeout(timeout);
     }, [jwt]);
 
     async function patchSetting(name: string, value: boolean) {

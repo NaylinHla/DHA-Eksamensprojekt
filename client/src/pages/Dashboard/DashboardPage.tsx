@@ -1,3 +1,6 @@
+import { useSetAtom } from "jotai";
+import { UserSettingsAtom } from "../../atoms";
+import { userSettingsClient } from "../../apiControllerClients";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     CategoryScale,
@@ -41,6 +44,7 @@ export default function DashboardPage() {
     // Atoms
     const [jwt] = useAtom(JwtAtom);
     const [selectedDeviceId, setDeviceId] = useAtom(SelectedDeviceIdAtom);
+    const [userSettings] = useAtom(UserSettingsAtom);
 
     // States
     const [devices,       setDevices]       = useState<UserDevice[]>([]);
@@ -55,7 +59,7 @@ export default function DashboardPage() {
     /* latest snapshot for circles */
     const [latest,        setLatest]        = useState<Record<string, SensorHistoryWithDeviceDto>>({});
     const [loadingLive,   setLoadingLive]   = useState(true);
-    
+
     // Fetch Devices
     useEffect(() => {
         if (!jwt) return;
@@ -133,6 +137,44 @@ export default function DashboardPage() {
             finally  { setLP(false); }
         })();
     }, [jwt]);
+
+    // Fetch user settings and populate atom
+    const setUserSettings = useSetAtom(UserSettingsAtom);
+
+    useEffect(() => {
+        if (!jwt || jwt.trim() === "") return;
+
+        const timeout = setTimeout(() => {
+            const fetchUserSettings = async () => {
+                try {
+                    const data = await userSettingsClient.getAllSettings(jwt);
+
+                    setUserSettings({
+                        celsius: data.celsius ?? false,
+                        darkTheme: data.darkTheme ?? false,
+                        confirmDialog: data.confirmDialog ?? false,
+                        secretMode: data.secretMode ?? false,
+                    });
+                } catch (e: any) {
+                    toast.error("Failed to fetch user settings");
+                    console.error(e);
+                }
+            };
+
+            fetchUserSettings();
+        }, 0);
+
+        return () => clearTimeout(timeout);
+    }, [jwt]);
+
+    // Switch to dark mode if darktheme = true
+    useEffect(() => {
+        if (!userSettings) return;
+
+        const theme = userSettings.darkTheme ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [userSettings]);
 
     const needsWater = plants.some(p => p.needsWater);
 
