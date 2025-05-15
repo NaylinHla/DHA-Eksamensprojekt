@@ -164,9 +164,13 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         var created = await resp.Content.ReadFromJsonAsync<AlertResponseDto>();
     
         Assert.That(created, Is.Not.Null);
-        Assert.That(created!.AlertName, Is.EqualTo(alertDto.AlertName));
-        Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
-        Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(created.AlertName, Is.EqualTo(alertDto.AlertName));
+            Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
+            Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
+        });
+        
     }
 
     [Test]
@@ -177,7 +181,10 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         var dto = new AlertCreateDto
         {
             AlertName = "Overheat",
-            AlertDesc = "Temp > 40℃"
+            AlertDesc = "Temp > 40℃",
+            IsPlantCondition = true,
+            AlertConditionId = Guid.NewGuid(),
+            AlertUser = _testUser.UserId
         };
 
         var resp = await client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", dto);
@@ -192,7 +199,10 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         var badDto = new AlertCreateDto
         {
             AlertName = null, // Missing name
-            AlertDesc = "No name should fail"
+            AlertDesc = "No name should fail",
+            IsPlantCondition = true,
+            AlertConditionId = Guid.NewGuid(),
+            AlertUser = _testUser.UserId
         };
 
         var resp = await _client.PostAsJsonAsync($"api/Alert/{AlertController.CreateAlertRoute}", badDto);
@@ -206,10 +216,11 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         // Arrange
         var dto = new AlertCreateDto
         {
-            AlertName        = "X",
-            AlertDesc        = "Y",
+            AlertName        = "XX",
+            AlertDesc        = "OPQRST",
             IsPlantCondition = true,
-            AlertConditionId = null
+            AlertConditionId = null,
+            AlertUser        = _testUser.UserId
         };
 
         // Act

@@ -8,6 +8,8 @@ public sealed class UserDeviceEditDtoValidator : AbstractValidator<UserDeviceEdi
     public UserDeviceEditDtoValidator()
     {
         RuleFor(x => x.DeviceName)
+            .NotEmpty().WithMessage("DeviceName cannot be empty")
+            .MinimumLength(2).WithMessage("DeviceName must be at least 2 characters.")
             .MaximumLength(50).WithMessage("DeviceName cannot be longer than 50 characters.")
             .When(x => x.DeviceName is not null);
         

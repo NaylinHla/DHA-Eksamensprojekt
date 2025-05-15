@@ -23,6 +23,6 @@ public sealed class UserDeviceCreateDtoValidator : AbstractValidator<UserDeviceC
         
         RuleFor(x => x.Created)
             .NotNull().WithMessage("Created cannot be null")
-            .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Created cannot be in the future.");
+            .LessThanOrEqualTo(DateTime.UtcNow.AddSeconds(1)).WithMessage("Created cannot be in the future (One Second Margin Allowed).");
     }
 }

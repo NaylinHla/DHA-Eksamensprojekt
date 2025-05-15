@@ -9,7 +9,7 @@ public sealed class AuthLoginDtoValidator : AbstractValidator<AuthLoginDto>
     {
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email cannot be empty")
-            .MinimumLength(3).WithMessage("Email cannot be shorter than 3 characters")
+            .MinimumLength(7).WithMessage("Email cannot be shorter than 7 characters")
             .EmailAddress().WithMessage("Email is not valid");
         
         RuleFor(x => x.Password)

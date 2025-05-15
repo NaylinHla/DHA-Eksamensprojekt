@@ -8,9 +8,11 @@ public sealed class PlantEditDtoValidator : AbstractValidator<PlantEditDto>
     public PlantEditDtoValidator()
     {
         RuleFor(x => x.PlantName)
+            .NotEmpty().WithMessage("PlantName cannot be empty")
             .MaximumLength(100).WithMessage("PlantName cannot be longer than 100 characters");
         
         RuleFor(x => x.PlantType)
+            .NotEmpty().WithMessage("PlantType cannot be empty")
             .MaximumLength(50).WithMessage("PlantType cannot be longer than 50 characters");
         
         RuleFor(x => x.WaterEvery)
@@ -22,7 +24,7 @@ public sealed class PlantEditDtoValidator : AbstractValidator<PlantEditDto>
             .MaximumLength(1000).WithMessage("PlantNotes cannot be longer than 1000 characters");
         
         RuleFor(x => x.LastWatered)
-            .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("LastWatered cannot be in the future")
+            .LessThanOrEqualTo(DateTime.UtcNow.AddSeconds(1)).WithMessage("LastWatered cannot be in the future (Margin of 1 second)")
             .When(x => x.LastWatered.HasValue);
     }
 }

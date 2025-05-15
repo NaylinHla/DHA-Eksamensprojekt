@@ -13,18 +13,12 @@ public sealed class AlertCreateDtoValidator : AbstractValidator<AlertCreateDto>
 
         RuleFor(x => x.AlertDesc)
             .NotEmpty().WithMessage("Alert Description cannot be empty")
-            .NotNull().WithMessage("Alert Description cannot be null")
             .MinimumLength(5).WithMessage("Alert Description cannot be shorter than 5 characters");
         
         RuleFor(x => x.AlertConditionId)
-            .NotNull().WithMessage("AlertConditionId cannot be null")
-            .NotEmpty().WithMessage("AlertConditionId cannot be empty");
-
-        RuleFor(x => x.IsPlantCondition)
-            .NotNull().WithMessage("IsPlantCondition cannot be null");
+            .NotNull().WithMessage("AlertConditionId cannot be null");
         
         RuleFor(x => x.AlertUser)
-            .NotEmpty().WithMessage("AlertUser cannot be empty")
             .NotNull().WithMessage("AlertUser cannot be null");
     }
 }

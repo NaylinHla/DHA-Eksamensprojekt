@@ -18,10 +18,10 @@ public sealed class DeviceSensorDataDtoValidator : AbstractValidator<DeviceSenso
             .InclusiveBetween(0, 100).WithMessage("Humidity must be between 0 and 100");
         
         RuleFor(x => x.AirPressure)
-            .GreaterThan(0).WithMessage("AirPressure must be greater than 0");
+            .GreaterThan(0).WithMessage("Air Pressure must be greater than 0");
         
         RuleFor(x => x.AirQuality)
-            .InclusiveBetween(0, 2000).WithMessage("AirQuality must be between 0 and 2000");
+            .InclusiveBetween(0, 2000).WithMessage("Air Quality must be between 0 and 2000");
         
         RuleFor(x => x.Time)
             .LessThanOrEqualTo(DateTime.UtcNow.AddMinutes(1)).WithMessage("Time cannot be in the future.");
