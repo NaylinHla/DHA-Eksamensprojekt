@@ -6,7 +6,7 @@ public sealed class PlantCreateDto
 {
     [Required] [MaxLength(100)] public string PlantName { get; init; } = null!;
 
-    [Required] [MaxLength(100)] public string PlantType { get; init; } = null!;
+    [Required] [MaxLength(50)] public string PlantType { get; init; } = null!;
 
     [MaxLength(1_000)] public string? PlantNotes { get; init; }
 

@@ -1,6 +1,14 @@
-﻿namespace Application.Validation.Email;
+﻿using Application.Models.Dtos.RestDtos.EmailList.Request;
+using FluentValidation;
 
-public class AddEmailDtoValidator
+namespace Application.Validation.Email;
+
+public sealed class AddEmailDtoValidator : AbstractValidator<AddEmailDto>
 {
-    
+    public AddEmailDtoValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email cannot be empty")
+            .EmailAddress().WithMessage("Email is not valid");
+    }
 }

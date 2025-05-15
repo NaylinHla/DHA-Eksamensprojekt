@@ -1,6 +1,14 @@
-﻿namespace Application.Validation.Email;
+﻿using Application.Models.Dtos.RestDtos.EmailList.Request;
+using FluentValidation;
 
-public class RemoveEmailDtoValidator
+namespace Application.Validation.Email;
+
+public sealed class RemoveEmailDtoValidator : AbstractValidator<RemoveEmailDto>
 {
-    
+    public RemoveEmailDtoValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email cannot be empty")
+            .EmailAddress().WithMessage("Email is not valid");
+    }
 }
