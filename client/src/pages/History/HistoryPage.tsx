@@ -12,7 +12,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import toast from "react-hot-toast";
-import { useAtom } from "jotai";
+import {useAtom, useSetAtom} from "jotai";
 import { UserSettingsAtom } from "../../atoms";
 import {
     formatDateTimeForUserTZ,
@@ -29,7 +29,7 @@ import {
     useTopicManager,
     useWebSocketMessage,
 } from "../import";
-import { greenhouseDeviceClient, userDeviceClient } from "../../apiControllerClients.ts";
+import {greenhouseDeviceClient, userDeviceClient, userSettingsClient} from "../../apiControllerClients.ts";
 import { cssVar } from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
@@ -174,6 +174,35 @@ export default function HistoryPage() {
         const unique = inRange.filter(l => !existing.has(new Date(l.time!).getTime()));
         if (unique.length) throttledAppend(unique);
     });
+
+    // Fetch user settings and populate atom
+    const setUserSettings = useSetAtom(UserSettingsAtom);
+
+    useEffect(() => {
+        if (!jwt || jwt.trim() === "") return;
+
+        const timeout = setTimeout(() => {
+            const fetchUserSettings = async () => {
+                try {
+                    const data = await userSettingsClient.getAllSettings(jwt);
+
+                    setUserSettings({
+                        celsius: data.celsius ?? false,
+                        darkTheme: data.darkTheme ?? false,
+                        confirmDialog: data.confirmDialog ?? false,
+                        secretMode: data.secretMode ?? false,
+                    });
+                } catch (e: any) {
+                    toast.error("Failed to fetch user settings");
+                    console.error(e);
+                }
+            };
+
+            fetchUserSettings();
+        }, 0);
+
+        return () => clearTimeout(timeout);
+    }, [jwt]);
 
     // subscribe to topic changes
     useEffect(() => {
