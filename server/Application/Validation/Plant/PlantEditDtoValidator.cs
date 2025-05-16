@@ -9,11 +9,13 @@ public sealed class PlantEditDtoValidator : AbstractValidator<PlantEditDto>
     {
         RuleFor(x => x.PlantName)
             .NotEmpty().WithMessage("PlantName cannot be empty")
-            .MaximumLength(100).WithMessage("PlantName cannot be longer than 100 characters");
+            .MaximumLength(100).WithMessage("PlantName cannot be longer than 100 characters")
+            .When(x => x.PlantName is not null);
         
         RuleFor(x => x.PlantType)
             .NotEmpty().WithMessage("PlantType cannot be empty")
-            .MaximumLength(50).WithMessage("PlantType cannot be longer than 50 characters");
+            .MaximumLength(50).WithMessage("PlantType cannot be longer than 50 characters")
+            .When(x => x.PlantType is not null);
         
         RuleFor(x => x.WaterEvery)
             .GreaterThan(0).WithMessage("Water Every cannot be less than 1 day")

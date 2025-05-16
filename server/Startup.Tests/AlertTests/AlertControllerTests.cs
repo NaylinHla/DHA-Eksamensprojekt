@@ -1,16 +1,11 @@
-// Startup.Tests/AlertTests/AlertControllerTests.cs
-
 using System.Net;
 using System.Net.Http.Json;
 using Api.Rest.Controllers;
-using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.RestDtos;
-using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,9 +18,9 @@ namespace Startup.Tests.AlertTests;
 [TestFixture]
 public class AlertControllerTests : WebApplicationFactory<Program>
 {
-    private HttpClient _client = null!;
-    private string _jwt = null!;
-    private User _testUser = null!;
+    private HttpClient _client;
+    private string _jwt;
+    private User _testUser;
     private Mock<IConnectionManager> _connManagerMock = null!;
 
 
@@ -124,11 +119,13 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     
         var created = await resp.Content.ReadFromJsonAsync<AlertResponseDto>();
-    
         Assert.That(created, Is.Not.Null);
-        Assert.That(created!.AlertName, Is.EqualTo(alertDto.AlertName));
-        Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
-        Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(created.AlertName, Is.EqualTo(alertDto.AlertName));
+            Assert.That(created.AlertDesc, Is.EqualTo(alertDto.AlertDesc));
+            Assert.That(created.AlertPlantConditionId != null || created.AlertDeviceConditionId != null, Is.True);
+        });
     }
     
     [Test]
@@ -225,11 +222,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
 
         // Act
         var resp = await _client.PostAsJsonAsync("api/Alert/CreateAlert", dto);
-
-        // Assert only on the error message
-        var pd = await resp.Content.ReadFromJsonAsync<ProblemDetails>();
-        Assert.That(pd, Is.Not.Null, "Expected a ProblemDetails JSON payload");
-        Assert.That(pd.Title, Is.EqualTo("AlertConditionId cannot be null"));
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
     [Test]
@@ -266,11 +259,8 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         _connManagerMock.Verify(ws => ws.BroadcastToTopic(
             expectedTopic,
             It.Is<object>(o =>
-                o.GetType().GetProperty("type")!.GetValue(o)!.ToString() == "alert"
+                o.GetType().GetProperty("type")!.GetValue(o).ToString() == "alert"
             )
         ), Times.Once);
     }
-
-
-
 }

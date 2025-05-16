@@ -25,9 +25,9 @@ public class SecurityService(
     IValidator<AuthRegisterDto> registerValidator) : ISecurityService
 {
     
-    public AuthResponseDto Login(AuthLoginDto dto)
+    public async Task<AuthResponseDto> Login(AuthLoginDto dto)
     {
-        loginValidator.ValidateAndThrow(dto);
+        await loginValidator.ValidateAndThrowAsync(dto);
         var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
         VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
         
@@ -45,17 +45,15 @@ public class SecurityService(
         };
     }
 
-    public AuthResponseDto Register(AuthRegisterDto dto)
+    public async Task<AuthResponseDto> Register(AuthRegisterDto dto)
     {
-        registerValidator.ValidateAndThrow(dto);
-        var player = repository.GetUserOrNull(dto.Email);
-        if (player is not null) throw new ValidationException("User already exists");
+        await registerValidator.ValidateAndThrowAsync(dto);
 
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
         var userId = Guid.NewGuid();
 
-        var insertedPlayer = repository.AddUser(new User
+        var user = repository.AddUser(new User
         {
             UserId = userId,
             FirstName = dto.FirstName,
@@ -81,10 +79,10 @@ public class SecurityService(
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = insertedPlayer.UserId.ToString(),
-                Role = insertedPlayer.Role,
+                Id = user.UserId.ToString(),
+                Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
-                Email = insertedPlayer.Email
+                Email = user.Email
             })
         };
     }

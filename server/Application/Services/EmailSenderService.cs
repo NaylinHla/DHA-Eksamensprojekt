@@ -5,6 +5,7 @@ using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Core.Domain.Entities;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 
 namespace Application.Services;
@@ -12,7 +13,9 @@ namespace Application.Services;
 public class EmailSenderService(
     IOptionsMonitor<AppOptions> optionsMonitor,
     IEmailListRepository emailListRepository,
-    JwtEmailTokenService jwtService)
+    JwtEmailTokenService jwtService,
+    IValidator<AddEmailDto> addEmailValidator,
+    IValidator<RemoveEmailDto> removeEmailValidator)
     : IEmailSender
 {
     private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
@@ -60,6 +63,7 @@ public class EmailSenderService(
 
     public async Task AddEmailAsync(AddEmailDto dto)
     {
+        await addEmailValidator.ValidateAndThrowAsync(dto);
         if (!emailListRepository.EmailExists(dto.Email))
         {
             emailListRepository.Add(new EmailList { Email = dto.Email });
@@ -71,6 +75,7 @@ public class EmailSenderService(
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
+        await removeEmailValidator.ValidateAndThrowAsync(dto);
         if (!emailListRepository.EmailExists(dto.Email))
             return;
 

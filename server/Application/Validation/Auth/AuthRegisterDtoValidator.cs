@@ -1,12 +1,17 @@
-﻿using FluentValidation;
+﻿using Application.Interfaces.Infrastructure.Postgres;
+using FluentValidation;
 using Application.Models.Dtos.RestDtos;
 
 namespace Application.Validation.Auth;
 
 public sealed class AuthRegisterDtoValidator : AbstractValidator<AuthRegisterDto>
 {
-    public AuthRegisterDtoValidator()
+    private readonly IUserRepository _userRepository;
+    
+    public AuthRegisterDtoValidator(IUserRepository userRepository)
     {
+        _userRepository = userRepository;
+        
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First Name cannot be empty")
             .MinimumLength(2).WithMessage("First Name cannot be shorter than 2 characters")
@@ -22,7 +27,8 @@ public sealed class AuthRegisterDtoValidator : AbstractValidator<AuthRegisterDto
         
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email cannot be empty")
-            .EmailAddress().WithMessage("Email is not valid");
+            .EmailAddress().WithMessage("Email is not valid")
+            .MustAsync(BeUniqueEmail).WithMessage("User with that email already exists");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password cannot be empty")
@@ -32,4 +38,7 @@ public sealed class AuthRegisterDtoValidator : AbstractValidator<AuthRegisterDto
             .NotEmpty().WithMessage("Country cannot be empty")
             .MaximumLength(56).WithMessage("Country cannot be longer than 56 characters");
     }
+
+    private async Task<bool> BeUniqueEmail(string email, CancellationToken ct) =>
+        !await _userRepository.EmailExistsAsync(email, ct);
 }

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Security.Authentication;
+﻿using System.Security.Authentication;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
@@ -37,7 +36,9 @@ public class PlantService(
     public async Task<Plant> CreatePlantAsync(Guid userId, PlantCreateDto dto)
     {
         MonitorService.Log.Debug("Entered Create Plant Async method in PlantService");
+        
         await plantCreateValidator.ValidateAndThrowAsync(dto);
+        
         var plant = new Plant
         {
             PlantId = Guid.NewGuid(),
@@ -74,7 +75,9 @@ public class PlantService(
     public async Task<Plant> EditPlantAsync(Guid plantId, PlantEditDto dto, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Edit Plant Async method in PlantService");
+        
         await plantEditValidator.ValidateAndThrowAsync(dto);
+        
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         var plant = await plantRepo.GetPlantByIdAsync(plantId);
         if (plantOwnerId != Guid.Parse(claims.Id))
