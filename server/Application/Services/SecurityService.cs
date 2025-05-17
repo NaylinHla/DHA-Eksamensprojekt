@@ -13,7 +13,6 @@ using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Options;
-using ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 
 namespace Application.Services;
 
@@ -28,7 +27,8 @@ public class SecurityService(
     public async Task<AuthResponseDto> Login(AuthLoginDto dto)
     {
         await loginValidator.ValidateAndThrowAsync(dto);
-        var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
+        var player = repository.GetUserOrNull(dto.Email) 
+                     ?? throw new ValidationException("Username not found");
         VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
         
         return new AuthResponseDto

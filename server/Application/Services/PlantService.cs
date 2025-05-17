@@ -6,7 +6,6 @@ using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using FluentValidation;
 using Infrastructure.Logging;
-using ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 
 namespace Application.Services;
 
@@ -62,7 +61,7 @@ public class PlantService(
         if (!plantToDelete.Result.IsDead)
         {
             MonitorService.Log.Error("User tried to delete plant that is not dead");
-            throw new ValidationException();
+            throw new ValidationException("Plant is not dead. Delete plant first by marking it as dead.");
         }
         if (plantOwnerId != Guid.Parse(claims.Id))
         {

@@ -1,6 +1,8 @@
-﻿using Application.Models.Dtos.RestDtos.Request;
+﻿using Application.Interfaces.Infrastructure.Postgres;
+using Application.Models.Dtos.RestDtos.Request;
 using Application.Validation.User;
 using FluentValidation.TestHelper;
+using Moq;
 using NUnit.Framework;
 
 namespace Startup.Tests.Validation.User;
@@ -11,31 +13,39 @@ public class PatchUserEmailDtoValidatorTests
     private PatchUserEmailDtoValidator _patchUserEmailDtoValidator;
 
     [SetUp]
-    public void Init() => _patchUserEmailDtoValidator = new PatchUserEmailDtoValidator();
+    public void SetUp()
+    {
+        var repo = Mock.Of<IUserRepository>(r =>
+            r.EmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()) == Task.FromResult(false));
+        _patchUserEmailDtoValidator = new PatchUserEmailDtoValidator(repo);
+    }
 
     [TestCase("")]
     [TestCase("not-an-email")]
-    public void Invalid_old_email_fails(string email)
+    public async Task Invalid_old_email_fails(string email)
     {
         var dto = Valid();
         dto.OldEmail = email;
-        _patchUserEmailDtoValidator.TestValidate(dto).ShouldHaveValidationErrorFor(x => x.OldEmail);
+        var result = await _patchUserEmailDtoValidator.TestValidateAsync(dto);
+        result.ShouldHaveValidationErrorFor(x => x.OldEmail);
     }
     
     [TestCase("")]
     [TestCase("not-an-email")]
-    public void Invalid_new_email_fails(string email)
+    public async Task Invalid_new_email_fails(string email)
     {
         var dto = Valid();
         dto.NewEmail = email;
-        _patchUserEmailDtoValidator.TestValidate(dto).ShouldHaveValidationErrorFor(x => x.NewEmail);
+        var result = await _patchUserEmailDtoValidator.TestValidateAsync(dto);
+        result.ShouldHaveValidationErrorFor(x => x.NewEmail);
     }
     
     [Test]
-    public void Valid_model_passes()
+    public async Task Valid_model_passes()
     {
         var dto = Valid();
-        _patchUserEmailDtoValidator.TestValidate(dto).ShouldNotHaveAnyValidationErrors();
+        var result = await _patchUserEmailDtoValidator.TestValidateAsync(dto);
+        result.ShouldNotHaveAnyValidationErrors();
     }
 
     private static PatchUserEmailDto Valid() => new()

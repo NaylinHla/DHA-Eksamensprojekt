@@ -4,7 +4,7 @@ using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
-namespace Startup.Tests.Infrastructure;
+namespace Startup.Tests.EmailTests;
 
 [TestFixture]
 public class EmailListRepositoryTest
