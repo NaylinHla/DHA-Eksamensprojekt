@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Authentication;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;

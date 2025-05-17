@@ -19,12 +19,12 @@ export class AlertConditionClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getConditionAlertPlant(plantId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
+    getConditionAlertPlant(conditionId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
         let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertPlant?";
-        if (plantId === null)
-            throw new Error("The parameter 'plantId' cannot be null.");
-        else if (plantId !== undefined)
-            url_ += "plantId=" + encodeURIComponent("" + plantId) + "&";
+        if (conditionId === null)
+            throw new Error("The parameter 'conditionId' cannot be null.");
+        else if (conditionId !== undefined)
+            url_ += "conditionId=" + encodeURIComponent("" + conditionId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -57,12 +57,12 @@ export class AlertConditionClient {
         return Promise.resolve<ConditionAlertPlantResponseDto>(null as any);
     }
 
-    getConditionAlertPlants(userId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto[]> {
+    getConditionAlertPlants(plantId: string | undefined, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto[]> {
         let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertPlants?";
-        if (userId === null)
-            throw new Error("The parameter 'userId' cannot be null.");
-        else if (userId !== undefined)
-            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        if (plantId === null)
+            throw new Error("The parameter 'plantId' cannot be null.");
+        else if (plantId !== undefined)
+            url_ += "plantId=" + encodeURIComponent("" + plantId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -95,11 +95,11 @@ export class AlertConditionClient {
         return Promise.resolve<ConditionAlertPlantResponseDto[]>(null as any);
     }
 
-    createConditionAlertPlant(dto: ConditionAlertPlantCreateDto, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
+    createConditionAlertPlant(plantId: string, authorization: string | undefined): Promise<ConditionAlertPlantResponseDto> {
         let url_ = this.baseUrl + "/api/AlertCondition/CreateConditionAlertPlant";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(dto);
+        const content_ = JSON.stringify(plantId);
 
         let options_: RequestInit = {
             body: content_,
@@ -176,12 +176,12 @@ export class AlertConditionClient {
         return Promise.resolve<FileResponse>(null as any);
     }
 
-    getConditionAlertUserDevice(userDeviceId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
+    getConditionAlertUserDevice(conditionId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
         let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertUserDevice?";
-        if (userDeviceId === null)
-            throw new Error("The parameter 'userDeviceId' cannot be null.");
-        else if (userDeviceId !== undefined)
-            url_ += "userDeviceId=" + encodeURIComponent("" + userDeviceId) + "&";
+        if (conditionId === null)
+            throw new Error("The parameter 'conditionId' cannot be null.");
+        else if (conditionId !== undefined)
+            url_ += "conditionId=" + encodeURIComponent("" + conditionId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -214,12 +214,12 @@ export class AlertConditionClient {
         return Promise.resolve<ConditionAlertUserDeviceResponseDto>(null as any);
     }
 
-    getConditionAlertUserDevices(userId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto[]> {
+    getConditionAlertUserDevices(userDeviceId: string | undefined, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto[]> {
         let url_ = this.baseUrl + "/api/AlertCondition/GetConditionAlertUserDevices?";
-        if (userId === null)
-            throw new Error("The parameter 'userId' cannot be null.");
-        else if (userId !== undefined)
-            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        if (userDeviceId === null)
+            throw new Error("The parameter 'userDeviceId' cannot be null.");
+        else if (userDeviceId !== undefined)
+            url_ += "userDeviceId=" + encodeURIComponent("" + userDeviceId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -290,8 +290,12 @@ export class AlertConditionClient {
         return Promise.resolve<ConditionAlertUserDeviceResponseDto>(null as any);
     }
 
-    editConditionAlertUserDevice(dto: ConditionAlertUserDeviceEditDto, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
-        let url_ = this.baseUrl + "/api/AlertCondition/EditConditionAlertUserDevice";
+    editConditionAlertUserDevice(conditionId: string | undefined, dto: ConditionAlertUserDeviceEditDto, authorization: string | undefined): Promise<ConditionAlertUserDeviceResponseDto> {
+        let url_ = this.baseUrl + "/api/AlertCondition/EditConditionAlertUserDevice?";
+        if (conditionId === null)
+            throw new Error("The parameter 'conditionId' cannot be null.");
+        else if (conditionId !== undefined)
+            url_ += "conditionId=" + encodeURIComponent("" + conditionId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
@@ -454,88 +458,6 @@ export class AlertClient {
             });
         }
         return Promise.resolve<AlertResponseDto>(null as any);
-    }
-
-    triggerUserDeviceCondition(dto: IsAlertUserDeviceConditionMeetDto, authorization: string | undefined): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Alert/trigger-user-device-condition";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(dto);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
-                "Content-Type": "application/json",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processTriggerUserDeviceCondition(_response);
-        });
-    }
-
-    protected processTriggerUserDeviceCondition(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    checkScheduledPlantAlerts(authorization: string | undefined): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Alert/check-scheduled-plant-alerts";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "POST",
-            headers: {
-                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processCheckScheduledPlantAlerts(_response);
-        });
-    }
-
-    protected processCheckScheduledPlantAlerts(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
     }
 }
 
@@ -1900,36 +1822,6 @@ export class UserSettingsClient {
     }
 }
 
-export interface ConditionAlertPlantResponseDto {
-    conditionAlertPlantId?: string;
-    plantId?: string;
-    waterNotify?: boolean;
-}
-
-export interface ConditionAlertPlantCreateDto {
-    plantId: string;
-}
-
-export interface ConditionAlertUserDeviceResponseDto {
-    conditionAlertUserDeviceId?: string;
-    userDeviceId?: string;
-    sensorType?: string;
-    condition?: string;
-}
-
-export interface ConditionAlertUserDeviceCreateDto {
-    userDeviceId: string;
-    sensorType: string;
-    condition: string;
-}
-
-export interface ConditionAlertUserDeviceEditDto {
-    conditionAlertUserDeviceId: string;
-    userDeviceId: string;
-    sensorType?: string;
-    condition?: string;
-}
-
 export interface Alert {
     alertId?: string;
     alertUserId?: string;
@@ -2000,7 +1892,6 @@ export interface ConditionAlertPlant {
     conditionAlertPlantId?: string;
     plantId?: string;
     waterNotify?: boolean;
-    isDeleted?: boolean;
     plant?: Plant | undefined;
     alerts?: Alert[] | undefined;
 }
@@ -2033,7 +1924,6 @@ export interface ConditionAlertUserDevice {
     userDeviceId?: string;
     sensorType?: string;
     condition?: string;
-    isDeleted?: boolean;
     userDevice?: UserDevice | undefined;
     alerts?: Alert[] | undefined;
 }
@@ -2053,15 +1943,6 @@ export interface AlertCreateDto {
     alertConditionId?: string | undefined;
     isPlantCondition?: boolean;
     alertUser?: string | undefined;
-}
-
-export interface IsAlertUserDeviceConditionMeetDto {
-    userDeviceId: string;
-    temperature?: number;
-    humidity?: number;
-    airPressure?: number;
-    airQuality?: number;
-    time?: Date;
 }
 
 export interface AuthResponseDto {
@@ -2206,7 +2087,6 @@ export interface UpdateUserSettingDto {
 }
 
 export interface UserSettingsResponseDto {
-    userId?: string;
     celsius?: boolean;
     darkTheme?: boolean;
     confirmDialog?: boolean;
@@ -2219,20 +2099,6 @@ export interface ApplicationBaseDto {
 
 export interface AdminHasDeletedData extends ApplicationBaseDto {
     eventType?: string;
-}
-
-export interface ServerBroadcastsLiveAlertToAlertView extends ApplicationBaseDto {
-    alerts?: AlertDto[];
-    eventType?: string;
-}
-
-export interface AlertDto {
-    alertId?: string;
-    alertName?: string;
-    alertDesc?: string;
-    alertTime?: Date;
-    alertPlantConditionId?: string | undefined;
-    alertDeviceConditionId?: string | undefined;
 }
 
 export interface ServerBroadcastsLiveDataToDashboard extends ApplicationBaseDto {
@@ -2259,7 +2125,6 @@ export interface ServerSendsErrorMessage extends BaseDto {
 /** Available eventType and string constants */
 export enum StringConstants {
     AdminHasDeletedData = "AdminHasDeletedData",
-    ServerBroadcastsLiveAlertToAlertView = "ServerBroadcastsLiveAlertToAlertView",
     ServerBroadcastsLiveDataToDashboard = "ServerBroadcastsLiveDataToDashboard",
     MemberLeftNotification = "MemberLeftNotification",
     Ping = "Ping",

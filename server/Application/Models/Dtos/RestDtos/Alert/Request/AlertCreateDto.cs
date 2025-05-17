@@ -9,9 +9,9 @@ public class AlertCreateDto
 
     public required string AlertDesc { get; set; }
 
-    public Guid? AlertConditionId { get; set; }
+    public required Guid? AlertConditionId { get; set; }
     
     public bool IsPlantCondition { get; set; }
 
-    public Guid? AlertUser { get; set; }
+    public required Guid? AlertUser { get; set; }
 }

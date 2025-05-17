@@ -7,6 +7,7 @@ using Application.Models.Dtos.MqttSubscriptionDto;
 using Application.Models.Dtos.RestDtos;
 using Application.Services;
 using Core.Domain.Entities;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
@@ -15,9 +16,9 @@ namespace Startup.Tests.GreenhouseDeviceTests
 {
     public class GreenhouseDeviceServiceTests
     {
-        private GreenhouseDeviceService _service = null!;
-        private Mock<IGreenhouseDeviceRepository> _repositoryMock = null!;
-        private Mock<IConnectionManager> _connectionManagerMock = null!;
+        private GreenhouseDeviceService _service;
+        private Mock<IGreenhouseDeviceRepository> _repositoryMock;
+        private Mock<IConnectionManager> _connectionManagerMock;
 
         [SetUp]
         public void Setup()
@@ -39,7 +40,10 @@ namespace Startup.Tests.GreenhouseDeviceTests
 
             var serviceProvider = services.BuildServiceProvider();
 
-            _service = new GreenhouseDeviceService(serviceProvider, _connectionManagerMock.Object);
+            _service = new GreenhouseDeviceService(
+                serviceProvider, 
+                _connectionManagerMock.Object, 
+                Mock.Of<IValidator<DeviceSensorDataDto>>());
         }
 
         [Test]
@@ -63,7 +67,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
                 Time        = DateTime.UtcNow
             };
 
-            // Mock AddSensorHistory to just return the entity back
+            // Mock AddSensorHistory to just return the entity
             _repositoryMock
                 .Setup(r => r.AddSensorHistory(It.IsAny<SensorHistory>()))
                 .ReturnsAsync((SensorHistory s) => s);

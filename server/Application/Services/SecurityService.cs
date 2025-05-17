@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,6 +7,7 @@ using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Enums;
 using Core.Domain.Entities;
+using FluentValidation;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -19,15 +19,18 @@ namespace Application.Services;
 public class SecurityService(
     IOptionsMonitor<AppOptions> optionsMonitor,
     IUserRepository repository,
-    IUserSettingsRepository userSettingsRepository) : ISecurityService
+    IUserSettingsRepository userSettingsRepository,
+    IValidator<AuthLoginDto> loginValidator,
+    IValidator<AuthRegisterDto> registerValidator) : ISecurityService
 {
     
-    private readonly IUserSettingsRepository _userSettingsRepository = userSettingsRepository;
-
-    public AuthResponseDto Login(AuthLoginDto dto)
+    public async Task<AuthResponseDto> Login(AuthLoginDto dto)
     {
-        var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
+        await loginValidator.ValidateAndThrowAsync(dto);
+        var player = repository.GetUserOrNull(dto.Email) 
+                     ?? throw new ValidationException("Username not found");
         VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
+        
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
@@ -42,16 +45,15 @@ public class SecurityService(
         };
     }
 
-    public AuthResponseDto Register(AuthRegisterDto dto)
+    public async Task<AuthResponseDto> Register(AuthRegisterDto dto)
     {
-        var player = repository.GetUserOrNull(dto.Email);
-        if (player is not null) throw new ValidationException("User already exists");
+        await registerValidator.ValidateAndThrowAsync(dto);
 
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
         var userId = Guid.NewGuid();
 
-        var insertedPlayer = repository.AddUser(new User
+        var user = repository.AddUser(new User
         {
             UserId = userId,
             FirstName = dto.FirstName,
@@ -64,7 +66,7 @@ public class SecurityService(
             Hash = hash
         });
         
-        _userSettingsRepository.Add(new UserSettings
+        userSettingsRepository.Add(new UserSettings
         {
             UserId = userId,
             Celsius = true,
@@ -77,10 +79,10 @@ public class SecurityService(
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = insertedPlayer.UserId.ToString(),
-                Role = insertedPlayer.Role,
+                Id = user.UserId.ToString(),
+                Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
-                Email = insertedPlayer.Email
+                Email = user.Email
             })
         };
     }

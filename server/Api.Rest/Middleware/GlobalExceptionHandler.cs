@@ -20,6 +20,7 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         var status = exception switch
         {
             ValidationException => StatusCodes.Status400BadRequest,
+            FluentValidation.ValidationException => StatusCodes.Status400BadRequest,
             AuthenticationException => StatusCodes.Status401Unauthorized,
             UnauthorizedAccessException => StatusCodes.Status403Forbidden,
             FileNotFoundException => StatusCodes.Status404NotFound,
