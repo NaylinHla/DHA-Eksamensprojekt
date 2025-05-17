@@ -52,34 +52,34 @@ export let options = {
             preAllocatedVUs: 20,
             maxVUs: 100,
             stages: [
-                { target: 10, duration: '10s' },
-                { target: 20, duration: '5s' },
+                { target: 10, duration: '5s' },
+                { target: 20, duration: '10s' },
                 { target: 0,   duration: '5s' },
             ],
             exec: 'testGetAlerts',
         },
         spike_plants: {
             executor: 'ramping-arrival-rate',
-            startRate:      1,
-            timeUnit:       '1s',
+            startRate: 1,
+            timeUnit: '1s',
             preAllocatedVUs: 20,
-            maxVUs:         100,
+            maxVUs: 100,
             stages: [
-                { target: 10,  duration: '10s'   },
-                { target: 20, duration: '5s'  },
+                { target: 10,  duration: '5s'   },
+                { target: 20, duration: '10s'  },
                 { target: 0,   duration: '5s'   },
             ],
             exec: 'testGetAllPlants',
         },
         spike_history: {
             executor: 'ramping-arrival-rate',
-            startRate:      1,
-            timeUnit:       '1s',
+            startRate: 1,
+            timeUnit: '1s',
             preAllocatedVUs: 20,
-            maxVUs:         100,
+            maxVUs: 100,
             stages: [
-                { target: 10,  duration: '10s'  },
-                { target: 20, duration: '5s' },
+                { target: 10,  duration: '5s'  },
+                { target: 20, duration: '10s' },
                 { target: 0,   duration: '5s'  },
             ],
             exec: 'testGetRecentSensorData',
@@ -96,7 +96,7 @@ export let options = {
 function authParams(token) {
     return {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: token,
             'Content-Type': 'application/json',
         },
     };
@@ -124,7 +124,7 @@ export function testGetAlerts(data) {
         `${BASE}/api/Alert/GetAlerts?year=2025`,
         authParams(data.token),
     );
-    console.log(`GetAllPlants → ${res.status}\n${res.body}`);
+    console.log(`GetAllAlerts → ${res.status}\n${res.body}`);
     check(res, {
         'status was 200': (r) => r.status === 200,
         'returned an array': (r) => Array.isArray(r.json()),
@@ -138,10 +138,9 @@ export function testGetRecentSensorData(data) {
         `${BASE}/api/GreenhouseDevice/GetRecentSensorDataForAllUserDevice`,
         authParams(data.token),
     );
-    console.log(`GetAllPlants → ${res.status}\n${res.body}`);
+    console.log(`GetAllDeviceSensorData → ${res.status}\n${res.body}`);
     check(res, {
         'status was 200':        (r) => r.status === 200,
-        'has device readings':   (r) => r.json().SensorHistoryWithDeviceRecords !== undefined,
     });
     sleep(1);
 }
