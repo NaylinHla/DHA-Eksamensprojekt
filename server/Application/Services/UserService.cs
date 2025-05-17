@@ -2,83 +2,78 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
+using FluentValidation;
 
 namespace Application.Services;
 
-public class UserService : IUserService
+public class UserService(
+    IUserRepository userRepository, 
+    ISecurityService securityService,
+    IValidator<DeleteUserDto> deleteUserValidator,
+    IValidator<PatchUserEmailDto> patchUserEmailValidator,
+    IValidator<PatchUserPasswordDto> patchUserPasswordValidator)
+    : IUserService
 {
-    private readonly ISecurityService _securityService;
-    private readonly IUserRepository _userRepository;
-
-    public UserService(IUserRepository userRepository, ISecurityService securityService)
+    public async Task<User> DeleteUser(DeleteUserDto request)
     {
-        _userRepository = userRepository;
-        _securityService = securityService;
-    }
-
-    public User DeleteUser(DeleteUserDto request)
-    {
-        var user = _userRepository.GetUserOrNull(request.Email);
-        if (user == null)
-            throw new KeyNotFoundException("Bruger blev ikke fundet.");
+        await deleteUserValidator.ValidateAndThrowAsync(request);
+        var user = userRepository.GetUserOrNull(request.Email)
+            ?? throw new KeyNotFoundException("User not found.");
 
         // Base anonymized email
-        var baseEmail = "Deleted@User.com";
+        const string baseEmail = "Deleted@User.com";
         var updatedEmail = baseEmail;
         var counter = 1;
 
         // Ensure email is unique
-        while (_userRepository.EmailExists(updatedEmail))
+        while (await userRepository.EmailExistsAsync(updatedEmail))
         {
             updatedEmail = $"Deleted{counter}@User.com";
             counter++;
         }
 
         // Anonymize user
-        user.FirstName = "Slettet";
-        user.LastName = "Bruger";
+        user.FirstName = "Deleted";
+        user.LastName = "User";
         user.Email = updatedEmail;
         user.Country = "-";
         user.Birthday = DateTime.MinValue;
-
-        _userRepository.UpdateUser(user);
-        _userRepository.Save();
+        
+        userRepository.UpdateUser(user);
+        userRepository.Save();
 
         return user;
     }
 
-    public User PatchUserEmail(PatchUserEmailDto request)
+    public async Task<User> PatchUserEmail(PatchUserEmailDto request)
     {
-        var user = _userRepository.GetUserOrNull(request.OldEmail);
-        if (user == null)
-            throw new KeyNotFoundException("Bruger blev ikke fundet.");
-
-        // Ensure email is unique
-        if (_userRepository.EmailExists(request.NewEmail))
-            throw new ArgumentException("Emailen er allerede i brug.");
+        await patchUserEmailValidator.ValidateAndThrowAsync(request);
+        var user = userRepository.GetUserOrNull(request.OldEmail)
+            ?? throw new KeyNotFoundException("User not found.");
 
         user.Email = request.NewEmail;
-        _userRepository.UpdateUser(user);
-        _userRepository.Save();
+        
+        userRepository.UpdateUser(user);
+        userRepository.Save();
 
         return user;
     }
 
-    public User PatchUserPassword(string email, PatchUserPasswordDto request)
+    public async Task<User> PatchUserPassword(string email, PatchUserPasswordDto request)
     {
-        var user = _userRepository.GetUserOrNull(email);
-        if (user == null)
-            throw new KeyNotFoundException("Bruger blev ikke fundet.");
+        await patchUserPasswordValidator.ValidateAndThrowAsync(request);
+        var user = userRepository.GetUserOrNull(email)
+            ?? throw new KeyNotFoundException("User not found.");
 
-        _securityService.VerifyPasswordOrThrow(request.OldPassword + user.Salt, user.Hash);
+        securityService.VerifyPasswordOrThrow(request.OldPassword + user.Salt, user.Hash);
 
-        var newSalt = _securityService.GenerateSalt();
-        var newHash = _securityService.HashPassword(request.NewPassword + newSalt);
+        var newSalt = securityService.GenerateSalt();
+        var newHash = securityService.HashPassword(request.NewPassword + newSalt);
 
         user.Salt = newSalt;
         user.Hash = newHash;
-        _userRepository.UpdateUser(user);
-        _userRepository.Save();
+        userRepository.UpdateUser(user);
+        userRepository.Save();
 
         return user;
     }

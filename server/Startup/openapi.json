@@ -6,6 +6,384 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/AlertCondition/GetConditionAlertPlant": {
+      "get": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_GetConditionAlertPlant",
+        "parameters": [
+          {
+            "name": "conditionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionAlertPlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/GetConditionAlertPlants": {
+      "get": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_GetConditionAlertPlants",
+        "parameters": [
+          {
+            "name": "plantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConditionAlertPlantResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/CreateConditionAlertPlant": {
+      "post": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_CreateConditionAlertPlant",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "plantId",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "format": "guid"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionAlertPlantResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/DeleteConditionAlertPlant": {
+      "delete": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_DeleteConditionAlertPlant",
+        "parameters": [
+          {
+            "name": "conditionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/GetConditionAlertUserDevice": {
+      "get": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_GetConditionAlertUserDevice",
+        "parameters": [
+          {
+            "name": "conditionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionAlertUserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/GetConditionAlertUserDevices": {
+      "get": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_GetConditionAlertUserDevices",
+        "parameters": [
+          {
+            "name": "userDeviceId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConditionAlertUserDeviceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/CreateConditionAlertUserDevice": {
+      "post": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_CreateConditionAlertUserDevice",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConditionAlertUserDeviceCreateDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionAlertUserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/EditConditionAlertUserDevice": {
+      "patch": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_EditConditionAlertUserDevice",
+        "parameters": [
+          {
+            "name": "conditionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConditionAlertUserDeviceEditDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionAlertUserDeviceResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AlertCondition/DeleteConditionAlertUserDevice": {
+      "delete": {
+        "tags": [
+          "AlertCondition"
+        ],
+        "operationId": "AlertCondition_DeleteConditionAlertUserDevice",
+        "parameters": [
+          {
+            "name": "conditionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Alert/GetAlerts": {
       "get": {
         "tags": [
@@ -1331,6 +1709,83 @@
   },
   "components": {
     "schemas": {
+      "ConditionAlertPlantResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "conditionAlertPlantId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "plantId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "waterNotify": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConditionAlertUserDeviceResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "conditionAlertUserDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "sensorType": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          }
+        }
+      },
+      "ConditionAlertUserDeviceCreateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userDeviceId",
+          "sensorType",
+          "condition"
+        ],
+        "properties": {
+          "userDeviceId": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          },
+          "sensorType": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "condition": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1
+          }
+        }
+      },
+      "ConditionAlertUserDeviceEditDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sensorType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "condition": {
+            "type": "string",
+            "maxLength": 20
+          }
+        }
+      },
       "Alert": {
         "type": "object",
         "additionalProperties": false,
@@ -2058,7 +2513,7 @@
           },
           "plantType": {
             "type": "string",
-            "maxLength": 100,
+            "maxLength": 50,
             "minLength": 1
           },
           "plantNotes": {
