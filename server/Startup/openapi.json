@@ -2513,7 +2513,7 @@
           },
           "plantType": {
             "type": "string",
-            "maxLength": 100,
+            "maxLength": 50,
             "minLength": 1
           },
           "plantNotes": {

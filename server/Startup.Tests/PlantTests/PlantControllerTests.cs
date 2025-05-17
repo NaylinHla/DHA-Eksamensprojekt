@@ -211,7 +211,7 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             PlantType = "Fungus",
             PlantNotes = "Move to bigger pot",
             WaterEvery = 5,
-            LastWatered = DateTime.UtcNow.Date.AddDays(2)
+            LastWatered = DateTime.UtcNow.Date
         };
 
         // Act

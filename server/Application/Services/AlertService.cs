@@ -1,26 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
+using FluentValidation;
 using Infrastructure.Logging;
 
 namespace Application.Services;
 
-public class AlertService(IAlertRepository alertRepo, IConnectionManager ws) : IAlertService
+public class AlertService(
+    IAlertRepository alertRepo, 
+    IConnectionManager ws,
+    IValidator<AlertCreateDto> alertCreateValidator) : IAlertService
 {
     public async Task<Alert> CreateAlertAsync(Guid userId, AlertCreateDto dto)
     {
         MonitorService.Log.Debug("Entered CreateAlertAsync method in AlertService");
-
-        if (dto.AlertConditionId == null)
-        {
-            MonitorService.Log.Error("AlertConditionId was null when creating an alert");
-            throw new ArgumentException("AlertConditionId cannot be null");
-        }
+        
+        await alertCreateValidator.ValidateAndThrowAsync(dto);
 
         var alert = new Alert
         {
@@ -33,12 +30,12 @@ public class AlertService(IAlertRepository alertRepo, IConnectionManager ws) : I
             AlertDeviceConditionId = !dto.IsPlantCondition ? dto.AlertConditionId : null
         };
 
-        MonitorService.Log.Debug("Creating alert for user " + userId + " with name " + dto.AlertName);
+        MonitorService.Log.Debug("Creating alert for user {UserId} with name {AlertName}", userId,dto.AlertName);
 
         var savedAlert = await alertRepo.AddAlertAsync(alert);
 
-        string topic = "alerts-" + userId;
-        MonitorService.Log.Debug("Broadcasting alert " + alert.AlertId + " to topic " + topic);
+        var topic = "alerts-" + userId;
+        MonitorService.Log.Debug("Broadcasting alert {AlertId} to topic {Topic} ", alert.AlertId ,topic);
 
         await ws.BroadcastToTopic(topic, new
         {
@@ -54,14 +51,14 @@ public class AlertService(IAlertRepository alertRepo, IConnectionManager ws) : I
             }
         });
 
-        MonitorService.Log.Debug("Successfully created and broadcast alert " + alert.AlertId);
+        MonitorService.Log.Debug("Successfully created and broadcast alert {AlertId} ", alert.AlertId);
 
         return savedAlert;
     }
 
     public async Task<List<AlertResponseDto>> GetAlertsAsync(Guid userId, int? year = null)
     {
-        MonitorService.Log.Debug("Entered GetAlertsAsync method in AlertService for user " + userId + " and year " + year);
+        MonitorService.Log.Debug("Entered GetAlertsAsync method in AlertService for user: {UserId} and year: {Year} ", userId, year);
         return await alertRepo.GetAlertsAsync(userId, year);
     }
 }

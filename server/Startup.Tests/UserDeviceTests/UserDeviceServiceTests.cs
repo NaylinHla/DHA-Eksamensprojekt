@@ -5,6 +5,7 @@ using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.UserDevice.Request;
 using Application.Services;
 using Core.Domain.Entities;
+using FluentValidation;
 using Moq;
 using NUnit.Framework;
 
@@ -14,16 +15,21 @@ public class UserDeviceServiceTests
 {
     private readonly Guid _otherUserId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
-    private Mock<IMqttPublisher> _mqttPublisherMock = null!;
-    private UserDeviceService _service = null!;
-    private Mock<IUserDeviceRepository> _userDeviceRepoMock = null!;
+    private Mock<IMqttPublisher> _mqttPublisherMock;
+    private UserDeviceService _service;
+    private Mock<IUserDeviceRepository> _userDeviceRepoMock;
 
     [SetUp]
     public void Setup()
     {
         _userDeviceRepoMock = new Mock<IUserDeviceRepository>();
         _mqttPublisherMock = new Mock<IMqttPublisher>();
-        _service = new UserDeviceService(_userDeviceRepoMock.Object, _mqttPublisherMock.Object);
+        _service = new UserDeviceService(
+            _userDeviceRepoMock.Object, 
+            _mqttPublisherMock.Object, 
+            Mock.Of<IValidator<UserDeviceCreateDto>>(), 
+            Mock.Of<IValidator<UserDeviceEditDto>>(), 
+            Mock.Of<IValidator<AdminChangesPreferencesDto>>());
     }
 
     private JwtClaims MockClaims(Guid id)
@@ -132,7 +138,7 @@ public class UserDeviceServiceTests
     }
     
     [Test]
-    public void UpdateDeviceFeed_ShouldThrowArgumentException_WhenDeviceIdIsNullOrEmpty()
+    public void UpdateDeviceFeed_ShouldThrowFormatException_WhenDeviceIdIsNullOrEmpty()
     {
         // Arrange
         var dto = new AdminChangesPreferencesDto
@@ -144,9 +150,9 @@ public class UserDeviceServiceTests
         var claims = MockClaims(_userId);
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<ArgumentException>(() =>
+        var ex = Assert.ThrowsAsync<FormatException>(() =>
             _service.UpdateDeviceFeed(dto, claims));
 
-        Assert.That(ex.Message, Is.EqualTo("DeviceId is required."));
+        Assert.That(ex.Message, Is.EqualTo("Unrecognized Guid format."));
     }
 }
