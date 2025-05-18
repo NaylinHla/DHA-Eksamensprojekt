@@ -58,6 +58,7 @@ const PlantCarousel: React.FC<Props> = ({ plants, className = "" }) => {
             ref={setContainerRef}
             className={`w-full card rounded-xl bg-[var(--color-surface)] shadow flex flex-col ${className}`}
         >
+            <h2 className="text-fluid-header text-center">Your Plants:</h2>
             <div className="card-body p-fluid pb-0">
                 <div className="flex items-center gap-fluid">
                     <button

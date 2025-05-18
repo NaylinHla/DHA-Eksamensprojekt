@@ -175,9 +175,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     </ul>
                 </aside>
                 <article className="relative flex-1 p-8 overflow-y-auto">
-                    <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]" aria-label="edit">
-                        <Pencil size={20} />
-                    </button>
                     <p className="italic text-gray-500">
                         User data will appear here once the <code>/api/User/GetCurrent</code> endpoint is available.
                     </p>

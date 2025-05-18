@@ -166,7 +166,8 @@ export default function DashboardPage() {
             <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-fluid px-6 py-6">
 
             {/* circle card */}
-                <div className="card flex-1 bg-[var(--color-surface)] shadow flex flex-col gap-fluid h-[clamp(12rem,20vw,20rem)]">
+                <div className="card flex-1 bg-[var(--color-surface)] shadow flex flex-col gap-fluid h-[clamp(12rem,30vw,32rem)]">
+                    <h2 className="text-fluid-header text-center ">Your Device:</h2>
                     <div className="card-body p-fluid">
                         {loadingLive ? (
                             <p className="text-center">Loading…</p>
@@ -186,7 +187,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* plant carousel */}
-                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col h-[clamp(10rem,20vw,20rem)]" plants={plants}/>
+                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col h-[clamp(13rem,30vw,32rem)]" plants={plants}/>
             </main>
         </div>
     );

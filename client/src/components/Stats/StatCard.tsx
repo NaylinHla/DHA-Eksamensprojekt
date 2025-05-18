@@ -9,8 +9,8 @@ export interface StatCardProps {
 
 export const StatCard: React.FC<StatCardProps> = ({title, loading, value, emphasisClass = "",}) => (
     <div className="card shadow rounded-xl bg-[var(--color-surface)]">
-        <div className="card-body text-center space-y-1">
-            <p className="text-lg">{title}</p>
+        <div className="card-body text-center space-y-1 ">
+            <p className="text-fluid-header">{title}</p>
             <p
                 className={`
           font-bold

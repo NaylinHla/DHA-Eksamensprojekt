@@ -26,7 +26,7 @@ export const CircleStat: React.FC<CircleStatProps> = ({label, value, unit, color
           {value == null ? "—" : `${value.toFixed(1)}${unit}`}
         </span>
             </div>
-            <p className="mt-2 text-sm text-center text-gray-500">{label}</p>
+            <p className="mt-2 text-sm text-center text-fluid text-gray-500">{label}</p>
         </div>
     );
 };
