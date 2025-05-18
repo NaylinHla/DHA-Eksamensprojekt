@@ -16,8 +16,8 @@ const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggl
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
-                <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-64">
-                    <Search className="absolute h-4 w-4 left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+                <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-[clamp(12rem,28vw,20rem)]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 placeholder h-[clamp(0.75rem,1vw,1.25rem)] w-[clamp(0.75rem,1vw,1.50rem)] text-muted-foreground"/>
                     <input
                         placeholder="Search"
                         value={term}
@@ -25,14 +25,14 @@ const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggl
                             setTerm(e.target.value);
                             onSearch(e.target.value);
                         }}
-                        className="pl-9 w-full"
+                        className="pl-9 w-full text-[clamp(0.85rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
                     />
                 </div>
 
-                <label className="inline-flex items-center gap-2 text-sm">
+                <label className="inline-flex items-center gap-2 text-[clamp(0.8rem,1vw,1.25rem)]">
                     <input
                         type="checkbox"
-                        className="checkbox checkbox-xs"
+                        className="checkbox"
                         checked={showDead}
                         onChange={onToggleDead}
                     />

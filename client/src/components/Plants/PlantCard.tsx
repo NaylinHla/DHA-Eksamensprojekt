@@ -65,9 +65,7 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
                 onClick={() => onClick?.(plant)}
                 className={`
           relative flex flex-col justify-between rounded-2xl border shadow-sm p-3
-          bg-[var(--color-surface)] hover:shadow-md transition-shadow
-          w-[clamp(10rem,14vw,18rem)]    /*  fluid width  */
-          h-[clamp(14rem,20vw,22rem)]    /*  fluid height */
+          bg-[var(--color-surface)] hover:shadow-md transition-shadow w-[clamp(10rem,14vw,18rem)] h-[clamp(14rem,20vw,22rem)]
           ${deadStyle}
         `}
             >

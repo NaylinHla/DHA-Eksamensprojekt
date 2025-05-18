@@ -102,13 +102,13 @@ const WeatherView: React.FC = () => {
             
             {/* Search bar */}
             <div className="px-6 pt-4">
-                <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-[clamp(12rem,28vw,20rem)]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 placeholder h-[clamp(0.75rem,1vw,1.25rem)] w-[clamp(0.75rem,1vw,1.50rem)] text-muted-foreground"/>
                     <input
                         value={q}
                         onChange={e => setQ(e.target.value)}
                         placeholder="Search city / country"
-                        className="pl-9 input input-sm w-full bg-[var(--color-surface)]"
+                        className="pl-9 w-full text-[clamp(0.85rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
                     />
                     {!!hits.length && (
                         <ul className="absolute z-10 bg-[var(--color-surface)] shadow rounded-lg mt-1 w-full max-h-44 overflow-auto">
