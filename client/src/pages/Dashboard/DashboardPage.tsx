@@ -43,18 +43,18 @@ export default function DashboardPage() {
     const [selectedDeviceId, setDeviceId] = useAtom(SelectedDeviceIdAtom);
 
     // States
-    const [devices,       setDevices]       = useState<UserDevice[]>([]);
-    const [loadingDev,    setLD]            = useState(true);
+    const [devices, setDevices] = useState<UserDevice[]>([]);
+    const [loadingDev, setLD] = useState(true);
 
-    const [weather,       setWeather]       = useState<{ temp: number; humidity: number } | null>(null);
-    const [loadingWX,     setLW]            = useState(true);
+    const [weather,       setWeather] = useState<{ temp: number; humidity: number } | null>(null);
+    const [loadingWX, setLW] = useState(true);
 
-    const [plants,        setPlants]        = useState<PlantStatus[]>([]);
-    const [loadingPlants, setLP]            = useState(true);
+    const [plants, setPlants] = useState<PlantStatus[]>([]);
+    const [loadingPlants, setLP] = useState(true);
 
     /* latest snapshot for circles */
-    const [latest,        setLatest]        = useState<Record<string, SensorHistoryWithDeviceDto>>({});
-    const [loadingLive,   setLoadingLive]   = useState(true);
+    const [latest, setLatest]        = useState<Record<string, SensorHistoryWithDeviceDto>>({});
+    const [loadingLive, setLoadingLive]   = useState(true);
     
     // Fetch Devices
     useEffect(() => {
@@ -156,7 +156,7 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold px-6 pt-4 pb-2">{`Good ${greet}!`}</h2>
 
             {/* stat cards */}
-            <div className="grid gap-6 px-6 md:grid-cols-3">
+            <div className="grid gap-6 px-6 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] 2xl:gap-10">
                 <StatCard title="Temperature" loading={loadingWX} value={`${Math.round(weather?.temp ?? 0)}°C`} />
                 <StatCard title="Humidity"    loading={loadingWX} value={`${Math.round(weather?.humidity ?? 0)}%`} />
                 <StatCard title="Need Watering" loading={loadingPlants}
@@ -205,7 +205,7 @@ const StatCard: React.FC<{ title: string; loading: boolean; value:string; cls?:s
         <div className="card shadow rounded-xl bg-[var(--color-surface)]">
             <div className="card-body text-center">
                 <p className="text-lg">{title}</p>
-                <p className={`text-5xl font-bold ${cls}`}>{loading ? "–" : value}</p>
+                <p className="text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl font-bold ${cls}">{loading ? "–" : value}</p>
             </div>
         </div>
     );
@@ -213,8 +213,8 @@ const StatCard: React.FC<{ title: string; loading: boolean; value:string; cls?:s
 const CircleStat: React.FC<{ label:string; value:number|null; unit:string; color:string }> =
     ({ label, value, unit, color }) => (
         <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28 rounded-full border-4 flex items-center justify-center" style={{ borderColor: color }}>
-                <span className="text-xl font-bold select-none">
+            <div className="relative w-28  h-28 md:w-32 md:h-32 xl:w-40 xl:h-40 2xl:w-48 2xl:h-48 rounded-full border-[6px] xl:border-[8px] flex items-center justify-center" style={{ borderColor: color }}>
+                <span className="text-xl md:text-2xl xl:text-3xl 2xl:text-4xl font-bold">
                     {value == null ? "—" : `${value.toFixed(1)}${unit}`}
                 </span>
             </div>
