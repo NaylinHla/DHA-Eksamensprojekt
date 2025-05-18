@@ -110,6 +110,9 @@ html {
     .text-fluid-lg {
         font-size: clamp(2.5rem, 2vw, 4rem);
     }
+    .text-fluid-header {
+        font-size: clamp(1.5rem,3vw,3rem);
+    }
     /* fluid padding */
     .p-fluid {
         padding: clamp(1rem, 1vw, 2rem);
