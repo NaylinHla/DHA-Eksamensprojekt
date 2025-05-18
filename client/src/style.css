@@ -99,3 +99,28 @@ html {
         --tw-ring-color: var(--n-content);
     }
 }
+
+
+@layer utilities {
+    /* fluid font size (for general text) */
+    .text-fluid {
+        font-size: clamp(0.85rem, 1vw, 1.25rem);
+    }
+    /* fluid heading size */
+    .text-fluid-lg {
+        font-size: clamp(2.5rem, 2vw, 4rem);
+    }
+    /* fluid padding */
+    .p-fluid {
+        padding: clamp(1rem, 1vw, 2rem);
+    }
+    /* fluid gap */
+    .gap-fluid {
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+    }
+    /* fluid icon size */
+    .icon-fluid {
+        width: clamp(0.75rem, 1vw, 2rem);
+        height: clamp(0.75rem, 1vw, 2rem);
+    }
+}
