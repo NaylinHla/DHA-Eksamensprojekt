@@ -31,11 +31,11 @@ const AlertOverview = () => {
             <div className="flex flex-grow overflow-hidden">
                 {/* Sidebar Year Filter */}
                 <aside
-                    className="bg-base-100 w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm text-gray-500">
+                    className=" w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm">
                     {selectedYear && (
                         <button
                             onClick={() => setSelectedYear(null)}
-                            className="w-full text-center py-2 px-3 rounded-md text-gray-500 hover:bg-red-100 transition font-semibold"
+                            className="w-full text-center py-2 px-3 rounded-md text-gray-500 hover:text-white hover:bg-neutral transition font-semibold"
                             title="Clear year filter"
                         >
                             Clear
@@ -46,8 +46,8 @@ const AlertOverview = () => {
                         <button
                             key={year}
                             onClick={() => setSelectedYear(year)}
-                            className={`w-full text-center py-2 px-3 rounded-md hover:bg-gray-100 transition ${
-                                selectedYear === year ? "text-[--color-primary] font-semibold bg-gray-200" : ""
+                            className={`w-full text-center py-2 px-3 rounded-md hover:bg-neutral hover:text-white transition ${
+                                selectedYear === year ? "text-white font-semibold bg-primary" : ""
                             }`}
                         >
                             {year}
@@ -75,7 +75,7 @@ const AlertOverview = () => {
                                 <div className="text-xs text-gray-500 mb-1">
                                     {formatDateTimeForUserTZ(alert.alertTime)}
                                 </div>
-                                <div className="bg-white text-black p-4 rounded-xl shadow-md whitespace-pre-line cursor-pointer"
+                                <div className="bg-[var(--color-surface)] p-4 rounded-xl shadow-md whitespace-pre-line cursor-pointer"
                                     onClick={() => handleAlertClick(alert)}
                                 >
                                     {alert.alertDesc}

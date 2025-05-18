@@ -42,7 +42,7 @@ const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggl
 
             <button
                 onClick={onWaterAll}
-                className="Btn btn-neutral bg-transparent rounded-2xl self-start lg:self-auto"
+                className="btn border-neutral bg-transparent btn-lg hover:text-white hover:bg-neutral self-start lg:self-auto"
             >
                 Water all plants
             </button>

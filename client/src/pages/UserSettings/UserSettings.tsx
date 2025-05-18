@@ -126,13 +126,13 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
             <TitleTimeHeader title="User Profile" />
             <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
-                <aside className="w-72 shrink-0 border-r border-gray-200 p-6 flex flex-col gap-4">
+                <aside className="w-72 shrink-0 border-r border-primary p-6 flex flex-col gap-4">
                     <h2 className="text-xl font-semibold">Settings</h2>
                     <div className="flex flex-col gap-3">
-                        <button onClick={() => setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">
+                        <button onClick={() => setOpenEmail(true)} className="btn border-neutral bg-transparent btn-sm hover:text-white hover:bg-neutral">
                             Change e-mail
                         </button>
-                        <button onClick={() => setOpenPassword(true)} className="btn btn-neutral bg-transparent btn-sm">
+                        <button onClick={() => setOpenPassword(true)} className="btn border-neutral bg-transparent btn-sm hover:text-white hover:bg-neutral">
                             Change password
                         </button>
                         <button onClick={() => setOpenDelete(true)} className="btn btn-error btn-sm flex items-center gap-1">
