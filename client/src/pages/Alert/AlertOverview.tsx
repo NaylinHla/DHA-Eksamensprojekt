@@ -31,7 +31,7 @@ const AlertOverview = () => {
             <div className="flex flex-grow overflow-hidden">
                 {/* Sidebar Year Filter */}
                 <aside
-                    className=" w-32 flex flex-col items-center py-6 px-2 space-y-2 text-sm">
+                    className="w-[clamp(8rem,15vw,12rem)] flex flex-col items-center p-fluid space-y-2 text-fluid">
                     {selectedYear && (
                         <button
                             onClick={() => setSelectedYear(null)}
@@ -46,7 +46,7 @@ const AlertOverview = () => {
                         <button
                             key={year}
                             onClick={() => setSelectedYear(year)}
-                            className={`w-full text-center py-2 px-3 rounded-md hover:bg-neutral hover:text-white transition ${
+                            className={`w-full text-center p-fluid rounded-md hover:bg-neutral hover:text-white transition ${
                                 selectedYear === year ? "text-white font-semibold bg-primary" : ""
                             }`}
                         >
@@ -56,7 +56,7 @@ const AlertOverview = () => {
                 </aside>
 
                 {/* Alerts Feed */}
-                <main className="flex-1 overflow-y-auto p-6 space-y-6">
+                <main className="flex-1 overflow-y-auto p-fluid space-y-6">
                     {loading ? (
                         <div className="flex justify-center items-center mt-20 text-gray-500">
                             <svg className="animate-spin h-6 w-6 mr-3 text-gray-500" viewBox="0 0 24 24">
@@ -68,14 +68,14 @@ const AlertOverview = () => {
                             Loading alerts...
                         </div>
                     ) : filteredAlerts.length === 0 ? (
-                        <div className="text-gray-400 text-center mt-12">No alerts found.</div>
+                        <div className="text-gray-400 text-center mt-[clamp(1rem,2vw,2rem)] text-fluid">No alerts found.</div>
                     ) : (
                         filteredAlerts.map((alert: Alert, index: number) => (
                             <div key={index}>
-                                <div className="text-xs text-gray-500 mb-1">
+                                <div className="text-fluid text-gray-500 mb-[clamp(0.25rem,0.5vw,0.5rem)]">
                                     {formatDateTimeForUserTZ(alert.alertTime)}
                                 </div>
-                                <div className="bg-[var(--color-surface)] p-4 rounded-xl shadow-md whitespace-pre-line cursor-pointer"
+                                <div className="bg-[var(--color-surface)] p-fluid rounded-xl shadow-md whitespace-pre-line cursor-pointer text-fluid"
                                     onClick={() => handleAlertClick(alert)}
                                 >
                                     {alert.alertDesc}
