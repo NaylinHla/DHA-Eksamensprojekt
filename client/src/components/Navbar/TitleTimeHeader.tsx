@@ -10,17 +10,17 @@ const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({title}) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-
-        return () => clearInterval(intervalId);
+        const id = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(id);
     }, []);
 
     return (
-        <header className="w-full bg-[var(--color-surface)] shadow px-6 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[--color-primary]">{title}</h1>
-            <span className="text-sm text-gray-600">
+        <header
+            className="w-full shadow bg-[var(--color-surface)] flex items-center justify-between"
+            style={{ padding: "clamp(0.75rem,1.5vw,1.5rem) clamp(1.5rem,3.5vw,4rem)" }}
+        >
+            <h1 className="font-bold text-[clamp(1.5rem,3vw,3rem)] text-[--color-primary]">{title}</h1>
+            <span className="text-[clamp(0.9rem,1.6vw,1.60rem)] text-gray-600 whitespace-nowrap">
         {formatDateTimeForUserTZ(currentTime)}
       </span>
         </header>

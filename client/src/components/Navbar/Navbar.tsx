@@ -31,17 +31,17 @@ export default function NavBar() {
     const liClass = "px-4 py-2 hover:bg-gray-100";
 
     return (
-        <header className="navbar bg-primary text-white sticky top-0 z-50 px-4 shadow-md">
+        <header className="navbar bg-primary text-white sticky top-0 z-50 px-4 shadow-md" style={{ padding: "clamp(0.5rem,1.5vw,1rem) clamp(1rem,3vw,2rem)" }}>
             <div className="navbar-start">
                 <Link
                     to="/"
-                    className="normal-case lg:text-3xl sm:text-2xl font-bold flex items-center gap-2"
+                    className="normal-case lg:text-3xl sm:text-2xl font-bold flex items-center gap-3 text-[clamp(1.25rem,2.8vw,2.25rem)]"
                 >
                     {/* Logo */}
                     <img
                         src={logo}
                         alt="Greenhouse logo"
-                        className="h-8 w-8 lg:h-10 lg:w-10 shrink-0"
+                        className="shrink-0 h-[clamp(3rem,5vw,6rem)] w-[clamp(3rem,5vw,6rem)]"
                     />
 
                     {/* Application name */}
@@ -60,7 +60,7 @@ export default function NavBar() {
                                         <NavLink
                                             to={to}
                                             className={({isActive}) =>
-                                                isActive ? "font-semibold underline" : undefined
+                                                `${isActive ? "font-semibold underline " : ""}text-[clamp(0.9rem,1.3vw,1.50rem)]`
                                             }
                                         >
                                             {label}
