@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history and tags teste213123
+          fetch-depth: 0  # Fetch all history and tags
 
       - name: Get Current Version
         id: current_version

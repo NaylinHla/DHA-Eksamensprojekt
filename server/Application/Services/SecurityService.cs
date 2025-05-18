@@ -27,16 +27,16 @@ public class SecurityService(
     public async Task<AuthResponseDto> Login(AuthLoginDto dto)
     {
         await loginValidator.ValidateAndThrowAsync(dto);
-        var player = repository.GetUserOrNull(dto.Email) 
+        var user = repository.GetUserOrNull(dto.Email) 
                      ?? throw new ValidationException("Username not found");
-        VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
-        
+        VerifyPasswordOrThrow(dto.Password + user.Salt, user.Hash);
+     
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = player.UserId.ToString(),
-                Role = player.Role,
+                Id = user.UserId.ToString(),
+                Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000)
                     .ToUnixTimeSeconds()
                     .ToString(),
