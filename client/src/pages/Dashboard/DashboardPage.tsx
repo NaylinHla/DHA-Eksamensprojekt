@@ -14,7 +14,7 @@ import {
     SelectedDeviceIdAtom,
     SensorHistoryDto,
     SensorHistoryWithDeviceDto,
-    UserDevice,
+    UserDevice, StatCard, CircleStatGrid, CircleStat, PlantCarousel,
 } from "../import";
 import {
     greenhouseDeviceClient,
@@ -22,12 +22,8 @@ import {
     userDeviceClient,
 } from "../../apiControllerClients.ts";
 import { cssVar } from "../../components/utils/Theme/theme.ts";
+import {CardPlant} from "../../components/Plants/PlantCard.tsx";
 ChartJS.register(CategoryScale, LinearScale, Legend, Tooltip);
-import { CardPlant } from "../../components/Modals/PlantCard";
-import PlantCarousel from "../../components/Modals/PlantCarousel.tsx";
-import {StatCard} from "../../components/Modals/StatCard.tsx";
-import {CircleStat} from "../../components/Modals/CircleStat.tsx";
-import { CircleStatGrid } from "../../components/Modals/CircleStatGrid.tsx";
 
 // Helpers
 const greeting = () => {

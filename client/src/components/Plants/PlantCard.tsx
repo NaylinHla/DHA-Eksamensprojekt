@@ -4,7 +4,8 @@ import PlantIcon from "../../assets/Favicon/Plant.svg?react";
 import {JwtAtom, PlantClient} from "../../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
-import ConfirmModal from "./ConfirmModal.tsx";
+import {ConfirmModal} from "../index.ts";
+
 
 const plantClient = new PlantClient(
     import.meta.env.VITE_API_URL ?? "http://localhost:5000"

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import PlantCard, { CardPlant } from "../Modals/PlantCard";
+import {PlantCard} from "../index.ts";
+import {CardPlant} from "./PlantCard.tsx";
 
 export type PlantStatus = CardPlant & { needsWater: boolean };
 

@@ -225,7 +225,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     type="date"
                     value={
                         data.planted
-                            ? format(data.planted, "yyyy-MM-dd")        // date‑fns helper
+                            ? format(data.planted, "yyyy-MM-dd")
                             : ""
                     }
                     onChange={e =>
