@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {Search} from "lucide-react";
+import {SearchBar} from "../index.ts";
 
 
 interface Props {
@@ -10,23 +11,14 @@ interface Props {
 }
 
 const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggleDead}) => {
-    const [term, setTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
 
     return (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
-                <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-[clamp(12rem,28vw,20rem)]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 placeholder h-[clamp(0.75rem,1vw,1.25rem)] w-[clamp(0.75rem,1vw,1.50rem)] text-muted-foreground"/>
-                    <input
-                        placeholder="Search"
-                        value={term}
-                        onChange={(e) => {
-                            setTerm(e.target.value);
-                            onSearch(e.target.value);
-                        }}
-                        className="pl-9 w-full text-[clamp(0.85rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
-                    />
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm}/>
                 </div>
 
                 <label className="inline-flex items-center gap-2 text-[clamp(0.8rem,1vw,1.25rem)]">

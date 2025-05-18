@@ -152,10 +152,10 @@ export default function DashboardPage() {
             <TitleTimeHeader title="Dashboard" />
 
             {/* greeting */}
-            <h2 className="text-2xl font-bold px-6 pt-4 pb-2">{`Good ${greet}!`}</h2>
+            <h2 className="font-bold text-fluid-header px-6 pt-[clamp(0.75rem,1.5vw,1.5rem)] pb-[clamp(0.5rem,1vw,1rem)]">{`Good ${greet}!`}</h2>
 
             {/* stat cards */}
-            <div className="grid gap-6 px-6 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] 2xl:gap-10">
+            <div className="grid auto-rows gap-fluid px-6 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
                 <StatCard title="Temperature"   loading={loadingWX} value={`${Math.round(weather?.temp ?? 0)}°C`} />
                 <StatCard title="Humidity"      loading={loadingWX} value={`${Math.round(weather?.humidity ?? 0)}%`} />
                 <StatCard title="Need Watering" loading={loadingPlants} value={needsWater ? "Yes" : "No"}
@@ -163,24 +163,22 @@ export default function DashboardPage() {
             </div>
             
             {/* main row */}
-            <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-6 px-6 py-6 overflow-y-auto">
+            <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-fluid px-6 py-6">
 
-                {/* circle card */}
-                <div className="card w-full lg:flex-1 lg:basis-0 rounded-xl bg-[var(--color-surface)] shadow flex flex-col">
-                    <div className="card-body">
-                        <h3 className="text-lg font-semibold mb-6 text-center">Your Device:</h3>
-
+            {/* circle card */}
+                <div className="card flex-1 bg-[var(--color-surface)] shadow flex flex-col gap-fluid h-[clamp(12rem,20vw,20rem)]">
+                    <div className="card-body p-fluid">
                         {loadingLive ? (
                             <p className="text-center">Loading…</p>
                         ) : live ? (
                             <CircleStatGrid>
-                                <CircleStat label="Temperature" unit="°C"  colorToken="primary" value={circleReadings.temperature} />
-                                <CircleStat label="Humidity"    unit="%"   colorToken="success" value={circleReadings.humidity}    />
-                                <CircleStat label="Pressure"    unit="hPa" colorToken="info"    value={circleReadings.pressure}    />
-                                <CircleStat label="Air Quality" unit="ppm" colorToken="warning" value={circleReadings.quality}     />
+                                <CircleStat label="Temperature" unit="°C" colorToken="primary" value={circleReadings.temperature}/>
+                                <CircleStat label="Humidity" unit="%" colorToken="success" value={circleReadings.humidity}/>
+                                <CircleStat label="Pressure" unit="hPa" colorToken="info"    value={circleReadings.pressure}/>
+                                <CircleStat label="Air Quality" unit="ppm" colorToken="warning" value={circleReadings.quality}/>
                             </CircleStatGrid>
                         ) : (
-                            <p className="text-center text-gray-500">
+                            <p className="text-fluid text-center text-gray-500">
                                 {Object.keys(latest).length ? "No data" : "No devices connected"}
                             </p>
                         )}
@@ -188,7 +186,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* plant carousel */}
-                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col" plants={plants}/>
+                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col h-[clamp(10rem,20vw,20rem)]" plants={plants}/>
             </main>
         </div>
     );
