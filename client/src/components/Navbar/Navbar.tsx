@@ -35,7 +35,7 @@ export default function NavBar() {
             <div className="navbar-start">
                 <Link
                     to="/"
-                    className="normal-case font-bold flex items-center gap-fluid text-[clamp(1.25rem,2.8vw,2.25rem)]"
+                    className="normal-case font-bold flex items-center gap-fluid text-[clamp(1rem,2.8vw,2.25rem)]"
                 >
                     {/* Logo */}
                     <img

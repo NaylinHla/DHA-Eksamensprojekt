@@ -121,9 +121,23 @@ html {
     .gap-fluid {
         gap: clamp(0.75rem, 2vw, 1.5rem);
     }
+    .gap-fluid-lg {
+        gap: clamp(0.20rem, 2vw, 2rem);
+    }
     /* fluid icon size */
     .icon-fluid {
         width: clamp(0.75rem, 1vw, 2rem);
         height: clamp(0.75rem, 1vw, 2rem);
     }
+    /* Card size */
+    .card-fluid {
+        width: clamp(10rem,14vw,18rem);
+        height: clamp(12rem,20vw,22rem);
+    }
+    
+    /* Modal Size */
+    .modal-fluid {
+        width: clamp(10rem,14vw,30rem);
+        height: clamp(12rem,20vw,50rem);
+        }
 }

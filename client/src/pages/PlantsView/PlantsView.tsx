@@ -122,7 +122,7 @@ const PlantsView: React.FC = () => {
                     onToggleDead={() => setShowDead((d) => !d)}
                 />
 
-                <div className="grid gap-6 auto-rows-fr grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]">
+                <div className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]">
                     {visible.map(p => (
                         <PlantCard
                             key={p.id}
