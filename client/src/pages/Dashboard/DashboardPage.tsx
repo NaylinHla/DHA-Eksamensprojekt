@@ -25,6 +25,9 @@ import { cssVar } from "../../components/utils/Theme/theme.ts";
 ChartJS.register(CategoryScale, LinearScale, Legend, Tooltip);
 import { CardPlant } from "../../components/Modals/PlantCard";
 import PlantCarousel from "../../components/Modals/PlantCarousel.tsx";
+import {StatCard} from "../../components/Modals/StatCard.tsx";
+import {CircleStat} from "../../components/Modals/CircleStat.tsx";
+import { CircleStatGrid } from "../../components/Modals/CircleStatGrid.tsx";
 
 // Helpers
 const greeting = () => {
@@ -157,12 +160,12 @@ export default function DashboardPage() {
 
             {/* stat cards */}
             <div className="grid gap-6 px-6 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] 2xl:gap-10">
-                <StatCard title="Temperature" loading={loadingWX} value={`${Math.round(weather?.temp ?? 0)}°C`} />
-                <StatCard title="Humidity"    loading={loadingWX} value={`${Math.round(weather?.humidity ?? 0)}%`} />
-                <StatCard title="Need Watering" loading={loadingPlants}
-                          value={needsWater ? "Yes" : "No"} cls={needsWater ? "text-error":"text-success"} />
+                <StatCard title="Temperature"   loading={loadingWX} value={`${Math.round(weather?.temp ?? 0)}°C`} />
+                <StatCard title="Humidity"      loading={loadingWX} value={`${Math.round(weather?.humidity ?? 0)}%`} />
+                <StatCard title="Need Watering" loading={loadingPlants} value={needsWater ? "Yes" : "No"}
+                          emphasisClass={needsWater ? "text-error" : "text-success"} />
             </div>
-
+            
             {/* main row */}
             <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-6 px-6 py-6 overflow-y-auto">
 
@@ -174,16 +177,12 @@ export default function DashboardPage() {
                         {loadingLive ? (
                             <p className="text-center">Loading…</p>
                         ) : live ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 place-items-center">
-                                <CircleStat label="Temperature" unit="°C" color={cssVar("--color-primary")}
-                                            value={circleReadings.temperature}/>
-                                <CircleStat label="Humidity" unit="%" color={cssVar("--color-success")}
-                                            value={circleReadings.humidity}/>
-                                <CircleStat label="Pressure" unit="hPa" color={cssVar("--color-info")}
-                                            value={circleReadings.pressure}/>
-                                <CircleStat label="Air Quality" unit="ppm" color={cssVar("--color-warning")}
-                                            value={circleReadings.quality}/>
-                            </div>
+                            <CircleStatGrid>
+                                <CircleStat label="Temperature" unit="°C"  colorToken="primary" value={circleReadings.temperature} />
+                                <CircleStat label="Humidity"    unit="%"   colorToken="success" value={circleReadings.humidity}    />
+                                <CircleStat label="Pressure"    unit="hPa" colorToken="info"    value={circleReadings.pressure}    />
+                                <CircleStat label="Air Quality" unit="ppm" colorToken="warning" value={circleReadings.quality}     />
+                            </CircleStatGrid>
                         ) : (
                             <p className="text-center text-gray-500">
                                 {Object.keys(latest).length ? "No data" : "No devices connected"}
@@ -198,26 +197,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-// Sub Components
-const StatCard: React.FC<{ title: string; loading: boolean; value:string; cls?:string; }> =
-    ({ title, loading, value, cls="" }) => (
-        <div className="card shadow rounded-xl bg-[var(--color-surface)]">
-            <div className="card-body text-center">
-                <p className="text-lg">{title}</p>
-                <p className="text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl font-bold ${cls}">{loading ? "–" : value}</p>
-            </div>
-        </div>
-    );
-
-const CircleStat: React.FC<{ label:string; value:number|null; unit:string; color:string }> =
-    ({ label, value, unit, color }) => (
-        <div className="flex flex-col items-center">
-            <div className="relative w-28  h-28 md:w-32 md:h-32 xl:w-40 xl:h-40 2xl:w-48 2xl:h-48 rounded-full border-[6px] xl:border-[8px] flex items-center justify-center" style={{ borderColor: color }}>
-                <span className="text-xl md:text-2xl xl:text-3xl 2xl:text-4xl font-bold">
-                    {value == null ? "—" : `${value.toFixed(1)}${unit}`}
-                </span>
-            </div>
-            <p className="mt-2 text-sm text-center text-gray-500">{label}</p>
-        </div>
-    );
