@@ -2115,7 +2115,6 @@ export interface UpdateUserSettingDto {
 }
 
 export interface UserSettingsResponseDto {
-    userId?: string;
     celsius?: boolean;
     darkTheme?: boolean;
     confirmDialog?: boolean;

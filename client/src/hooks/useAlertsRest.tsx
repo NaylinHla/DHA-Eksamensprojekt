@@ -52,7 +52,8 @@ export default function useAlertsRest() {
 
     // subscribe to topic changes
     useEffect(() => {
-        const userId = "6d620123-a859-40a1-a520-1f0f445db9f9"; // hardcoded user ID
+        const { sub, Id } = JSON.parse(atob(jwt.split(".")[1]));
+        const userId = (sub || Id) ?? "";
         const topic = `alerts-${userId}`;
 
         if (prevTopic.current && prevTopic.current !== topic) {
