@@ -15,6 +15,6 @@ public class ConditionAlertUserDeviceCreateDto
         
     [Required]
     [MaxLength(20)]
-    [RegularExpression(@"^(<=|=>)\d+(\.\d+)?$", ErrorMessage = "Condition must be in the format '<=Number' or '=>Number' where Number can be an integer or decimal.")]
+    [RegularExpression(@"^(<=|>=)\d+(\.\d+)?$", ErrorMessage = "Condition must be in the format '<=Number' or '>=Number' where Number can be an integer or decimal.")]
     public string Condition { get; init; } = null!;
 }

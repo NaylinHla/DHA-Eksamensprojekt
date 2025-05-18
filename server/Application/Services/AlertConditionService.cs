@@ -1,18 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Exceptions;
+using FluentValidation;
 using Infrastructure.Logging;
+using ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 
 namespace Application.Services
 {
     public class AlertConditionService(
         IAlertConditionRepository alertConditionRepo,
         IPlantRepository plantRepository,
-        IUserDeviceRepository userDeviceRepository)
-        : IAlertConditionService
+        IUserDeviceRepository userDeviceRepository, 
+        IValidator<ConditionAlertUserDeviceCreateDto> conditionAlertUserDeviceCreateValidator,
+        IValidator<ConditionAlertUserDeviceEditDto> conditionAlertUserDeviceEditValidator,
+        IValidator<ConditionAlertPlantCreateDto> conditionAlertPlantCreateValidator): IAlertConditionService
     {
         private const string AlertConditionNotFound = "Alert Condition not found.";
         private const string UnauthorizedAlertConditionAccess = "You do not own this alert condition.";
@@ -59,6 +62,9 @@ namespace Application.Services
             ConditionAlertPlantCreateDto dto,
             JwtClaims claims)
         {
+            
+            await conditionAlertPlantCreateValidator.ValidateAndThrowAsync(dto);
+            
             MonitorService.Log.Debug(
                 "Creating new alert condition plant with ConditionAlertPlantId: {ConditionAlertPlantId}",
                 dto.PlantId);
@@ -163,6 +169,8 @@ namespace Application.Services
         {
             MonitorService.Log.Debug("Creating new alert condition user device");
 
+            await conditionAlertUserDeviceCreateValidator.ValidateAndThrowAsync(dto);
+            
             var deviceOwnerId = await userDeviceRepository.GetUserDeviceOwnerUserIdAsync(Guid.Parse(dto.UserDeviceId));
             if (deviceOwnerId != Guid.Parse(claims.Id))
             {
@@ -184,6 +192,8 @@ namespace Application.Services
                 "Editing Alert Condition User Device with ConditionAlertUserDeviceId: {UserDeviceId}",
                 dto.UserDeviceId);
 
+            await conditionAlertUserDeviceEditValidator.ValidateAndThrowAsync(dto);
+            
             var deviceOwnerId = await userDeviceRepository.GetUserDeviceOwnerUserIdAsync(Guid.Parse(dto.UserDeviceId));
             if (deviceOwnerId != Guid.Parse(claims.Id))
             {

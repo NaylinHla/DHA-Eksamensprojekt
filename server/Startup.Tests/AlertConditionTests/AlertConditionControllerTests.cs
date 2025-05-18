@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Api.Rest.Controllers;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.RestDtos;
@@ -257,8 +258,11 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         await Assert.MultipleAsync(async () =>
         {
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-            var body = await resp.Content.ReadAsStringAsync();
-            Assert.That(body, Does.Contain("The PlantId is required."));
+            var json = await resp.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(json);
+            var title = doc.RootElement.GetProperty("title").GetString();
+
+            Assert.That(title, Does.Contain("PlantId is required"));
         });
     }
 
@@ -292,14 +296,14 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
         });
     }
-    
+
     [Test]
     public async Task CreateConditionAlertPlant_DuplicateCondition_ShouldReturnConflict()
     {
         // Arrange
         var plant = _testUser.UserPlants.First().PlantId;
         var dto = new ConditionAlertPlantCreateDto { PlantId = plant };
-        
+
         // Act
         var resp = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", dto);
@@ -310,14 +314,20 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
             var body = await resp.Content.ReadAsStringAsync();
             Assert.That(body, Does.Contain("A water notification already exists for this plant."));
-        });
 
+            // Check DB to confirm no duplicates
+            var count = await _ctx.ConditionAlertPlant
+                .CountAsync(c => c.PlantId == plant && c.IsDeleted == false);
+
+            Assert.That(count, Is.EqualTo(1), "There should be only one active condition in the database.");
+        });
     }
 
-    
+
     [Test]
     public async Task CreateConditionAlertPlant_ValidDto_ShouldPersist()
     {
+        // Arrange: Create Plant
         var newPlant = new Plant
         {
             PlantId = Guid.NewGuid(),
@@ -341,15 +351,19 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertPlantRoute}", dto);
 
         resp.EnsureSuccessStatusCode();
+
         var created = await resp.Content.ReadFromJsonAsync<ConditionAlertPlantResponseDto>();
+        Assert.That(created, Is.Not.Null, "Response DTO should not be null");
 
         // Assert
-        await Assert.MultipleAsync(async () =>
+        var inDb = await _ctx.ConditionAlertPlant.FindAsync(created!.ConditionAlertPlantId);
+        Assert.That(inDb, Is.Not.Null, "ConditionAlertPlant entity should exist in DB");
+        using (Assert.EnterMultipleScope())
         {
-            var inDb = await _ctx.ConditionAlertPlant.FindAsync(created!.ConditionAlertPlantId);
-            Assert.That(inDb, Is.Not.Null);
-            Assert.That(inDb!.PlantId, Is.EqualTo(newPlant.PlantId));
-        });
+            Assert.That(inDb!.PlantId, Is.EqualTo(newPlant.PlantId), "PlantId should match the created plant");
+            Assert.That(inDb.WaterNotify, Is.True);
+            Assert.That(inDb.IsDeleted, Is.False);
+        }
     }
 
 
@@ -378,12 +392,38 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var resp = await _client.DeleteAsync(
             $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={Guid.NewGuid()}");
 
-        Assert.Multiple(async () =>
+        await Assert.MultipleAsync(async () =>
         {
             Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
             var body = await resp.Content.ReadAsStringAsync();
             Assert.That(body, Does.Contain(AlertConditionNotFound));
         });
+    }
+
+    [Test]
+    public async Task DeleteConditionAlertPlant_NullOrDeleted_ShouldReturnNotFound()
+    {
+        // Act
+        var respNull = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={Guid.NewGuid()}");
+
+        Assert.That(respNull.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var bodyNull = await respNull.Content.ReadAsStringAsync();
+        Assert.That(bodyNull, Does.Contain(AlertConditionNotFound));
+
+        // Arrange
+        var plantId = _testUser.UserPlants.First().PlantId;
+        var conditionAlert = await _ctx.ConditionAlertPlant.FirstOrDefaultAsync(c => c.PlantId == plantId);
+        conditionAlert!.IsDeleted = true;
+        await _ctx.SaveChangesAsync();
+
+        // Assert
+        var respDeleted = await _client.DeleteAsync(
+            $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={conditionAlert.ConditionAlertPlantId}");
+
+        Assert.That(respDeleted.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var bodyDeleted = await respDeleted.Content.ReadAsStringAsync();
+        Assert.That(bodyDeleted, Does.Contain(AlertConditionNotFound));
     }
 
     [Test]
@@ -431,7 +471,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         // Act
         var deleteResp1 = await _client.DeleteAsync(
             $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={plantConditionId}");
-        
+
         var deleteResp2 = await _client.DeleteAsync(
             $"/api/AlertCondition/{AlertConditionController.DeleteConditionAlertPlantRoute}?conditionId={plantConditionId}");
 
@@ -444,7 +484,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             Assert.That(body, Does.Contain(AlertConditionNotFound), "Should return appropriate not-found message");
         });
     }
-    
+
     [Test]
     public async Task DeleteConditionAlertPlant_ValidId_ShouldSoftDelete()
     {
@@ -610,11 +650,11 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}",
             new ConditionAlertUserDeviceCreateDto
-                { UserDeviceId = dev.ToString(), SensorType = "Temperature", Condition = "=>30" });
+                { UserDeviceId = dev.ToString(), SensorType = "Temperature", Condition = "<=30" });
         await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}",
             new ConditionAlertUserDeviceCreateDto
-                { UserDeviceId = dev.ToString(), SensorType = "Temperature", Condition = "=>1" });
+                { UserDeviceId = dev.ToString(), SensorType = "Temperature", Condition = "<=1" });
 
         // Act
         var resp = await _client.GetAsync(
@@ -656,24 +696,24 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         // Assert
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
-    
+
     [Test]
     public async Task CreateConditionAlertUserDevice_AsUser1_ForUser2Device_ShouldReturnForbidden()
     {
         // Arrange
         var testUser2 = await MockObjects.SeedDbAsync(Services);
         var user2Device = _ctx.UserDevices.FirstOrDefault(ud => ud.UserId == testUser2.UserId); // Get User 2's device
-        
+
         if (user2Device == null)
         {
             Assert.Fail("User 2 does not have a device in the database.");
         }
-        
+
         var conditionDto = new ConditionAlertUserDeviceCreateDto
         {
             UserDeviceId = user2Device!.DeviceId.ToString(),
             SensorType = "Temperature",
-            Condition = "=>20"
+            Condition = ">=20"
         };
 
         // Act
@@ -687,7 +727,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
         });
     }
-    
+
     [Test]
     public async Task CreateConditionAlertUserDevice_DuplicateCondition_ShouldReturnConflict()
     {
@@ -697,21 +737,32 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         {
             UserDeviceId = dev.ToString(),
             SensorType = "AirPressure",
-            Condition = "=>5"
+            Condition = ">=5"
         };
 
-        // Act
-        await _client.PostAsJsonAsync(
+        // Ensure no preexisting entry causes false conflict
+        var existing = _ctx.ConditionAlertUserDevice
+            .Where(c => c.UserDeviceId == dev && c.SensorType == "AirPressure" && c.Condition == ">=5")
+            .ToList();
+
+        _ctx.ConditionAlertUserDevice.RemoveRange(existing);
+        await _ctx.SaveChangesAsync();
+
+        // First create
+        var resp1 = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", dto);
-        var resp = await _client.PostAsJsonAsync(
+        resp1.EnsureSuccessStatusCode();
+
+        // Second create - should trigger duplicate
+        var resp2 = await _client.PostAsJsonAsync(
             $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}", dto);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp2.Content.ReadAsStringAsync();
 
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+            Assert.That(resp2.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
             Assert.That(body, Does.Contain(AlertDupeConditionDevice));
         });
     }
@@ -722,7 +773,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         // Arrange
         var dev = _testUser.UserDevices.First().DeviceId;
         var dto = new ConditionAlertUserDeviceCreateDto
-            { UserDeviceId = dev.ToString(), SensorType = "AirPressure", Condition = "=>5" };
+            { UserDeviceId = dev.ToString(), SensorType = "AirPressure", Condition = ">=5" };
 
         // Act
         var resp = await _client.PostAsJsonAsync(
@@ -760,7 +811,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             ConditionAlertUserDeviceId = Guid.NewGuid().ToString(),
             UserDeviceId = _testUser.UserDevices.First().DeviceId.ToString(),
             SensorType = "AirQuality",
-            Condition = "=>1"
+            Condition = "<=1"
         };
 
         // Act
@@ -776,7 +827,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
     {
         // Arrange
         var testUser2 = await MockObjects.SeedDbAsync(Services);
-    
+
         var user2Condition = _ctx.ConditionAlertUserDevice
             .Include(c => c.UserDevice)
             .FirstOrDefault(c => c.UserDevice != null && c.UserDevice.UserId == testUser2.UserId);
@@ -790,7 +841,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         {
             ConditionAlertUserDeviceId = user2Condition!.ConditionAlertUserDeviceId.ToString(),
             UserDeviceId = user2Condition.UserDeviceId.ToString(),
-            Condition = "=>30",
+            Condition = "<=30",
             SensorType = user2Condition.SensorType
         };
 
@@ -814,7 +865,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         {
             UserDeviceId = dev.ToString(),
             SensorType = "AirPressure",
-            Condition = "=>5"
+            Condition = ">=5"
         };
 
         var createResp = await _client.PostAsJsonAsync(
@@ -828,7 +879,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             ConditionAlertUserDeviceId = created!.ConditionAlertUserDeviceId.ToString(),
             UserDeviceId = dev.ToString(),
             SensorType = "AirPressure",
-            Condition = "=>5"
+            Condition = ">=5"
         };
 
         // Act
@@ -841,6 +892,50 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
             var body = await editResp.Content.ReadAsStringAsync();
             Assert.That(editResp.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
             Assert.That(body, Does.Contain(AlertDupeConditionDevice));
+        });
+    }
+
+    [Test]
+    public async Task EditConditionAlertUserDevice_ShouldUpdateFieldsCorrectly()
+    {
+        // Arrange
+        var device = _testUser.UserDevices.First();
+        var createResp = await _client.PostAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.CreateConditionAlertUserDeviceRoute}",
+            new ConditionAlertUserDeviceCreateDto
+            {
+                UserDeviceId = device.DeviceId.ToString(),
+                SensorType = "Humidity",
+                Condition = "<=10"
+            });
+
+        var created = await createResp.Content.ReadFromJsonAsync<ConditionAlertUserDeviceResponseDto>();
+
+        var editDto = new ConditionAlertUserDeviceEditDto
+        {
+            ConditionAlertUserDeviceId = created!.ConditionAlertUserDeviceId.ToString(),
+            UserDeviceId = device.DeviceId.ToString(),
+            SensorType = "Temperature",
+            Condition = ">=100"
+        };
+
+        // Act
+        var editResp = await _client.PatchAsJsonAsync(
+            $"/api/AlertCondition/{AlertConditionController.EditConditionAlertUserDeviceRoute}",
+            editDto);
+
+        editResp.EnsureSuccessStatusCode();
+
+        // Assert
+        var entity = await _ctx.ConditionAlertUserDevice
+            .FindAsync(Guid.Parse(editDto.ConditionAlertUserDeviceId));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entity, Is.Not.Null);
+            Assert.That(entity!.SensorType, Is.EqualTo("Temperature"));
+            Assert.That(entity.Condition, Is.EqualTo(">=100"));
+            Assert.That(entity.IsDeleted, Is.False);
         });
     }
 
@@ -872,7 +967,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var body = await resp.Content.ReadAsStringAsync();
         Assert.That(body, Does.Contain(AlertConditionNotFound));
     }
-    
+
     [Test]
     public async Task DeleteConditionAlertUserDevice_AsUser1_ShouldReturnForbidden()
     {
@@ -896,7 +991,7 @@ public class AlertConditionControllerTests : WebApplicationFactory<Program>
         var body = await deleteResponse.Content.ReadAsStringAsync();
         Assert.That(body, Does.Contain(UnauthorizedAlertConditionAccess));
     }
-    
+
     [Test]
     public async Task DeleteConditionAlertUserDevice_SecondDelete_ShouldReturnNotFound()
     {

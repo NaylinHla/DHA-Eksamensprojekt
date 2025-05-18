@@ -22,7 +22,7 @@ public class WebSocketConnectionManagerTests
     public void GetConnectionIdToSocketDictionary_ShouldReturnCorrectData()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -36,16 +36,19 @@ public class WebSocketConnectionManagerTests
         var result = _connectionManager.GetConnectionIdToSocketDictionary();
 
         // Assert
-        Assert.That(result.Count, Is.EqualTo(1));
-        Assert.That(result.ContainsKey(clientId), Is.True);
-        Assert.That(result[clientId], Is.EqualTo(socketMock.Object));
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ContainsKey(clientId), Is.True);
+            Assert.That(result[clientId], Is.EqualTo(socketMock.Object));
+        });
     }
 
     [Test]
     public async Task OnOpen_ShouldAddConnection()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -58,7 +61,7 @@ public class WebSocketConnectionManagerTests
 
         // Assert
         var result = _connectionManager.GetConnectionIdToSocketDictionary();
-        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result.ContainsKey(clientId), Is.True);
     }
 
@@ -66,7 +69,7 @@ public class WebSocketConnectionManagerTests
     public async Task OnClose_ShouldRemoveConnection()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -80,15 +83,15 @@ public class WebSocketConnectionManagerTests
 
         // Assert
         var result = _connectionManager.GetConnectionIdToSocketDictionary();
-        Assert.That(result.Count, Is.EqualTo(0));
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
     public async Task AddToTopic_ShouldAddMember()
     {
         // Arrange
-        var clientId = "client1";
-        var topic = "test/topic";
+        const string clientId = "client1";
+        const string topic = "test/topic";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -110,8 +113,8 @@ public class WebSocketConnectionManagerTests
     public async Task RemoveFromTopic_ShouldRemoveMember()
     {
         // Arrange
-        var clientId = "client1";
-        var topic = "test/topic";
+        const string clientId = "client1";
+        const string topic = "test/topic";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -134,9 +137,9 @@ public class WebSocketConnectionManagerTests
     public async Task BroadcastToTopic_ShouldSendMessageToMembers()
     {
         // Arrange
-        var topic = "test/topic";
+        const string topic = "test/topic";
         var message = new { text = "Hello" };
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -165,8 +168,8 @@ public class WebSocketConnectionManagerTests
     public async Task GetTopicsFromMemberId_ShouldReturnCorrectTopics()
     {
         // Arrange
-        var clientId = "client1";
-        var topic = "test/topic";
+        const string clientId = "client1";
+        const string topic = "test/topic";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -188,8 +191,8 @@ public class WebSocketConnectionManagerTests
     public async Task GetMembersFromTopicId_ShouldReturnCorrectMembers()
     {
         // Arrange
-        var clientId = "client1";
-        var topic = "test/topic";
+        const string clientId = "client1";
+        const string topic = "test/topic";
         var socketMock = new Mock<IWebSocketConnection>();
 
         // Mock the IWebSocketConnectionInfo, which is returned from ConnectionInfo property
@@ -211,7 +214,7 @@ public class WebSocketConnectionManagerTests
     public void GetSocketIdToClientIdDictionary_ShouldReturnCorrectData()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
         var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
         connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
@@ -223,7 +226,7 @@ public class WebSocketConnectionManagerTests
         var result = _connectionManager.GetSocketIdToClientIdDictionary();
 
         // Assert
-        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result.ContainsKey(socketMock.Object.ConnectionInfo.Id.ToString()), Is.True);
     }
 
@@ -231,7 +234,7 @@ public class WebSocketConnectionManagerTests
     public void GetClientIdFromSocket_ShouldReturnCorrectClientId()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
         var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
         connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
@@ -250,7 +253,7 @@ public class WebSocketConnectionManagerTests
     public void GetSocketFromClientId_ShouldReturnCorrectSocket()
     {
         // Arrange
-        var clientId = "client1";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
         var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
         connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
@@ -268,7 +271,7 @@ public class WebSocketConnectionManagerTests
     [Test]
     public async Task OnOpen_ShouldReplaceOldSocketIfExists()
     {
-        var clientId = "client1";
+        const string clientId = "client1";
 
         var oldSocketMock = new Mock<IWebSocketConnection>();
         var oldConnectionInfo = new Mock<IWebSocketConnectionInfo>();
@@ -290,8 +293,8 @@ public class WebSocketConnectionManagerTests
     [Test]
     public async Task BroadcastToTopic_ShouldLogErrorIfSendFails()
     {
-        var topic = "test/topic";
-        var clientId = "client1";
+        const string topic = "test/topic";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
         var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
         connectionInfoMock.Setup(c => c.Id).Returns(Guid.NewGuid());
@@ -336,8 +339,8 @@ public class WebSocketConnectionManagerTests
     [Test]
     public async Task BroadcastToTopic_ShouldSkipUnavailableSockets()
     {
-        var topic = "test/topic";
-        var clientId = "client1";
+        const string topic = "test/topic";
+        const string clientId = "client1";
         var socketMock = new Mock<IWebSocketConnection>();
         var connectionInfoMock = new Mock<IWebSocketConnectionInfo>();
 
@@ -358,9 +361,9 @@ public class WebSocketConnectionManagerTests
     [Test]
     public async Task BroadcastToTopic_ShouldSendOnlyToAvailableSockets()
     {
-        var topic = "group/topic";
-        var client1 = "client1";
-        var client2 = "client2";
+        const string topic = "group/topic";
+        const string client1 = "client1";
+        const string client2 = "client2";
 
         // Client 1 - Available
         var socketMock1 = new Mock<IWebSocketConnection>();

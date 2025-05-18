@@ -1,9 +1,11 @@
-﻿using Core.Domain.Entities;
+﻿using System.Reflection;
+using Core.Domain.Entities;
 using Infrastructure.Postgres.Postgresql.Data;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Application.Models.Dtos.RestDtos;
+using Core.Domain.Exceptions;
 
 namespace Startup.Tests.AlertConditionTests
 {
@@ -29,6 +31,105 @@ namespace Startup.Tests.AlertConditionTests
             _context.Dispose();
         }
 
+        // GetConditionAlertUserDeviceIdByConditionAlertIdAsync
+
+        [Test]
+        public async Task GetConditionAlertUserDeviceIdByConditionAlertIdAsync_ShouldRespectIsDeletedFilter()
+        {
+            // Arrange
+            var deviceId = Guid.NewGuid();
+            var otherDeviceId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var otherUserId = Guid.NewGuid();
+
+            var userDevice = new UserDevice
+            {
+                UserId = userId,
+                DeviceId = deviceId,
+                DeviceName = "Device",
+                DeviceDescription = "Device description",
+                WaitTime = "100"
+            };
+
+            var otherUserDevice = new UserDevice
+            {
+                UserId = otherUserId,
+                DeviceId = otherDeviceId,
+                DeviceName = "Other",
+                DeviceDescription = "Other device",
+                WaitTime = "100"
+            };
+
+            var notDeletedAlert = new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDevice = userDevice,
+                UserDeviceId = deviceId,
+                IsDeleted = false,
+                SensorType = "Temperature",
+                Condition = "<=30"
+            };
+
+            var deletedAlert = new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDevice = userDevice,
+                UserDeviceId = deviceId,
+                IsDeleted = true,
+                SensorType = "Humidity",
+                Condition = ">=50"
+            };
+
+            var wrongDeviceAlert = new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDevice = otherUserDevice,
+                UserDeviceId = otherDeviceId,
+                IsDeleted = false,
+                SensorType = "Pressure",
+                Condition = ">10"
+            };
+
+            _context.UserDevices.AddRange(userDevice, otherUserDevice);
+            _context.ConditionAlertUserDevice.AddRange(notDeletedAlert, deletedAlert, wrongDeviceAlert);
+            await _context.SaveChangesAsync();
+
+            // Act: fetch by single-alert methods
+            var resultNotDeleted = await _repository.GetConditionAlertUserDeviceIdByConditionAlertIdAsync(
+                notDeletedAlert.ConditionAlertUserDeviceId);
+            var resultDeleted = await _repository.GetConditionAlertUserDeviceIdByConditionAlertIdAsync(
+                deletedAlert.ConditionAlertUserDeviceId);
+
+            // Act: fetch all alerts for the user (matches method signature & log)
+            var allForUser = await _repository.GetAllConditionAlertUserDevicesAsync(userId);
+
+            // Assert: single-alert lookups
+            Assert.That(resultNotDeleted, Is.Not.Null, "Not-deleted alert should be found");
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(resultNotDeleted!.ConditionAlertUserDeviceId,
+                    Is.EqualTo(notDeletedAlert.ConditionAlertUserDeviceId));
+
+                Assert.That(resultDeleted, Is.Null, "Deleted alert should NOT be found");
+            }
+
+            // (Optional) Verify data in the context directly
+            var directQuery = await _context.ConditionAlertUserDevice
+                .Where(c => c.UserDeviceId == deviceId && !c.IsDeleted)
+                .ToListAsync();
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(directQuery, Has.Exactly(1).Items,
+                    "Direct query should find exactly one non-deleted alert");
+                Assert.That(allForUser, Has.Exactly(1).Items,
+                    "GetAllConditionAlertUserDevicesAsync should return exactly one alert");
+            }
+
+            Assert.That(allForUser[0].ConditionAlertUserDeviceId,
+                Is.EqualTo(notDeletedAlert.ConditionAlertUserDeviceId));
+        }
+
+        // GetAllConditionAlertPlantForAllUserAsync
 
         [Test]
         public async Task GetAllConditionAlertPlantForAllUserAsync_NoRecords_ReturnsEmptyList()
@@ -100,26 +201,178 @@ namespace Startup.Tests.AlertConditionTests
         }
 
         [Test]
-        public void IsAlertUserDeviceConditionMeet_NullDto_ThrowsArgumentNullException()
+        public async Task GetAllConditionAlertPlantForAllUserAsync_MultipleRecords_ReturnsOnlyNonDeleted()
         {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            var condition1 = new ConditionAlertPlant
             {
-                await _repository.IsAlertUserDeviceConditionMeet(null!);
+                ConditionAlertPlantId = Guid.NewGuid(),
+                PlantId = Guid.NewGuid(),
+                WaterNotify = true,
+                IsDeleted = false
+            };
+
+            var condition2 = new ConditionAlertPlant
+            {
+                ConditionAlertPlantId = Guid.NewGuid(),
+                PlantId = Guid.NewGuid(),
+                WaterNotify = false,
+                IsDeleted = false
+            };
+
+            var condition3 = new ConditionAlertPlant
+            {
+                ConditionAlertPlantId = Guid.NewGuid(),
+                PlantId = Guid.NewGuid(),
+                WaterNotify = true,
+                IsDeleted = true
+            };
+
+            _context.ConditionAlertPlant.AddRange(condition1, condition2, condition3);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.GetAllConditionAlertPlantForAllUserAsync();
+
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result.Any(r => r.ConditionAlertPlantId == condition3.ConditionAlertPlantId), Is.False);
+        }
+
+        // DeleteConditionAlertPlantAsync
+
+        [Test]
+        public async Task DeleteConditionAlertPlantAsync_ShouldHandleAllBranches()
+        {
+            // 1) Missing ID -> NotFoundException
+            var missingId = Guid.NewGuid();
+            var notFoundEx = Assert.ThrowsAsync<NotFoundException>(async () =>
+                await _repository.DeleteConditionAlertPlantAsync(missingId));
+            Assert.That(notFoundEx.Message, Is.EqualTo(AlertConditionNotFound));
+
+            // 2) Seed a new, non-deleted plant condition
+            var condition = new ConditionAlertPlant
+            {
+                ConditionAlertPlantId = Guid.NewGuid(),
+                PlantId = Guid.NewGuid(),
+                WaterNotify = false,
+                IsDeleted = false
+            };
+            _context.ConditionAlertPlant.Add(condition);
+            await _context.SaveChangesAsync();
+
+            // 3) First delete -> should mark as deleted (happy path)
+            await _repository.DeleteConditionAlertPlantAsync(condition.ConditionAlertPlantId);
+            var reloaded = await _context.ConditionAlertPlant
+                .FirstOrDefaultAsync(c => c.ConditionAlertPlantId == condition.ConditionAlertPlantId);
+            Assert.That(reloaded, Is.Not.Null);
+            Assert.That(reloaded!.IsDeleted, Is.True);
+
+            // 4) Second delete on the same ID -> already deleted -> throws NotFoundException
+            var deletedEx = Assert.ThrowsAsync<NotFoundException>(async () =>
+                await _repository.DeleteConditionAlertPlantAsync(condition.ConditionAlertPlantId));
+            Assert.That(deletedEx.Message, Is.EqualTo(AlertConditionNotFound));
+        }
+
+        private const string AlertConditionNotFound = "Alert Condition not found.";
+
+        // ConditionAlertExistsAsync
+
+        [Test]
+        public async Task ConditionAlertExistsAsync_ExcludeIdBehavior_WorksCorrectly()
+        {
+            // Arrange
+            var devId = Guid.NewGuid();
+            var alert1 = new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDeviceId = devId,
+                SensorType = "Temperature",
+                Condition = "<=25",
+                IsDeleted = false
+            };
+            var alert2 = new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDeviceId = devId,
+                SensorType = "Temperature",
+                Condition = "<=25",
+                IsDeleted = false
+            };
+            _context.ConditionAlertUserDevice.AddRange(alert1, alert2);
+            await _context.SaveChangesAsync();
+
+            var method = typeof(AlertConditionRepository)
+                .GetMethod("ConditionAlertExistsAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+            // Act 1: excludeId = null
+            var task1 = (Task<bool>)method.Invoke(
+                _repository,
+                [devId, "Temperature", "<=25", null]
+            )!;
+            var existsNoExclude = await task1;
+
+            // Act 2: excludeId = alert1.Id
+            var task2 = (Task<bool>)method.Invoke(
+                _repository,
+                [devId, "Temperature", "<=25", alert1.ConditionAlertUserDeviceId]
+            )!;
+            var existsExcl1 = await task2;
+
+            // Act 3: excludeId = alert2.Id
+            var task3 = (Task<bool>)method.Invoke(
+                _repository,
+                [devId, "Temperature", "<=25", alert2.ConditionAlertUserDeviceId]
+            )!;
+            var existsExcl2 = await task3;
+
+            // Act 4: excludeId = unknown GUID
+            var task4 = (Task<bool>)method.Invoke(
+                _repository,
+                [devId, "Temperature", "<=25", Guid.NewGuid()]
+            )!;
+            var existsExclUnknown = await task4;
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(existsNoExclude, Is.True);
+                Assert.That(existsExcl1, Is.True);
+                Assert.That(existsExcl2, Is.True);
+                Assert.That(existsExclUnknown, Is.True);
             });
         }
 
         [Test]
-        public void IsAlertUserDeviceConditionMeet_EmptyUserDeviceId_ThrowsArgumentException_WithExpectedMessage()
+        public async Task ConditionAlertExistsAsync_ShouldReturnFalse_WhenOnlyMatchingAlertIsExcluded()
         {
-            var dto = new IsAlertUserDeviceConditionMeetDto { UserDeviceId = null! };
-
-            var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            // Arrange
+            var devId = Guid.NewGuid();
+            var alert = new ConditionAlertUserDevice
             {
-                await _repository.IsAlertUserDeviceConditionMeet(dto);
-            });
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDeviceId = devId,
+                SensorType = "Temperature",
+                Condition = "<=25",
+                IsDeleted = false
+            };
 
-            Assert.That(ex.Message, Is.EqualTo("UserDeviceId is required."));
+            // Act
+            _context.ConditionAlertUserDevice.Add(alert);
+            await _context.SaveChangesAsync();
+
+            var method = typeof(AlertConditionRepository)
+                .GetMethod("ConditionAlertExistsAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+            var task = (Task<bool>)method.Invoke(
+                _repository,
+                [devId, "Temperature", "<=25", alert.ConditionAlertUserDeviceId]
+            )!;
+            var result = await task;
+
+            // Assert
+            Assert.That(result, Is.False);
         }
+
+
+        // IsAlertUserDeviceConditionMeet
 
         [Test]
         public void
@@ -295,41 +548,34 @@ namespace Startup.Tests.AlertConditionTests
                 DeviceDescription = "Device description",
                 WaitTime = "10"
             });
-            _context.ConditionAlertUserDevice.AddRange(new[]
+            _context.ConditionAlertUserDevice.AddRange(new ConditionAlertUserDevice
             {
-                new ConditionAlertUserDevice
-                {
-                    ConditionAlertUserDeviceId = condition1Id,
-                    UserDeviceId = deviceId,
-                    SensorType = "Temperature",
-                    Condition = "<=30",
-                    IsDeleted = false
-                },
-                new ConditionAlertUserDevice
-                {
-                    ConditionAlertUserDeviceId = condition2Id,
-                    UserDeviceId = deviceId,
-                    SensorType = "Humidity",
-                    Condition = "=>50",
-                    IsDeleted = false
-                },
-
-                new ConditionAlertUserDevice
-                {
-                    ConditionAlertUserDeviceId = condition3Id,
-                    UserDeviceId = deviceId,
-                    SensorType = "AirPressure",
-                    Condition = ">=1000",
-                    IsDeleted = false
-                },
-                new ConditionAlertUserDevice
-                {
-                    ConditionAlertUserDeviceId = condition4Id,
-                    UserDeviceId = deviceId,
-                    SensorType = "AirQuality",
-                    Condition = "<=50",
-                    IsDeleted = false
-                }
+                ConditionAlertUserDeviceId = condition1Id,
+                UserDeviceId = deviceId,
+                SensorType = "Temperature",
+                Condition = "<=30",
+                IsDeleted = false
+            }, new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = condition2Id,
+                UserDeviceId = deviceId,
+                SensorType = "Humidity",
+                Condition = ">=50",
+                IsDeleted = false
+            }, new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = condition3Id,
+                UserDeviceId = deviceId,
+                SensorType = "AirPressure",
+                Condition = ">=1000",
+                IsDeleted = false
+            }, new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = condition4Id,
+                UserDeviceId = deviceId,
+                SensorType = "AirQuality",
+                Condition = "<=50",
+                IsDeleted = false
             });
             await _context.SaveChangesAsync();
 
@@ -346,6 +592,221 @@ namespace Startup.Tests.AlertConditionTests
             Assert.That(result, Does.Contain(condition1Id.ToString()));
             Assert.That(result, Does.Contain(condition2Id.ToString()));
             Assert.That(result, Has.Count.EqualTo(2));
+        }
+
+        [TestCase("42")]
+        [TestCase("abc")]
+        [TestCase("<50")]
+        [TestCase(">23.5")]
+        [TestCase("")]
+        public void TryParseCondition_ShouldReturnFalse_ForInvalidConditions(string input)
+        {
+            // Act
+            var result = AlertConditionRepository.TryParseCondition(input, out var op, out var threshold);
+
+            Assert.Multiple(() =>
+            {
+                // Assert
+                Assert.That(result, Is.False, $"Expected '{input}' to be rejected");
+                Assert.That(string.IsNullOrEmpty(op), Is.True,
+                    $"Expected operator to be null or empty for input '{input}'");
+                Assert.That(threshold, Is.EqualTo(0), $"Expected threshold to be 0 for input '{input}'");
+            });
+        }
+
+        [Test]
+        public async Task CheckAlertConditions_ShouldReturnEmptyList_WhenDeviceNotFound()
+        {
+            // Arrange
+            var nonExistentDeviceId = Guid.NewGuid().ToString();
+
+            var dto = new IsAlertUserDeviceConditionMeetDto
+            {
+                UserDeviceId = nonExistentDeviceId,
+                Temperature = 25,
+                Humidity = 50,
+                AirPressure = 1000,
+                AirQuality = 10
+            };
+
+            // Act
+            var result = await _repository.IsAlertUserDeviceConditionMeet(dto);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty, "Expected empty list when device does not exist");
+        }
+
+        private static IEnumerable<TestCaseData> ValidSensorValues =>
+        [
+            new("Temperature", new IsAlertUserDeviceConditionMeetDto { Temperature = 23.5f }, 23.5f),
+            new("Humidity", new IsAlertUserDeviceConditionMeetDto { Humidity = 50.1f }, 50.1f),
+            new("AirPressure", new IsAlertUserDeviceConditionMeetDto { AirPressure = 1013.25f }, 1013.25f),
+            new("AirQuality", new IsAlertUserDeviceConditionMeetDto { AirQuality = 45 }, 45f)
+        ];
+
+        [TestCaseSource(nameof(ValidSensorValues))]
+        public void GetSensorValue_ShouldReturnCorrectValue(string sensorType, IsAlertUserDeviceConditionMeetDto dto,
+            float expected)
+        {
+            var result = AlertConditionRepository.GetSensorValue(sensorType, dto);
+            Assert.That(result, Is.EqualTo(expected));
+        }
+
+        private static IEnumerable<TestCaseData> NullSensorValues =>
+        [
+            new("Temperature", new IsAlertUserDeviceConditionMeetDto { Temperature = null }),
+            new("Humidity", new IsAlertUserDeviceConditionMeetDto { Humidity = null }),
+            new("AirPressure", new IsAlertUserDeviceConditionMeetDto { AirPressure = null }),
+            new("UnknownSensor", new IsAlertUserDeviceConditionMeetDto())
+        ];
+
+        [TestCaseSource(nameof(NullSensorValues))]
+        public void GetSensorValue_ShouldReturnNull(string sensorType, IsAlertUserDeviceConditionMeetDto dto)
+        {
+            var result = AlertConditionRepository.GetSensorValue(sensorType, dto);
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public async Task IsAlertUserDeviceConditionMeet_SensorValueEqualsThreshold_ReturnsMatch()
+        {
+            var deviceId = Guid.NewGuid();
+            var conditionId = Guid.NewGuid();
+            var conditionId2 = Guid.NewGuid();
+
+            _context.UserDevices.Add(new UserDevice
+            {
+                DeviceId = deviceId,
+                DeviceName = "Device",
+                DeviceDescription = "Device description",
+                WaitTime = "10"
+            });
+
+            _context.ConditionAlertUserDevice.Add(new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = conditionId,
+                UserDeviceId = deviceId,
+                SensorType = "Temperature",
+                Condition = "<=25",
+                IsDeleted = false
+            });
+
+            _context.ConditionAlertUserDevice.Add(new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = conditionId2,
+                UserDeviceId = deviceId,
+                SensorType = "Temperature",
+                Condition = ">=25",
+                IsDeleted = false
+            });
+
+            await _context.SaveChangesAsync();
+
+            var dto = new IsAlertUserDeviceConditionMeetDto
+            {
+                UserDeviceId = deviceId.ToString(),
+                Temperature = 25
+            };
+
+            var result = await _repository.IsAlertUserDeviceConditionMeet(dto);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result[0], Is.EqualTo(conditionId.ToString()));
+        }
+
+        [Test]
+        public async Task IsAlertUserDeviceConditionMeet_DeletedOrWrongDeviceConditions_AreIgnored()
+        {
+            var deviceId = Guid.NewGuid();
+            var otherDeviceId = Guid.NewGuid();
+
+            _context.UserDevices.Add(new UserDevice
+            {
+                DeviceId = deviceId,
+                DeviceName = "Main Device",
+                DeviceDescription = "Device for test",
+                WaitTime = "100"
+            });
+
+            _context.ConditionAlertUserDevice.AddRange(new[]
+            {
+                new ConditionAlertUserDevice
+                {
+                    ConditionAlertUserDeviceId = Guid.NewGuid(),
+                    UserDeviceId = otherDeviceId, // different device
+                    SensorType = "Temperature",
+                    Condition = "<=30",
+                    IsDeleted = false
+                },
+                new ConditionAlertUserDevice
+                {
+                    ConditionAlertUserDeviceId = Guid.NewGuid(),
+                    UserDeviceId = deviceId,
+                    SensorType = "Temperature",
+                    Condition = "<=30",
+                    IsDeleted = true // deleted
+                }
+            });
+
+            await _context.SaveChangesAsync();
+
+            var dto = new IsAlertUserDeviceConditionMeetDto
+            {
+                UserDeviceId = deviceId.ToString(),
+                Temperature = 25
+            };
+
+            var result = await _repository.IsAlertUserDeviceConditionMeet(dto);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty, "Deleted or unrelated device conditions should be ignored");
+        }
+
+
+        [Test]
+        public async Task IsAlertUserDeviceConditionMeet_AllConditionsFail_ReturnsEmptyList()
+        {
+            var deviceId = Guid.NewGuid();
+
+            _context.UserDevices.Add(new UserDevice
+            {
+                DeviceId = deviceId,
+                DeviceName = "Device",
+                DeviceDescription = "Device description",
+                WaitTime = "100"
+            });
+
+            _context.ConditionAlertUserDevice.AddRange(new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDeviceId = deviceId,
+                SensorType = "Temperature",
+                Condition = "<=10",
+                IsDeleted = false
+            }, new ConditionAlertUserDevice
+            {
+                ConditionAlertUserDeviceId = Guid.NewGuid(),
+                UserDeviceId = deviceId,
+                SensorType = "Humidity",
+                Condition = ">=90",
+                IsDeleted = false
+            });
+
+            await _context.SaveChangesAsync();
+
+            var dto = new IsAlertUserDeviceConditionMeetDto
+            {
+                UserDeviceId = deviceId.ToString(),
+                Temperature = 25,
+                Humidity = 50
+            };
+
+            var result = await _repository.IsAlertUserDeviceConditionMeet(dto);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
         }
     }
 }

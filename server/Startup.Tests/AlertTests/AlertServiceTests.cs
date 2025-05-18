@@ -1,10 +1,10 @@
-﻿using Application.Interfaces;
-using Application.Interfaces.Infrastructure.Postgres;
+﻿using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.BroadcastModels;
 using Application.Models.Dtos.RestDtos;
 using Application.Services;
 using Core.Domain.Entities;
+using FluentValidation;
 using Moq;
 using NUnit.Framework;
 
@@ -12,12 +12,14 @@ namespace Startup.Tests.AlertTests
 {
     public class AlertServiceTests
     {
-        private Mock<IAlertRepository> _alertRepoMock = null!;
-        private Mock<IAlertConditionRepository> _condRepoMock = null!;
-        private Mock<IPlantRepository> _plantRepoMock = null!;
-        private Mock<IUserDeviceRepository> _deviceRepoMock = null!;
-        private Mock<IConnectionManager> _wsMock = null!;
-        private IAlertService _service = null!;
+        private AlertService _service;
+        private Mock<IAlertRepository> _alertRepoMock;
+        private Mock<IAlertConditionRepository> _condRepoMock;
+        private Mock<IPlantRepository> _plantRepoMock;
+        private Mock<IUserDeviceRepository> _deviceRepoMock;
+        private Mock<IConnectionManager> _wsMock;
+        private IValidator<AlertCreateDto> _validatorAlertCreate;
+        private IValidator<IsAlertUserDeviceConditionMeetDto> _validatorIsMeet;
 
         private Guid _deviceId;
         private Guid _conditionId;
@@ -30,13 +32,17 @@ namespace Startup.Tests.AlertTests
             _plantRepoMock = new Mock<IPlantRepository>();
             _deviceRepoMock = new Mock<IUserDeviceRepository>();
             _wsMock = new Mock<IConnectionManager>();
+            _validatorAlertCreate = new Mock<IValidator<AlertCreateDto>>().Object;
+            _validatorIsMeet = new Mock<IValidator<IsAlertUserDeviceConditionMeetDto>>().Object;
 
             _service = new AlertService(
                 _alertRepoMock.Object,
                 _condRepoMock.Object,
                 _plantRepoMock.Object,
                 _deviceRepoMock.Object,
-                _wsMock.Object
+                _wsMock.Object,
+                _validatorAlertCreate,
+                _validatorIsMeet
             );
 
             _deviceId = Guid.NewGuid();
@@ -403,6 +409,10 @@ namespace Startup.Tests.AlertTests
             _plantRepoMock
                 .Setup(x => x.GetPlantByIdAsync(conditionAlert.PlantId))
                 .ReturnsAsync((Plant)null!);
+
+            _plantRepoMock
+                .Setup(x => x.GetPlantOwnerUserId(It.IsAny<Guid>()))
+                .Throws(new Exception("This should not be called"));
 
             await _service.CheckAndTriggerScheduledPlantAlertsAsync();
 

@@ -8,9 +8,9 @@ namespace Application.Models.Dtos.BroadcastModels
 
     public class AlertDto
     {
-        public string AlertId { get; set; } = "";
-        public string AlertName { get; set; } = "";
-        public string AlertDesc { get; set; } = "";
+        public string AlertId { get; set; } = null!;
+        public string AlertName { get; set; } = null!;
+        public string AlertDesc { get; set; } = null!;
         public DateTime AlertTime { get; set; }
         public string? AlertPlantConditionId { get; set; }
         public string? AlertDeviceConditionId { get; set; }
