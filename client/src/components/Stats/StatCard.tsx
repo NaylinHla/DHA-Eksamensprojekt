@@ -5,6 +5,7 @@ export interface StatCardProps {
     loading: boolean;
     value: string;
     emphasisClass?: string;
+    cls: string;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({title, loading, value, emphasisClass = "",}) => (

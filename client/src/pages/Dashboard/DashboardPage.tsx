@@ -189,9 +189,9 @@ export default function DashboardPage() {
             {/* stat cards */}
             <div className="grid gap-6 px-6 md:grid-cols-3">
                 <StatCard title="Temperature" loading={loadingWX}
-                          value={weather ? `${Math.round(weather.temp)}${unit}` : "–"} />
+                          value={weather ? `${Math.round(weather.temp)}${unit}` : "–"} cls={""} />
                 <StatCard title="Humidity" loading={loadingWX}
-                          value={`${Math.round(weather?.humidity ?? 0)}%`} />
+                          value={`${Math.round(weather?.humidity ?? 0)}%`} cls={""} />
                 <StatCard title="Need Watering" loading={loadingPlants}
                           value={needsWater ? "Yes" : "No"} cls={needsWater ? "text-error" : "text-success"} />
             </div>
