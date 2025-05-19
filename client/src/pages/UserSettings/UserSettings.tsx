@@ -20,11 +20,17 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     const [confirmWater, setConfirmWater] = useState(false);
     const [celsius, setCelsius] = useState(true);
-    const [darkTheme, setDarkTheme] = useState(false);
+
+    const [darkTheme, setDarkTheme] = useState(() => {
+        const stored = localStorage.getItem(LOCAL_KEY);
+        return stored === "dark";
+    });
+
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
     const [settings] = useAtom(UserSettingsAtom);
+
 
     const navigate = useNavigate();
     const { logout } = useLogout();
@@ -34,14 +40,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem(LOCAL_KEY, theme);
     }, [darkTheme]);
-
-    useEffect(() => {
-        if (!jwt) {
-            setDarkTheme(false);
-            localStorage.removeItem(LOCAL_KEY);
-            document.documentElement.setAttribute("data-theme", "light");
-        }
-    }, [jwt]);
 
     // I put a fake timeout on it, cause it loads without a jwt token if you don't :(
     const setUserSettings = useSetAtom(UserSettingsAtom);
@@ -162,33 +160,54 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     <ul className="flex-1 flex flex-col gap-2 pr-1 overflow-y-auto">
                         <li className="flex justify-between items-center">
                             <span>Celsius</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={celsius}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setCelsius(value);
-                                       patchSetting("celsius", value);
-                                   }} />
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-sm"
+                                checked={celsius}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    setCelsius(value);
+                                    patchSetting("celsius", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        celsius: value,
+                                    }));
+                                }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Dark Theme</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={darkTheme}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setDarkTheme(value);
-                                       patchSetting("darktheme", value);
-                                   }} />
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-sm"
+                                checked={darkTheme}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    setDarkTheme(value);
+                                    patchSetting("darktheme", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        darkTheme: value,
+                                    }));
+                                }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
                             <span>Confirm Water Dialog</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={confirmWater}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setConfirmWater(value);
-                                       patchSetting("confirmdialog", value);
-                                   }} />
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-sm"
+                                checked={confirmWater}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    setConfirmWater(value);
+                                    patchSetting("confirmdialog", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        confirmDialog: value,
+                                    }));
+                                }}
+                            />
                         </li>
                     </ul>
                 </aside>
