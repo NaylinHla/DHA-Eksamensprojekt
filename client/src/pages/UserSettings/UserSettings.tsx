@@ -127,12 +127,12 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             <TitleTimeHeader title="User Profile" />
             <section className="flex flex-1 overflow-hidden rounded-lg p-fluid">
                 <aside className="w-[clamp(12rem,20vw,25rem)] shrink-0 border-r border-primary p-fluid flex flex-col gap-fluid">
-                <h2 className="text-fluid font-semibold">Settings</h2>
+                <h2 className="text-fluid font-semibold">Settings:</h2>
                     <div className="flex flex-col gap-3">
-                        <button onClick={() => setOpenEmail(true)} className="btn border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid px-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
+                        <button onClick={() => setOpenEmail(true)} className="btn btn-lg border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
                             Change e-mail
                         </button>
-                        <button onClick={() => setOpenPassword(true)} className="btn btn-lg border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid px-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
+                        <button onClick={() => setOpenPassword(true)} className="btn btn-lg border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
                             Change password
                         </button>
                         <button onClick={() => setOpenDelete(true)} className="btn btn-lg btn-error flex items-center gap-[clamp(0.25rem,0.8vw,0.5rem)] text-fluid px-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
