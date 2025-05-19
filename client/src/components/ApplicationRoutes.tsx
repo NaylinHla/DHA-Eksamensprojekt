@@ -49,6 +49,7 @@ export default function ApplicationRoutes() {
         const [checked, setChecked] = useState(false);
 
         useEffect(() => {
+            setChecked(true);
 
             if (!jwt || jwt.length < 10) {
                 localStorage.removeItem('jwt');
