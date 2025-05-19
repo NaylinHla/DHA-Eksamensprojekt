@@ -21,7 +21,6 @@ export default function UserSettingsInitializer() {
                     secretMode: data.secretMode ?? false,
                 });
             } catch (e) {
-                toast.error('Failed to fetch user settings');
                 console.error(e);
             }
         };

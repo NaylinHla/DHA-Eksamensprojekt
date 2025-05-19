@@ -25,7 +25,7 @@ function NotFound() {
                         onClick={navigateToHome}
                         className="px-8 py-3 text-sm sm:text-base font-semibold btn btn-neutral bg-transparent btn-sm"
                     >
-                        Back to homepage
+                        Return back
                     </button>
                 </div>
             </div>
