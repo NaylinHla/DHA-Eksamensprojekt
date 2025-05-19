@@ -94,6 +94,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             const { jwt } = response;
 
             console.log("Got JWT:", jwt);
+            localStorage.setItem("jwt", jwt);
             setJwt(jwt);
             onLogin?.();
         } catch (err) {

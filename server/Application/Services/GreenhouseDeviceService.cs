@@ -6,6 +6,7 @@ using Application.Models.Dtos;
 using Application.Models.Dtos.BroadcastModels;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
+using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.SensorHistory;
 using Core.Domain.Entities;
 using FluentValidation;
@@ -31,8 +32,7 @@ public class GreenhouseDeviceService(
         
         await sensorValidator.ValidateAndThrowAsync(dto);
 
-        MonitorService.Log.Debug("Processing sensor data for DeviceId: {DeviceId}", dto.DeviceId);
-
+        // Save sensor data to DB
         var sensorHistory = new SensorHistory
         {
             SensorHistoryId = Guid.NewGuid(),
@@ -44,13 +44,30 @@ public class GreenhouseDeviceService(
             Time = dto.Time
         };
 
-        // Create a new scope so we get a fresh DbContext/repository
+        //Check and trigger user device condition alerts
+        var alertCheckDto = new IsAlertUserDeviceConditionMeetDto
+        {
+            UserDeviceId = dto.DeviceId,
+            Temperature = dto.Temperature,
+            Humidity = dto.Humidity,
+            AirPressure = dto.AirPressure,
+            AirQuality = dto.AirQuality,
+            Time = dto.Time
+        };
+        
+        // Single DI scope for repo + alert service
         using var scope = services.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
-
+        var repo         = scope.ServiceProvider.GetRequiredService<IGreenhouseDeviceRepository>();
+        var alertService = scope.ServiceProvider.GetRequiredService<IAlertService>();
+        
+        
+        await alertService.TriggerUserDeviceConditionAsync(alertCheckDto);
+        MonitorService.Log.Debug("Triggering alert check for DeviceId: {DeviceId}", dto.DeviceId);
+        
         await repo.AddSensorHistory(sensorHistory);
         MonitorService.Log.Debug("Sensor data added to DB for DeviceId: {DeviceId}", dto.DeviceId);
-
+        
+        //Broadcast to live dashboard
         var recentHistory = await repo.GetSensorHistoryByDeviceIdAsync(Guid.Parse(dto.DeviceId));
 
         var broadcast = new ServerBroadcastsLiveDataToDashboard

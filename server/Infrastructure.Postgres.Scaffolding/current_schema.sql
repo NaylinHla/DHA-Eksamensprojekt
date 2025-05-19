@@ -45,6 +45,7 @@ CREATE TABLE meetyourplants."ConditionAlertPlant" (
     "ConditionAlertPlantId" uuid NOT NULL,
     "PlantId" uuid NOT NULL,
     "WaterNotify" boolean NOT NULL,
+    "IsDeleted" boolean NOT NULL,
     CONSTRAINT "PK_ConditionAlertPlant" PRIMARY KEY ("ConditionAlertPlantId"),
     CONSTRAINT "FK_ConditionAlertPlant_Plant_PlantId" FOREIGN KEY ("PlantId") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE CASCADE
 );
@@ -96,6 +97,7 @@ CREATE TABLE meetyourplants."ConditionAlertUserDevice" (
     "UserDeviceId" uuid NOT NULL,
     "SensorType" text NOT NULL,
     "Condition" text NOT NULL,
+    "IsDeleted" boolean NOT NULL,
     CONSTRAINT "PK_ConditionAlertUserDevice" PRIMARY KEY ("ConditionAlertUserDeviceId"),
     CONSTRAINT "FK_ConditionAlertUserDevice_UserDevice_UserDeviceId" FOREIGN KEY ("UserDeviceId") REFERENCES meetyourplants."UserDevice" ("DeviceId") ON DELETE CASCADE
 );

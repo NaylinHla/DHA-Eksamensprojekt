@@ -13,6 +13,7 @@ import {
 import { Line } from "react-chartjs-2";
 import toast from "react-hot-toast";
 import { useAtom } from "jotai";
+import { useDisplayTemperature } from "../../hooks/useDisplayTemperature";
 import {
     formatDateTimeForUserTZ,
     GetRecentSensorDataForAllUserDeviceDto,
@@ -55,6 +56,7 @@ export default function HistoryPage() {
     const [rangeFrom, setRangeFrom] = useState(isoMonthAgo);
     const [rangeTo, setRangeTo] = useState(isoToday);
     const [tab, setTab] = useState<TabKey>("temperature");
+    const { convert, unit, useCelsius } = useDisplayTemperature();
 
     const chartRefs = {
         temperature: useRef<ChartJS | null>(null),
@@ -71,7 +73,11 @@ export default function HistoryPage() {
     const rangeToRef = useRef(rangeTo);
     useEffect(() => { rangeFromRef.current = rangeFrom; rangeToRef.current = rangeTo; }, [rangeFrom, rangeTo]);
 
-    
+    useEffect(() => {
+        rangeFromRef.current = rangeFrom;
+        rangeToRef.current = rangeTo;
+    }, [rangeFrom, rangeTo]);
+
     // Tab Helper
     const pretty: Record<TabKey, string> = {
         temperature: "Temperature",
@@ -80,19 +86,19 @@ export default function HistoryPage() {
         airQuality: "Air Quality",
     };
 
-    const unit: Record<TabKey, string> = {
+    /* const unit: Record<TabKey, string> = {
         temperature: "°C",
         humidity: "%",
         airPressure: "hPa",
         airQuality: "ppm",
-    };
+    }; */
 
 
     //  Chart Helpers
     function appendPointToChart(
         chartRef: React.RefObject<ChartJS | null>,
         point: { time: string; value: number },
-        maxPoints = 500,
+        maxPoints = 500
     ) {
         const chart = chartRef.current;
         if (!chart) return;
@@ -117,19 +123,17 @@ export default function HistoryPage() {
     const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
         if (!logs.length) return;
 
-        // update jotai store
-        setGreenhouseData(prev => prev.map(d =>
-            d.deviceId === selectedDeviceId
-                ? { ...d, sensorHistoryRecords: [...(d.sensorHistoryRecords || []), ...logs] }
-                : d,
-        ));
+        setGreenhouseData(prev =>
+            prev.map(d =>
+                d.deviceId === selectedDeviceId
+                    ? { ...d, sensorHistoryRecords: [...(d.sensorHistoryRecords || []), ...logs] }
+                    : d
+            )
+        );
 
         /* Push to charts (only if chart exists yet) */
         logs.forEach(r => {
-            const iso = 
-                r.time instanceof Date
-                    ? r.time.toISOString() 
-                    : String(r.time);
+            const iso = r.time instanceof Date ? r.time.toISOString() : String(r.time);
             if (!iso) return;
             appendPointToChart(chartRefs.temperature, { time: iso, value: Number(r.temperature) });
             appendPointToChart(chartRefs.humidity, { time: iso, value: Number(r.humidity) });
@@ -148,14 +152,7 @@ export default function HistoryPage() {
         const latestLog = logs[logs.length - 1];
         setLatestSensorData(prev => ({
             ...prev,
-            [deviceId]: {
-                deviceId,
-                temperature: latestLog.temperature,
-                humidity: latestLog.humidity,
-                airPressure: latestLog.airPressure,
-                airQuality: latestLog.airQuality,
-                time: latestLog.time,
-            },
+            [deviceId]: { ...latestLog, deviceId },
         }));
 
         // Only update chart if logs are in date range
@@ -166,10 +163,8 @@ export default function HistoryPage() {
             const t = new Date(l.time!);
             return t >= from && t <= to;
         });
-        if (!inRange.length) return;
-
         const existing = new Set(
-            greenhouseData.flatMap(d => d.sensorHistoryRecords?.map(r => new Date(r.time!).getTime()) || []),
+            greenhouseData.flatMap(d => d.sensorHistoryRecords?.map(r => new Date(r.time!).getTime()) || [])
         );
         const unique = inRange.filter(l => !existing.has(new Date(l.time!).getTime()));
         if (unique.length) throttledAppend(unique);
@@ -191,13 +186,14 @@ export default function HistoryPage() {
     useEffect(() => {
         if (!jwt) return;
         setLoadingDevices(true);
-        userDeviceClient.getAllUserDevices(jwt)
-            .then((list: any) => {
+        userDeviceClient
+            .getAllUserDevices(jwt)
+            .then(list => {
                 const devices = Array.isArray(list) ? list : [];
                 setDevices(devices);
                 if (!selectedDeviceId && devices.length) setSelectedDeviceId(devices[0].deviceId!);
             })
-            .catch(() => toast.error("Failed to load devices", { id: "load-devices-error" }))
+            .catch(() => toast.error("Failed to load devices"))
             .finally(() => setLoadingDevices(false));
     }, [jwt]);
 
@@ -206,15 +202,12 @@ export default function HistoryPage() {
         if (!jwt || !selectedDeviceId) return;
         setLoadingData(true);
         const debounced = setTimeout(() => {
-            const [fy, fm, fd] = rangeFrom.split("-").map(Number);
-            const [ty, tm, td] = rangeTo.split("-").map(Number);
-            const localStart = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
-            const localEnd = new Date(ty, tm - 1, td, 23, 59, 59, 999);
-            const utcStart = new Date(localStart.toISOString());
-            const utcEnd = new Date(localEnd.toISOString());
-            greenhouseDeviceClient.getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, utcStart, utcEnd, jwt)
+            const start = new Date(rangeFrom + "T00:00:00");
+            const end = new Date(rangeTo + "T23:59:59.999");
+            greenhouseDeviceClient
+                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, start, end, jwt)
                 .then(setGreenhouseData)
-                .catch(() => toast.error("Failed to load sensor data", { id: "load-sensor-error" }))
+                .catch(() => toast.error("Failed to load sensor data"))
                 .finally(() => setLoadingData(false));
         }, 300);
         return () => clearTimeout(debounced);
@@ -223,16 +216,14 @@ export default function HistoryPage() {
     // load recent data
     useEffect(() => {
         if (!jwt) return;
-        greenhouseDeviceClient.getRecentSensorDataForAllUserDevice(jwt)
-            .then((res: GetRecentSensorDataForAllUserDeviceDto | null) => {
-                if (!res?.sensorHistoryWithDeviceRecords?.length) { setLatestSensorData({}); return; }
-                const snapshot = res.sensorHistoryWithDeviceRecords.reduce((acc, curr) => {
-                    if (curr.deviceId) acc[curr.deviceId] = curr;
-                    return acc;
-                }, {} as Record<string, SensorHistoryWithDeviceDto>);
+        greenhouseDeviceClient
+            .getRecentSensorDataForAllUserDevice(jwt)
+            .then(res => {
+                const recs = res?.sensorHistoryWithDeviceRecords ?? [];
+                const snapshot = Object.fromEntries(recs.map(r => [r.deviceId, r]));
                 setLatestSensorData(snapshot);
             })
-            .catch(() => toast.error("Failed to load recent sensor data", { id: "load-sensor-error" }));
+            .catch(() => toast.error("Failed to load recent sensor data"));
     }, [jwt]);
 
     function downSampleRecords<T>(arr: T[], maxPoints = 500): T[] {
@@ -244,11 +235,9 @@ export default function HistoryPage() {
     //  Build series
     const series = useMemo(() => {
         const recs = greenhouseData.find(d => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
-        if (!recs.length) return { temperature: [], humidity: [], airPressure: [], airQuality: [] };
-
-        // 1) Deduplicate consecutive identical records
         const unique: SensorHistoryDto[] = [];
         let prev: Partial<SensorHistoryDto> = {};
+
         for (const r of recs) {
             if (
                 r.time === prev.time &&
@@ -264,15 +253,16 @@ export default function HistoryPage() {
         // 2) Down-sample
         const sampled = downSampleRecords(unique, 500);
 
-        // 3) Build point arrays
-        const build = (key: keyof SensorHistoryDto): Point[] => 
-            sampled.map(r => ({
-                time: r.time instanceof Date 
-                    ? r.time.toISOString() 
-                    : String(r.time),
-                display: format(new Date(r.time!), 'd MMM'),
-                value: Number(r[key]) || 0,
-        }));
+        const build = (key: keyof SensorHistoryDto): Point[] =>
+            sampled.map(r => {
+                const raw = Number(r[key]) || 0;
+                const value = key === "temperature" ? convert(raw) ?? 0 : raw;
+                return {
+                    time: r.time instanceof Date ? r.time.toISOString() : String(r.time),
+                    display: format(new Date(r.time!), "d MMM"),
+                    value,
+                };
+            });
 
         return {
             temperature: build("temperature"),
@@ -293,8 +283,8 @@ export default function HistoryPage() {
         </div>
     );
 
-    const unitMap: Record<string, string> = {
-        temperature: "°C",
+    const unitMap: Record<TabKey, string> = {
+        temperature: unit,
         humidity: "%",
         airPressure: "hPa",
         airQuality: "ppm",
@@ -310,13 +300,15 @@ export default function HistoryPage() {
                         ref={chartRef as any}
                         data={{
                             labels: data.map(p => p.time),
-                            datasets: [{
-                                data: data.map(p => p.value),
-                                tension: 0.3,
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                borderColor: cssVar("--color-primary"),
-                            }],
+                            datasets: [
+                                {
+                                    data: data.map(p => p.value),
+                                    tension: 0.3,
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    borderColor: cssVar("--color-primary"),
+                                },
+                            ],
                         }}
                         options={{
                             responsive: true,
@@ -326,41 +318,35 @@ export default function HistoryPage() {
                             devicePixelRatio: 1.5,
                             plugins: {
                                 legend: { display: false },
-                                tooltip: { 
-                                    enabled: true, 
-                                    intersect: false, 
-                                    mode: "index",
+                                tooltip: {
                                     callbacks: {
                                         title: items => {
-                                            if (!items.length) return '';
-                                            const i = items[0].dataIndex;
-                                            return format(new Date(data[i].time), 'PPP HH:mm:ss');
-                                        }
-                                    }
-                                
+                                            if (!items.length) return "";
+                                            const i = items[0].dataIndex as number;
+                                            const point = data[i];
+                                            return point ? format(new Date(point.time), "PPP HH:mm:ss") : "";
+                                        },
+                                    },
                                 },
                             },
                             scales: {
                                 x: {
                                     grid: { display: false },
                                     ticks: {
-                                        callback: (val: string | number) => {
-                                            const i = Number(val);
-                                            return data[i]?.display ?? '';
-                                        },
-                                        maxTicksLimit: 12, 
-                                        autoSkip: true },
+                                        callback: (val: any) => data[val]?.display ?? "",
+                                        maxTicksLimit: 12,
+                                        autoSkip: true,
+                                    },
                                 },
                                 y: {
                                     grid: { display: false },
                                     title: {
                                         display: true,
-                                        text: `${label} (${unit[tabKey]})`,
+                                        text: `${label} (${unitMap[tabKey]})`,
                                         padding: 4,
                                     },
                                     ticks: {
-                                        callback: (v: string | number) => `${v} ${unit[tabKey]}`,
-                                        autoSkip: true,
+                                        callback: (v: any) => `${v} ${unitMap[tabKey]}`,
                                     },
                                 },
                             },
@@ -373,8 +359,8 @@ export default function HistoryPage() {
         )
     );
 
-    const noData = !series.temperature.length && !series.humidity.length && !series.airPressure.length && !series.airQuality.length;
     const fields: (keyof SensorHistoryWithDeviceDto)[] = ["temperature", "humidity", "airPressure", "airQuality"];
+    const noData = !series.temperature.length && !series.humidity.length && !series.airPressure.length && !series.airQuality.length;
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
@@ -398,20 +384,28 @@ export default function HistoryPage() {
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-fluid text-fluid">
-                                {fields.map(f => (
-                                        <div key={f} className="flex">
-                                            <span className="capitalize font-medium">{f}:</span>
-                                            <span className="ml-1">
-                                                {(latest as any)[f]?.toFixed(2)}{unitMap[f]}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {fields.map(f => {
+                                        const key = f as TabKey;
+                                        let value = (latest as any)[f];
+
+                                        if (key === "temperature" && typeof value === "number") {
+                                            value = convert(value);
+                                        }
+
+                                        return (
+                                            <div key={f} className="flex">
+                                                <span className="capitalize font-medium">{f}:</span>
+                                                <span className="ml-1">
+                                                    {typeof value === "number" ? value.toFixed(2) : "–"}{unitMap[key]}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </>
                         );
                     })()}
                 </div>
-                
             </div>
 
             {/* Charts */}

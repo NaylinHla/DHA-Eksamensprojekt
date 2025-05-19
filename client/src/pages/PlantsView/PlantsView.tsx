@@ -4,6 +4,8 @@ import {JwtAtom, PlantResponseDto} from "../../atoms";
 import {useAtom} from "jotai";
 import {plantClient} from "../../apiControllerClients.ts";
 import {CardPlant} from "../../components/Plants/PlantCard.tsx";
+import ConfirmModal from "../../components/Modals/ConfirmModal";
+import { UserSettingsAtom } from "../../atoms";
 
 
 const toCard = (dto: PlantResponseDto): CardPlant => {
@@ -40,6 +42,12 @@ const PlantsView: React.FC = () => {
     const [selected, setSelected] = useState<CardPlant | null>(null);
     const [showDead, setShowDead] = useState(false);
 
+    const [userSettings] = useAtom(UserSettingsAtom);
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [pendingWaterId, setPendingWaterId] = useState<string | null>(null);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+
+
     // Fetch plants
     const fetchPlants = useCallback(async () => {
         if (!jwt) return;
@@ -74,7 +82,14 @@ const PlantsView: React.FC = () => {
             alert(e.message ?? "Failed");
         }
     };
+
     const waterOne = async (id: string) => {
+        if (userSettings?.confirmDialog) {
+            setPendingWaterId(id);
+            setConfirmModalOpen(true);
+            return;
+        }
+
         try {
             await plantClient.waterPlant(id, jwt);
             await fetchPlants();
@@ -83,6 +98,23 @@ const PlantsView: React.FC = () => {
         }
     };
 
+
+    // Confirm modal
+    const confirmWatering = async () => {
+        if (!pendingWaterId) return;
+        setConfirmLoading(true);
+
+        try {
+            await plantClient.waterPlant(pendingWaterId, jwt);
+            await fetchPlants();
+        } catch (e: any) {
+            alert(e.message ?? "Failed");
+        } finally {
+            setConfirmLoading(false);
+            setPendingWaterId(null);
+            setConfirmModalOpen(false);
+        }
+    };
 
     // Open helpers 
     const openNew = () => {
@@ -142,6 +174,15 @@ const PlantsView: React.FC = () => {
                 plant={selected}
                 onClose={closeMod}
                 onSaved={fetchPlants}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModalOpen}
+                title="Confirm Watering"
+                subtitle="Do you really want to water this plant now?"
+                onCancel={() => setConfirmModalOpen(false)}
+                onConfirm={confirmWatering}
+                loading={confirmLoading}
             />
         </div>
     );

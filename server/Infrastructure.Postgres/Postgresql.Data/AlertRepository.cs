@@ -16,20 +16,20 @@ public class AlertRepository(MyDbContext ctx) : IAlertRepository
         ctx.Alerts.Add(alert);
         await ctx.SaveChangesAsync();
 
-        MonitorService.Log.Debug("Successfully added alert with ID: " + alert.AlertId);
+        MonitorService.Log.Debug("Successfully added alert with ID: {AlertId}", alert.AlertId);
         return alert;
     }
 
     public async Task<List<AlertResponseDto>> GetAlertsAsync(Guid userId, int? year = null)
     {
-        MonitorService.Log.Debug("Entered GetAlertsAsync method in AlertRepository for userId: " + userId + " and year: " + (year.HasValue ? year.Value.ToString() : "null"));
+        MonitorService.Log.Debug("Entered GetAlertsAsync method in AlertRepository for userId: {UserId} and year: {Year}", userId, year);
 
         var query = ctx.Alerts
             .Where(a => a.AlertUserId == userId);
 
         if (year.HasValue)
         {
-            MonitorService.Log.Debug("Filtering alerts by year: " + year.Value);
+            MonitorService.Log.Debug("Filtering alerts by year: {Year}", year.Value);
             query = query.Where(a => a.AlertTime.Year == year.Value);
         }
 
@@ -46,7 +46,7 @@ public class AlertRepository(MyDbContext ctx) : IAlertRepository
             })
             .ToListAsync();
 
-        MonitorService.Log.Debug("Fetched " + alerts.Count + " alerts for userId: " + userId);
+        MonitorService.Log.Debug("Fetched {AlertCount} alerts for userId: {UserId}", alerts.Count, userId);
         return alerts;
     }
 }
