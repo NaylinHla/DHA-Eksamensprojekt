@@ -249,7 +249,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
             ref={backdrop}
             className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
         >
-            <div className="bg-[var(--color-cream)] rounded-2xl w-full max-w-md p-6 relative flex flex-col gap-4">
+            <div className="bg-base-100 rounded-2xl w-full max-w-md p-6 relative flex flex-col gap-4">
                 <button
                     className="absolute right-4 top-4 text-muted-foreground"
                     onClick={onClose}
