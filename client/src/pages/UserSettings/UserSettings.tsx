@@ -1,77 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import {useAtom, useSetAtom} from "jotai";
-import { JwtAtom } from "../../atoms";
+import { useAtom, useSetAtom } from "jotai";
+import { JwtAtom, UserSettingsAtom } from "../../atoms";
 import { useNavigate } from "react-router";
 import EmailModal from "../../components/Modals/EmailModal";
 import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal";
 import { TitleTimeHeader, useLogout } from "../../components";
 import { userClient, userSettingsClient } from "../../apiControllerClients";
-import { UserSettingsAtom } from '../../atoms'
 
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
 
 const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
+    const [settings] = useAtom(UserSettingsAtom);
+    const setUserSettings = useSetAtom(UserSettingsAtom);
+
     const [saving, setSaving] = useState(false);
-
-    const [confirmWater, setConfirmWater] = useState(false);
-    const [celsius, setCelsius] = useState(true);
-
-    const [darkTheme, setDarkTheme] = useState(() => {
-        const stored = localStorage.getItem(LOCAL_KEY);
-        return stored === "dark";
-    });
-
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
-    const [settings] = useAtom(UserSettingsAtom);
-
 
     const navigate = useNavigate();
     const { logout } = useLogout();
 
     useEffect(() => {
-        const theme = darkTheme ? "dark" : "light";
+        const theme = settings?.darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem(LOCAL_KEY, theme);
-    }, [darkTheme]);
-
-    const setUserSettings = useSetAtom(UserSettingsAtom);
-
-    useEffect(() => {
-        if (!jwt || jwt.trim() === "") return;
-
-        const timeout = setTimeout(() => {
-            const fetchSettings = async () => {
-                try {
-                    const data = await userSettingsClient.getAllSettings(jwt);
-
-                    setConfirmWater(data.confirmDialog ?? false);
-                    setCelsius(data.celsius ?? false);
-                    setDarkTheme(data.darkTheme ?? false);
-
-                    setUserSettings({
-                        celsius: data.celsius ?? false,
-                        darkTheme: data.darkTheme ?? false,
-                        confirmDialog: data.confirmDialog ?? false,
-                        secretMode: data.secretMode ?? false,
-                    });
-                } catch (e: any) {
-                    toast.error("Could not load user settings");
-                    console.error(e);
-                }
-            };
-
-            fetchSettings();
-        }, 500);
-
-        return () => clearTimeout(timeout);
-    }, [jwt]);
+    }, [settings?.darkTheme]);
 
     async function patchSetting(name: string, value: boolean) {
         try {
@@ -136,6 +95,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         }
     }
 
+    if (!settings) {
+        return <p className="p-6">Loading user settings...</p>;
+    }
+
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
             <TitleTimeHeader title="User Profile" />
@@ -161,10 +124,9 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                             <input
                                 type="checkbox"
                                 className="toggle toggle-sm"
-                                checked={celsius}
+                                checked={settings.celsius}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    setCelsius(value);
                                     patchSetting("celsius", value);
                                     setUserSettings((prev) => ({
                                         ...prev!,
@@ -178,10 +140,9 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                             <input
                                 type="checkbox"
                                 className="toggle toggle-sm"
-                                checked={darkTheme}
+                                checked={settings.darkTheme}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    setDarkTheme(value);
                                     patchSetting("darktheme", value);
                                     setUserSettings((prev) => ({
                                         ...prev!,
@@ -195,10 +156,9 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                             <input
                                 type="checkbox"
                                 className="toggle toggle-sm"
-                                checked={confirmWater}
+                                checked={settings.confirmDialog}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    setConfirmWater(value);
                                     patchSetting("confirmdialog", value);
                                     setUserSettings((prev) => ({
                                         ...prev!,
