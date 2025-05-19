@@ -37,6 +37,7 @@ public class Program
 
         services.AddTransient<IEmailSender, EmailSenderService>();
         services.AddSingleton<JwtEmailTokenService>();
+        services.AddTransient<SmtpClientFactory>(_ => () => new SmtpClientWrapper("smtp.mailersend.net", 2525));
 
 
         services.AddWebsocketInfrastructure();

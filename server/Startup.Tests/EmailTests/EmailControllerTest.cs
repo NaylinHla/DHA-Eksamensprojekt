@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
@@ -16,6 +15,10 @@ namespace Startup.Tests.EmailTests;
 [TestFixture]
 public class EmailControllerTest
 {
+    private WebApplicationFactory<Program> _factory;
+    private HttpClient _client;
+    private User _testUser;
+    
     [SetUp]
     public async Task Setup()
     {
@@ -27,13 +30,6 @@ public class EmailControllerTest
                 builder.ConfigureServices(services =>
                 {
                     services.DefaultTestConfig();
-
-                    var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailSender));
-                    if (descriptor != null)
-                        services.Remove(descriptor);
-
-                    services.AddSingleton<IEmailSender, FakeEmailSender>();
-
                     services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
                 });
             });
@@ -53,16 +49,15 @@ public class EmailControllerTest
         _factory.Dispose();
     }
 
-    private WebApplicationFactory<Program> _factory = null!;
-    private HttpClient _client = null!;
-    private User _testUser = null!;
-
     [Test]
     public async Task SubscribeToEmailList_ShouldReturnOk()
     {
         var dto = new AddEmailDto { Email = "subscribe_test@example.com" };
         var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("Subscription confirmed and email sent.")); 
     }
 
     [Test]
@@ -71,6 +66,9 @@ public class EmailControllerTest
         var dto = new RemoveEmailDto { Email = _testUser.Email };
         var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("Unsubscription confirmed and email sent."));
     }
 
     [Test]
@@ -82,12 +80,15 @@ public class EmailControllerTest
 
         var response = await _client.GetAsync($"/api/email/unsubscribe?token={token}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("You have been unsubscribed."));
     }
 
     [Test]
     public async Task UnsubscribeFromEmailListViaToken_ShouldReturnBadRequest_WhenTokenInvalid()
     {
-        var invalidToken = "this.is.invalid";
+        const string invalidToken = "this.is.invalid";
         var response = await _client.GetAsync($"/api/email/unsubscribe?token={invalidToken}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
@@ -106,23 +107,5 @@ public class EmailControllerTest
         var dto = new RemoveEmailDto { Email = "nonexistent@example.com" };
         var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-    }
-
-    private class FakeEmailSender : IEmailSender
-    {
-        public Task AddEmailAsync(AddEmailDto dto)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task RemoveEmailAsync(RemoveEmailDto dto)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task SendEmailAsync(string subject, string message)
-        {
-            return Task.CompletedTask;
-        }
     }
 }
