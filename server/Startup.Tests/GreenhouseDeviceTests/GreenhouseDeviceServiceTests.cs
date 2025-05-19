@@ -1,8 +1,10 @@
+using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models.Dtos.BroadcastModels;
 using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
+using Application.Models.Dtos.RestDtos;
 using Application.Services;
 using Core.Domain.Entities;
 using FluentValidation;
@@ -17,6 +19,7 @@ namespace Startup.Tests.GreenhouseDeviceTests
         private GreenhouseDeviceService _service;
         private Mock<IGreenhouseDeviceRepository> _repositoryMock;
         private Mock<IConnectionManager> _connectionManagerMock;
+        private Mock<IAlertService> _alertServiceMock;
 
         [SetUp]
         public void Setup()
@@ -24,10 +27,16 @@ namespace Startup.Tests.GreenhouseDeviceTests
             // Mock the repository and connection manager
             _repositoryMock = new Mock<IGreenhouseDeviceRepository>();
             _connectionManagerMock = new Mock<IConnectionManager>();
+            _alertServiceMock = new Mock<IAlertService>();
             
-            
-            var services = new ServiceCollection(); 
+            _alertServiceMock
+                .Setup(a => a.TriggerUserDeviceConditionAsync(It.IsAny<IsAlertUserDeviceConditionMeetDto>()))
+                .Returns(Task.CompletedTask);
+
+            var services = new ServiceCollection();
+
             services.AddSingleton(_repositoryMock.Object);
+            services.AddSingleton(_alertServiceMock.Object);
             services.AddLogging();
 
             var serviceProvider = services.BuildServiceProvider();
@@ -107,6 +116,46 @@ namespace Startup.Tests.GreenhouseDeviceTests
                     msg.Logs[0].DeviceId == Guid.Parse(dto.DeviceId) &&
                     msg.Logs[0].SensorHistoryRecords.Count == 1 &&
                     Math.Abs(msg.Logs[0].SensorHistoryRecords[0].Temperature - dto.Temperature) < 0.001
+                )), Times.Once);
+        }
+
+        [Test]
+        public async Task AddToDbAndBroadcast_ShouldTriggerAlertService_WhenTemperatureIsUnderThreshold()
+        {
+            // Arrange: craft a DTO that *should* trigger an alert
+            var dto = new DeviceSensorDataDto
+            {
+                DeviceId = Guid.NewGuid().ToString(),
+                Temperature = 22, // condition is "<= 50"
+                Humidity = 50,
+                AirPressure = 1000,
+                AirQuality = 50,
+                Time = DateTime.UtcNow
+            };
+
+            // Allow repository calls so the method flows through
+            _repositoryMock
+                .Setup(r => r.AddSensorHistory(It.IsAny<SensorHistory>()))
+                .ReturnsAsync(new SensorHistory
+                {
+                    SensorHistoryId = default
+                });
+            _repositoryMock
+                .Setup(r => r.GetSensorHistoryByDeviceIdAsync(It.IsAny<Guid>(), null, null))
+                .ReturnsAsync([]);
+
+            // Act
+            await _service.AddToDbAndBroadcast(dto);
+
+            // Assert: verify the alert‐service mock was called exactly once
+            _alertServiceMock.Verify(a =>
+                a.TriggerUserDeviceConditionAsync(It.Is<IsAlertUserDeviceConditionMeetDto>(x =>
+                    x.UserDeviceId == dto.DeviceId &&
+                    Math.Abs(dto.Temperature - dto.Temperature) < 0.001 &&
+                    Math.Abs(dto.Humidity    - dto.Humidity)    < 0.001 &&
+                    Math.Abs(dto.AirPressure - dto.AirPressure) < 0.001 &&
+                    x.AirQuality == dto.AirQuality &&
+                    x.Time == dto.Time
                 )), Times.Once);
         }
 

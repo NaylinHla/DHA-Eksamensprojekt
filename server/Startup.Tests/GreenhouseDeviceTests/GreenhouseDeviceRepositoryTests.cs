@@ -127,10 +127,13 @@ public class GreenhouseDeviceRepositoryTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Count, Is.EqualTo(3));
-        Assert.That(result[0].Time, Is.EqualTo(now)); // Most recent
-        Assert.That(result[1].Time, Is.EqualTo(now.AddMinutes(-5)));
-        Assert.That(result[2].Time, Is.EqualTo(now.AddMinutes(-10))); // Oldest
+        Assert.That(result, Has.Count.EqualTo(3));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result[0].Time, Is.EqualTo(now)); // Most recent
+            Assert.That(result[1].Time, Is.EqualTo(now.AddMinutes(-5)));
+            Assert.That(result[2].Time, Is.EqualTo(now.AddMinutes(-10))); // Oldest
+        });
     }
 
     [Test]
@@ -172,20 +175,22 @@ public class GreenhouseDeviceRepositoryTests
         await _context.SaveChangesAsync();
 
         var from = now.AddDays(-1); // Include the record from this exact date
-        var to = now; // Include the record from this exact time
 
         // Act
-        var result = await _repository.GetSensorHistoryByDeviceIdAsync(deviceId, from, to);
+        var result = await _repository.GetSensorHistoryByDeviceIdAsync(deviceId, from, now);
 
         // Assert
         // Expecting two records because the time range is inclusive
-        Assert.That(result.Single().SensorHistoryRecords.Count, Is.EqualTo(2));
-    
-        // The first record should be included because it's exactly from 'now.AddDays(-1)'
-        Assert.That(result.Single().SensorHistoryRecords[0].Temperature, Is.EqualTo(20)); 
-    
-        // The second record should be included because it's exactly from 'now'
-        Assert.That(result.Single().SensorHistoryRecords[1].Temperature, Is.EqualTo(30));
+        Assert.That(result.Single().SensorHistoryRecords, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+
+            // The first record should be included because it's exactly from 'now.AddDays(-1)'
+            Assert.That(result.Single().SensorHistoryRecords[0].Temperature, Is.EqualTo(20));
+
+            // The second record should be included because it's exactly from 'now'
+            Assert.That(result.Single().SensorHistoryRecords[1].Temperature, Is.EqualTo(30));
+        });
     }
     
     [Test]
@@ -246,12 +251,15 @@ public class GreenhouseDeviceRepositoryTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Count, Is.EqualTo(1));
-    
-        // Ensure the most recent sensor data is returned (should be the second sensor history with temperature 25)
-        Assert.That(result[0].Temperature, Is.EqualTo(25));
-        Assert.That(result[0].Humidity, Is.EqualTo(45));
-        Assert.That(result[0].Time, Is.EqualTo(sensorHistories[1].Time)); // Latest time
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+
+            // Ensure the most recent sensor data is returned (should be the second sensor history with temperature 25)
+            Assert.That(result[0].Temperature, Is.EqualTo(25));
+            Assert.That(result[0].Humidity, Is.EqualTo(45));
+            Assert.That(result[0].Time, Is.EqualTo(sensorHistories[1].Time)); // Latest time
+        });
     }
 
     [Test]
@@ -278,8 +286,11 @@ public class GreenhouseDeviceRepositoryTests
             .FirstOrDefaultAsync(sh => sh.SensorHistoryId == sensorHistory.SensorHistoryId);
 
         Assert.That(saved, Is.Not.Null, "SensorHistory was not saved to the database.");
-        Assert.That(saved.Temperature, Is.EqualTo(23.5));
-        Assert.That(saved.Humidity, Is.EqualTo(55.0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved.Temperature, Is.EqualTo(23.5));
+            Assert.That(saved.Humidity, Is.EqualTo(55.0));
+        });
     }
     
     [Test]
@@ -334,12 +345,9 @@ public class GreenhouseDeviceRepositoryTests
             .FirstOrDefaultAsync(ud => ud.DeviceId == deviceId && ud.UserId == outsiderId);
 
         // Simulate behavior if repo tried to fetch and got no match or null User
-        if (device == null || device.User == null)
+        if (device?.User == null)
         {
-            var ex = Assert.Throws<NotFoundException>(() =>
-            {
-                throw new NotFoundException("Device User not found");
-            });
+            var ex = Assert.Throws<NotFoundException>(() => throw new NotFoundException("Device User not found"));
 
             Assert.That(ex!.Message, Is.EqualTo("Device User not found"));
         }
