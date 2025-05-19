@@ -10,7 +10,7 @@ interface Props {
     onToggleDead: () => void;
 }
 
-const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggleDead}) => {
+const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onToggleDead }) => {
     const [searchTerm, setSearchTerm] = useState("");
 
     return (
@@ -18,7 +18,13 @@ const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggl
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                    <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm}/>
+                    <SearchBar 
+                        searchTerm={searchTerm} 
+                        onSearch={term => {
+                            setSearchTerm(term);
+                            onSearch(term);
+                        }}
+                        />
                 </div>
 
                 <label className="inline-flex items-center gap-2 text-[clamp(0.8rem,1vw,1.25rem)]">

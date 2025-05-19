@@ -12,7 +12,7 @@ const SearchBar: React.FC<SearchBarProps> = ({searchTerm, onSearch}) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 placeholder h-[clamp(0.75rem,1vw,1.25rem)] w-[clamp(0.75rem,1vw,1.50rem)] text-muted-foreground"/>
             <input
                 type="text"
-                placeholder="Search devices…"
+                placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => onSearch(e.target.value)}
                 className="pl-9 w-full text-[clamp(0.85rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
