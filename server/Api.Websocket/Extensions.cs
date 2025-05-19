@@ -27,7 +27,7 @@ public static class Extensions
         Environment.SetEnvironmentVariable("PORT", port.ToString());
         var url = $"ws://0.0.0.0:{port}";
         var logger = app.Services.GetRequiredService<ILogger<NonStaticWsExtensionClassForLogger>>();
-        logger.LogInformation("WS running on url: {url} ", url);
+        logger.LogInformation("WS running on url: {Url} ", url);
         var server = new WebSocketServer(url);
         Action<IWebSocketConnection> config = ws =>
         {
@@ -52,7 +52,7 @@ public static class Extensions
                 }
                 catch (Exception e)
                 {
-                    logger.LogError(e, "Error in handling message: {message}", message);
+                    logger.LogError(e, "Error in handling message: {Message}", message);
                     var baseDto = JsonSerializer.Deserialize<BaseDto>(message, JsonDefaults.CaseInsensitive) ??
                                   new BaseDto
                                   {

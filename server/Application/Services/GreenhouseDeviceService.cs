@@ -8,6 +8,7 @@ using Application.Models.Dtos.MqttDtos.Response;
 using Application.Models.Dtos.MqttSubscriptionDto;
 using Application.Models.Dtos.RestDtos.SensorHistory;
 using Core.Domain.Entities;
+using FluentValidation;
 using Infrastructure.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,18 +16,20 @@ namespace Application.Services;
 
 public class GreenhouseDeviceService(
     IServiceProvider services,
-    IConnectionManager connectionManager)
+    IConnectionManager connectionManager,
+    IValidator<DeviceSensorDataDto> sensorValidator)
     : IGreenhouseDeviceService
 {
     public async Task AddToDbAndBroadcast(DeviceSensorDataDto? dto)
     {
         MonitorService.Log.Debug("Entered AddToDbAndBroadcast method");
-
         if (dto == null)
         {
             MonitorService.Log.Warning("AddToDbAndBroadcast called with null dto");
             return;
         }
+        
+        await sensorValidator.ValidateAndThrowAsync(dto);
 
         MonitorService.Log.Debug("Processing sensor data for DeviceId: {DeviceId}", dto.DeviceId);
 

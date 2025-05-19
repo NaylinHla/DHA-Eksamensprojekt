@@ -4,6 +4,7 @@ using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
 using Core.Domain.Entities;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
@@ -13,6 +14,10 @@ namespace Startup.Tests.EmailTests;
 [TestFixture]
 public class EmailSenderServiceTest
 {
+    private EmailSenderService _service;
+    private Mock<IEmailListRepository> _emailRepo;
+    private JwtEmailTokenService _jwtService;
+    
     [SetUp]
     public void Setup()
     {
@@ -20,8 +25,8 @@ public class EmailSenderServiceTest
 
         var appOptions = new AppOptions
         {
-            EMAIL_SENDER_USERNAME = "fakeuser",
-            EMAIL_SENDER_PASSWORD = "fakepass",
+            EMAIL_SENDER_USERNAME = "fakeUser",
+            EMAIL_SENDER_PASSWORD = "fakePass",
             JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
             EnableEmailSending = false
         };
@@ -33,12 +38,15 @@ public class EmailSenderServiceTest
         var emailOptionsMonitorMock = new Mock<IOptionsMonitor<AppOptions>>();
         emailOptionsMonitorMock.Setup(o => o.CurrentValue).Returns(appOptions);
 
-        _service = new EmailSenderService(emailOptionsMonitorMock.Object, _emailRepo.Object, _jwtService);
+        _service = new EmailSenderService(
+            emailOptionsMonitorMock.Object, 
+            _emailRepo.Object, 
+            _jwtService, 
+            Mock.Of<IValidator<AddEmailDto>>(), 
+            Mock.Of<IValidator<RemoveEmailDto>>());
     }
 
-    private EmailSenderService _service = null!;
-    private Mock<IEmailListRepository> _emailRepo = null!;
-    private JwtEmailTokenService _jwtService = null!;
+    
 
     [Test]
     public async Task AddEmailAsync_ShouldAdd_WhenEmailNotExists()
@@ -91,7 +99,7 @@ public class EmailSenderServiceTest
     [Test]
     public Task SendEmailAsync_ShouldNotSend_WhenDisabled()
     {
-        _emailRepo.Setup(r => r.GetAllEmails()).Returns(new List<string> { "user1@example.com" });
+        _emailRepo.Setup(r => r.GetAllEmails()).Returns(["user1@example.com"]);
 
         Assert.DoesNotThrowAsync(() => _service.SendEmailAsync("Subject", "Body"));
         return Task.CompletedTask;
@@ -102,8 +110,8 @@ public class EmailSenderServiceTest
     {
         var appOptions = new AppOptions
         {
-            EMAIL_SENDER_USERNAME = "fakeuser",
-            EMAIL_SENDER_PASSWORD = "fakepass",
+            EMAIL_SENDER_USERNAME = "fakeUser",
+            EMAIL_SENDER_PASSWORD = "fakePass",
             JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
             EnableEmailSending = true
         };
@@ -117,13 +125,17 @@ public class EmailSenderServiceTest
         var jwtService = new JwtEmailTokenService(jwtOptionsMock.Object);
 
         var repo = new Mock<IEmailListRepository>();
-        repo.Setup(r => r.GetAllEmails()).Returns(new List<string>
-        {
+        repo.Setup(r => r.GetAllEmails()).Returns([
             "a@example.com",
             "b@example.com"
-        });
+        ]);
 
-        var service = new EmailSenderService(monitorMock.Object, repo.Object, jwtService);
+        var service = new EmailSenderService(
+            monitorMock.Object, 
+            repo.Object, 
+            jwtService, 
+            Mock.Of<IValidator<AddEmailDto>>(), 
+            Mock.Of<IValidator<RemoveEmailDto>>());
 
         try
         {
@@ -143,8 +155,8 @@ public class EmailSenderServiceTest
     {
         var appOptions = new AppOptions
         {
-            EMAIL_SENDER_USERNAME = "fakeuser",
-            EMAIL_SENDER_PASSWORD = "fakepass",
+            EMAIL_SENDER_USERNAME = "fakeUser",
+            EMAIL_SENDER_PASSWORD = "fakePass",
             JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
             EnableEmailSending = true
         };
@@ -160,7 +172,11 @@ public class EmailSenderServiceTest
         var repo = new Mock<IEmailListRepository>();
         repo.Setup(r => r.EmailExists(It.IsAny<string>())).Returns(true);
 
-        var service = new EmailSenderService(monitorMock.Object, repo.Object, jwtService);
+        var service = new EmailSenderService(
+            monitorMock.Object, 
+            repo.Object, jwtService, 
+            Mock.Of<IValidator<AddEmailDto>>(), 
+            Mock.Of<IValidator<RemoveEmailDto>>());
 
         try
         {

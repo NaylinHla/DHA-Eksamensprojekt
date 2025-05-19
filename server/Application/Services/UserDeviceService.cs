@@ -6,15 +6,20 @@ using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.UserDevice.Request;
 using Core.Domain.Entities;
 using Core.Domain.Exceptions;
+using FluentValidation;
 using Infrastructure.Logging;
 
 namespace Application.Services;
 
-public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublisher mqttPublisher) : IUserDeviceService
+public class UserDeviceService(
+    IUserDeviceRepository userDeviceRepo, 
+    IMqttPublisher mqttPublisher,
+    IValidator<UserDeviceCreateDto> userDeviceCreateValidator,
+    IValidator<UserDeviceEditDto> userDeviceEditValidator,
+    IValidator<AdminChangesPreferencesDto> adminChangesPreferencesValidator) : IUserDeviceService
 {
     private const string DeviceNotFound = "Device not found.";
     private const string UnauthorizedDeviceAccess = "You do not own this device.";
-    private const string DeviceIdRequired = "DeviceId is required.";
 
     public async Task<UserDevice?> GetUserDeviceAsync(Guid deviceId, JwtClaims claims)
     {
@@ -46,6 +51,8 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     {
         MonitorService.Log.Debug("Creating new user device");
 
+        await userDeviceCreateValidator.ValidateAndThrowAsync(dto);
+        
         var userDevice = new UserDevice
         {
             DeviceId = Guid.NewGuid(),
@@ -65,6 +72,8 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     {
         MonitorService.Log.Debug("Updating UserDevice with DeviceId: {DeviceId}", deviceId);
 
+        await userDeviceEditValidator.ValidateAndThrowAsync(dto);
+        
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(deviceId)
                      ?? throw new NotFoundException(DeviceNotFound);
 
@@ -104,8 +113,8 @@ public class UserDeviceService(IUserDeviceRepository userDeviceRepo, IMqttPublis
     {
         MonitorService.Log.Debug("Entering UpdateDeviceFeed for DeviceId: {DeviceId}", dto.DeviceId);
 
-        if (string.IsNullOrEmpty(dto.DeviceId))
-            throw new ArgumentException(DeviceIdRequired);
+        await adminChangesPreferencesValidator.ValidateAndThrowAsync(dto);
+
 
         var device = await userDeviceRepo.GetUserDeviceByIdAsync(Guid.Parse(dto.DeviceId))
                      ?? throw new NotFoundException(DeviceNotFound);

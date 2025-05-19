@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using Api.Rest.Controllers;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
@@ -14,6 +15,10 @@ namespace Startup.Tests.UserTests;
 [TestFixture]
 public class UserControllerTest
 {
+    private WebApplicationFactory<Program> _factory;
+    private HttpClient _client;
+    private User _testUser;
+    
     [SetUp]
     public async Task Setup()
     {
@@ -35,11 +40,12 @@ public class UserControllerTest
         db.Users.Add(_testUser);
         await db.SaveChangesAsync();
 
-        // Login and set JWT
+        // Log in and set JWT
         var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
-        _client.DefaultRequestHeaders.Add("Authorization", authDto!.Jwt);
+        Assert.That(authDto, Is.Not.Null);
+        _client.DefaultRequestHeaders.Add("Authorization", authDto.Jwt);
     }
 
     [TearDown]
@@ -49,14 +55,12 @@ public class UserControllerTest
         _factory.Dispose();
     }
 
-    private WebApplicationFactory<Program> _factory = null!;
-    private HttpClient _client = null!;
-    private User _testUser = null!;
+    
 
     [Test]
     public async Task DeleteUser_ShouldReturnOk()
     {
-        var response = await _client.DeleteAsync("api/User/DeleteUser");
+        var response = await _client.DeleteAsync($"api/User/{UserController.DeleteUserRoute}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
@@ -69,7 +73,7 @@ public class UserControllerTest
             NewEmail = "newemail@example.com"
         };
 
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserEmailRoute}", patchDto);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
@@ -80,10 +84,10 @@ public class UserControllerTest
         var patchDto = new PatchUserPasswordDto
         {
             OldPassword = "pass",
-            NewPassword = "newpass123"
+            NewPassword = "newPass123"
         };
 
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
@@ -92,11 +96,11 @@ public class UserControllerTest
     {
         var patchDto = new PatchUserPasswordDto
         {
-            OldPassword = "wrongpass",
-            NewPassword = "newpass123"
+            OldPassword = "wrongPass",
+            NewPassword = "newPass123"
         };
 
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 
@@ -104,7 +108,7 @@ public class UserControllerTest
     public async Task DeleteUser_ShouldReturnBadRequest_WhenNoJwtProvided()
     {
         var unauthClient = _factory.CreateClient(); // No JWT
-        var response = await unauthClient.DeleteAsync("api/User/DeleteUser");
+        var response = await unauthClient.DeleteAsync($"api/User/{UserController.DeleteUserRoute}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
@@ -125,7 +129,7 @@ public class UserControllerTest
         };
 
         // Act
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserEmailRoute}", patchDto);
 
         // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
@@ -134,8 +138,8 @@ public class UserControllerTest
     [Test]
     public async Task PatchUserEmail_ShouldReturnBadRequest_WhenEmailIsInvalid()
     {
-        var patchDto = new PatchUserEmailDto { NewEmail = "" }; // empty email should trigger ArgumentException
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserEmail", patchDto);
+        var patchDto = new PatchUserEmailDto { NewEmail = "" }; // an empty email should trigger ArgumentException
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserEmailRoute}", patchDto);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
@@ -156,10 +160,10 @@ public class UserControllerTest
         var patchDto = new PatchUserPasswordDto
         {
             OldPassword = "pass",
-            NewPassword = "newpass123"
+            NewPassword = "newPass123"
         };
 
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
@@ -173,7 +177,7 @@ public class UserControllerTest
             NewPassword = "" // invalid password
         };
 
-        var response = await _client.PatchAsJsonAsync("api/User/PatchUserPassword", patchDto);
+        var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
@@ -187,7 +191,7 @@ public class UserControllerTest
         db.Users.Remove(user);
         await db.SaveChangesAsync();
 
-        var response = await _client.DeleteAsync("api/User/DeleteUser");
+        var response = await _client.DeleteAsync($"api/User/{UserController.DeleteUserRoute}");
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
