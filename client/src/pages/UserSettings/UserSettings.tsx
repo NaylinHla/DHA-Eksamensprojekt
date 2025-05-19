@@ -41,7 +41,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         localStorage.setItem(LOCAL_KEY, theme);
     }, [darkTheme]);
 
-    // I put a fake timeout on it, cause it loads without a jwt token if you don't :(
     const setUserSettings = useSetAtom(UserSettingsAtom);
 
     useEffect(() => {
@@ -52,7 +51,6 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 try {
                     const data = await userSettingsClient.getAllSettings(jwt);
 
-                    // Update local component state (optional)
                     setConfirmWater(data.confirmDialog ?? false);
                     setCelsius(data.celsius ?? false);
                     setDarkTheme(data.darkTheme ?? false);
