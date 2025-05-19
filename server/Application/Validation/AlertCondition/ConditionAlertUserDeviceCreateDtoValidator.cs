@@ -5,9 +5,6 @@ namespace Application.Validation.AlertCondition;
 
 public sealed class ConditionAlertUserDeviceCreateDtoValidator : AbstractValidator<ConditionAlertUserDeviceCreateDto>
 {
-    private static readonly string[] AllowedSensorTypes =
-        ["Temperature", "Humidity", "AirPressure", "AirQuality"];
-    
     public ConditionAlertUserDeviceCreateDtoValidator()
     {
         RuleFor(x => x.UserDeviceId)
@@ -17,14 +14,21 @@ public sealed class ConditionAlertUserDeviceCreateDtoValidator : AbstractValidat
 
         RuleFor(x => x.SensorType)
             .NotEmpty().WithMessage("SensorType is required")
-            .Must(s => AllowedSensorTypes.Contains(s))
+            .Must(GlobalValidator.IsValidSensorType)
             .WithMessage("SensorType must be one of: Temperature, Humidity, AirPressure, AirQuality")
             .MaximumLength(50);
 
         RuleFor(x => x.Condition)
             .NotEmpty().WithMessage("Condition is required")
-            .Matches(@"^(<=|>=)\d+(\.\d+)?$")
-            .WithMessage("Condition must be in the format '<=Number' or '>=Number'")
-            .MaximumLength(20);
+            .Must((dto, condition) => 
+                GlobalValidator.IsConditionFormatValid(condition, dto.SensorType) 
+                && GlobalValidator.IsConditionValueInRange(dto.SensorType, condition))
+            .WithMessage("Condition must be valid and within the allowed sensor range")
+            .MaximumLength(15);
+
+
+        RuleFor(x => x)
+            .Must(dto => GlobalValidator.IsConditionValueInRange(dto.SensorType, dto.Condition))
+            .WithMessage("Condition value is out of range for the selected SensorType");
     }
 }

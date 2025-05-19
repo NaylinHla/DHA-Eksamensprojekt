@@ -1,39 +1,22 @@
-import {
-    Navigate,
-    Outlet,
-    Route,
-    Routes,
-    useLocation,
-    useNavigate,
-} from "react-router";
-import {
-    DashboardRoute,
-    SettingsRoute,
-    SignInRoute,
-} from "../routeConstants.ts";
-import {
-    AuthScreen,
-    WeatherView,
-    PlantsView,
-    UserSettings,
-    ContactUsPage,
-} from "../pages";
+import {Outlet, Route, Routes, useLocation, useNavigate,} from "react-router";
+import {DashboardRoute, SettingsRoute, SignInRoute,} from "../routeConstants.ts";
+import {AlertConditionsPage, AuthScreen, ContactUsPage, PlantsView, UserSettings, WeatherView,} from "../pages";
 import React, {useEffect, useState} from "react";
-import { Footer, NavBar } from "./index";
+import {Footer, NavBar} from "./index";
 import {
     AboutPage,
-    AlertPage,
-    DashboardPage,
-    HistoryPage,
-    MyDevicePage,
-    NotFoundPage,
     AdvertisementPage,
+    AlertPage,
     CareerPage,
     CookiesPage,
+    DashboardPage,
+    HistoryPage,
+    JwtAtom,
     MarketingPage,
+    MyDevicePage,
+    NotFoundPage,
     PrivacyPage,
     TermsPage,
-    JwtAtom,
     useAtom,
 } from "./import";
 
@@ -53,18 +36,18 @@ export default function ApplicationRoutes() {
 
             if (!jwt || jwt.length < 10) {
                 localStorage.removeItem('jwt');
-                navigate(SignInRoute, { replace: true });
+                navigate(SignInRoute, {replace: true});
             }
         }, [jwt, navigate]);
 
         if (!checked) return null;
 
-        return <Outlet />;
+        return <Outlet/>;
     }
 
     return (
         <>
-            {!isAuthScreen && <NavBar />}
+            {!isAuthScreen && <NavBar/>}
             <div className="min-h-screen">
                 <Routes>
                     {/* Public Routes */}
@@ -76,31 +59,32 @@ export default function ApplicationRoutes() {
                             />
                         }
                     />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/contact-us" element={<ContactUsPage />} />
-                    <Route path="/career" element={<CareerPage />} />
-                    <Route path="/advertisement" element={<AdvertisementPage />} />
-                    <Route path="/marketing" element={<MarketingPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                    <Route path="/privacy" element={<PrivacyPage />} />
-                    <Route path="/cookies" element={<CookiesPage />} />
+                    <Route path="/about" element={<AboutPage/>}/>
+                    <Route path="/contact-us" element={<ContactUsPage/>}/>
+                    <Route path="/career" element={<CareerPage/>}/>
+                    <Route path="/advertisement" element={<AdvertisementPage/>}/>
+                    <Route path="/marketing" element={<MarketingPage/>}/>
+                    <Route path="/terms" element={<TermsPage/>}/>
+                    <Route path="/privacy" element={<PrivacyPage/>}/>
+                    <Route path="/cookies" element={<CookiesPage/>}/>
 
                     {/* Protected Routes */}
-                    <Route element={<RequireAuth />}>
-                        <Route path={DashboardRoute} element={<DashboardPage />} />
-                        <Route path="/history" element={<HistoryPage />} />
-                        <Route path={SettingsRoute} element={<UserSettings />} />
-                        <Route path="/alerts" element={<AlertPage />} />
-                        <Route path="/myDevice" element={<MyDevicePage />} />
-                        <Route path="/plants" element={<PlantsView />} />
-                        <Route path="/weather" element={<WeatherView />} />
+                    <Route element={<RequireAuth/>}>
+                        <Route path={DashboardRoute} element={<DashboardPage/>}/>
+                        <Route path="/history" element={<HistoryPage/>}/>
+                        <Route path={SettingsRoute} element={<UserSettings/>}/>
+                        <Route path="/alerts" element={<AlertPage/>}/>
+                        <Route path="/myDevice" element={<MyDevicePage/>}/>
+                        <Route path="/myalertcondition" element={<AlertConditionsPage/>}/>
+                        <Route path="/plants" element={<PlantsView/>}/>
+                        <Route path="/weather" element={<WeatherView/>}/>
                     </Route>
 
                     {/* Catch-all */}
-                    <Route path="/*" element={<NotFoundPage />} />
+                    <Route path="/*" element={<NotFoundPage/>}/>
                 </Routes>
             </div>
-            <Footer />
+            <Footer/>
         </>
     );
 }

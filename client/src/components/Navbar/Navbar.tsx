@@ -15,6 +15,7 @@ export default function NavBar() {
     const mobileDrop = useDropdown();
     const profileDrop = useDropdown();
     const myDeviceDrop = useDropdown();
+    const myAlertConditionDrop = useDropdown();
     const {logout} = useLogout();
 
     useEffect(() => {
@@ -133,6 +134,15 @@ export default function NavBar() {
                                         className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                                     >
                                         Settings
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        to="/myalertcondition"
+                                        onClick={() => myAlertConditionDrop.setOpen(false)}
+                                        className="block px-4 py-2 text-green-600 hover:bg-gray-100"
+                                    >
+                                        My alert condition
                                     </Link>
                                 </li>
                                 <li>
