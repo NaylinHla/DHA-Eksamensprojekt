@@ -5,7 +5,8 @@ import ApplicationRoutes from './ApplicationRoutes';
 import { DevTools } from 'jotai-devtools';
 import 'jotai-devtools/styles.css';
 import { RandomUidAtom } from './import';
-import { UserProvider } from '../UserContext.tsx';
+import { UserProvider } from '../LoggedInUserData/UserContext.tsx';
+import UserSettingsInitializer from "../LoggedInUserData/UserSettingsInitializer.tsx";
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const prod = import.meta.env.PROD;
@@ -32,6 +33,7 @@ export default function App() {
 
     return (
         <UserProvider>
+            <UserSettingsInitializer />
             {serverUrl && (
                 <WsClientProvider url={serverUrl}>
                     <ApplicationRoutes />
@@ -44,4 +46,5 @@ export default function App() {
             ></div>
         </UserProvider>
     );
+
 }

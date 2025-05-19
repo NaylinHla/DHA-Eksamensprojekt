@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 
 export interface UserSettings {
     celsius: boolean;
@@ -7,4 +7,10 @@ export interface UserSettings {
     secretMode: boolean;
 }
 
-export const UserSettingsAtom = atom<UserSettings | null>(null);
+const sessionStorageWithJson = createJSONStorage<UserSettings | null>(() => sessionStorage);
+
+export const UserSettingsAtom = atomWithStorage<UserSettings | null>(
+    'userSettings',
+    null,
+    sessionStorageWithJson
+);

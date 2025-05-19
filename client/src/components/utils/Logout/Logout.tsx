@@ -9,7 +9,7 @@ import {
 } from "../../import";
 import { SignInRoute } from "../../../routeConstants";
 import { useNavigate } from "react-router";
-import { useUser } from "../../../UserContext.tsx";
+import { useUser } from "../../../LoggedInUserData/UserContext.tsx";
 
 export const useLogout = () => {
     const [, setJwt] = useAtom(JwtAtom);

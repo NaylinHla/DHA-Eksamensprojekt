@@ -161,35 +161,6 @@ export default function DashboardPage() {
         })();
     }, [jwt]);
 
-    // Fetch user settings and populate atom
-    const setUserSettings = useSetAtom(UserSettingsAtom);
-
-    useEffect(() => {
-        if (!jwt || jwt.trim() === "") return;
-
-        const timeout = setTimeout(() => {
-            const fetchUserSettings = async () => {
-                try {
-                    const data = await userSettingsClient.getAllSettings(jwt);
-
-                    setUserSettings({
-                        celsius: data.celsius ?? false,
-                        darkTheme: data.darkTheme ?? false,
-                        confirmDialog: data.confirmDialog ?? false,
-                        secretMode: data.secretMode ?? false,
-                    });
-                } catch (e: any) {
-                    toast.error("Failed to fetch user settings");
-                    console.error(e);
-                }
-            };
-
-            fetchUserSettings();
-        }, 0);
-
-        return () => clearTimeout(timeout);
-    }, [jwt]);
-
     // Switch to dark mode if darktheme = true
     useEffect(() => {
         if (!userSettings) return;
