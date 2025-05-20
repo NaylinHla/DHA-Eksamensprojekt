@@ -1,8 +1,8 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Check, X} from "lucide-react";
 import {useAtom} from "jotai";
-import {ConditionAlertPlantResponseDto, JwtAtom, UserIdAtom} from "../../atoms";
-import {alertConditionClient, plantClient, userDeviceClient} from "../../apiControllerClients";
+import {ConditionAlertPlantResponseDto, JwtAtom, UserIdAtom, UserSettingsAtom,} from "../../atoms";
+import {alertConditionClient, plantClient, userDeviceClient,} from "../../apiControllerClients";
 import {
     ConditionAlertPlantCreateDto,
     ConditionAlertUserDeviceCreateDto,
@@ -33,6 +33,9 @@ const DeviceConditionModal: React.FC<Props> = ({
                                                }) => {
     const [jwt] = useAtom(JwtAtom);
     const [userId] = useAtom(UserIdAtom);
+    const [settings] = useAtom(UserSettingsAtom);
+    const useCelsius = settings?.celsius ?? true; // User preference for units
+
     const backdrop = useRef<HTMLDivElement>(null);
 
     const navigate = useNavigate();
@@ -45,11 +48,53 @@ const DeviceConditionModal: React.FC<Props> = ({
     const [deviceId, setDeviceId] = useState("");
     const [sensorType, setSensorType] = useState("Temperature");
     const [operator, setOperator] = useState(">=");
-    const [threshold, setThreshold] = useState<number | "">("");
+
+    const [thresholdInput, setThresholdInput] = useState<string>("");
+    const [threshold, setThreshold] = useState<number | null>(null); // always in base unit (Celsius, %, etc.)
+
 
     // Plants state
     const [plants, setPlants] = useState<PlantResponseDto[]>([]);
     const [selectedPlantId, setSelectedPlantId] = useState("");
+
+    // Convert between Celsius and Fahrenheit
+    function celsiusToFahrenheit(c: number) {
+        return c * 9 / 5 + 32;
+    }
+
+    function fahrenheitToCelsius(f: number) {
+        return (f - 32) * 5 / 9;
+    }
+
+    function onThresholdChange(value: string) {
+        const normalized = value.replace(",", ".");
+
+        // Enforce max 2 decimal places – reject early if invalid
+        const decimalRegex = sensorType === "Temperature"
+            ? /^-?\d*(\.\d{0,2})?$/
+            : /^\d*(\.\d{0,2})?$/;
+
+        if (!decimalRegex.test(normalized)) {
+            return;
+        }
+
+        setThresholdInput(normalized);
+
+        const parsed = parseFloat(normalized);
+        if (isNaN(parsed)) {
+            setThreshold(null);
+            return;
+        }
+
+        // Convert F → C if needed
+        let base = (sensorType === "Temperature" && !useCelsius)
+            ? fahrenheitToCelsius(parsed)
+            : parsed;
+
+        // Canonical value always rounded to 2 decimals
+        base = parseFloat(base.toFixed(2));
+        setThreshold(base);
+    }
 
     useEffect(() => {
         if (!isOpen) return;
@@ -62,7 +107,8 @@ const DeviceConditionModal: React.FC<Props> = ({
             setDeviceId(selectedDeviceId || "");
             setSensorType("Temperature");
             setOperator(">=");
-            setThreshold("");
+            setThresholdInput("");
+            setThreshold(null);
         } else {
             fetchPlants().then();
             setSelectedPlantId("");
@@ -90,11 +136,30 @@ const DeviceConditionModal: React.FC<Props> = ({
         }
     }
 
+    const getUnit = (sensorType: string) => {
+        switch (sensorType) {
+            case "Temperature":
+                return useCelsius ? "°C" : "°F";
+            case "Humidity":
+                return "%";
+            case "AirPressure":
+                return "hPa";
+            case "AirQuality":
+                return "ppm";
+            default:
+                return "";
+        }
+    };
+
     function validate() {
         const errs: { [key: string]: string } = {};
 
         if (view === "devices") {
-            if (threshold === "" || isNaN(Number(threshold))) {
+            const parsed = parseFloat(thresholdInput);
+
+            if (thresholdInput === "" || isNaN(parsed)) {
+                errs.threshold = "Threshold must be a valid number.";
+            } else if (threshold === null || isNaN(threshold)) {
                 errs.threshold = "Threshold must be a valid number.";
             } else {
                 const val = Number(threshold);
@@ -107,9 +172,20 @@ const DeviceConditionModal: React.FC<Props> = ({
 
                 const [min, max] = limits[sensorType] || [];
 
-                if (min !== undefined && val < min) errs.threshold = `Value must be ≥ ${min}.`;
-                else if (max !== undefined && val > max) errs.threshold = `Value must be ≤ ${max}.`;
-                else if (!limits[sensorType]) errs.sensorType = "Invalid sensor type.";
+                // Only if below minimum
+                if (min !== undefined && threshold < min) {
+                    const displayMin =
+                        sensorType === "Temperature" && !useCelsius ? celsiusToFahrenheit(min) : min;
+                    errs.threshold = `Value must be ≥ ${displayMin.toFixed(1)} ${getUnit(
+                        sensorType)}.`;
+                }
+                // Only if above maximum
+                else if (max !== undefined && threshold > max) {
+                    const displayMax =
+                        sensorType === "Temperature" && !useCelsius ? celsiusToFahrenheit(max) : max;
+                    errs.threshold = `Value must be ≤ ${displayMax.toFixed(1)} ${getUnit(
+                        sensorType)}.`;
+                }
             }
 
             if (operator !== ">=" && operator !== "<=") errs.operator = "Operator must be >= or <=.";
@@ -126,6 +202,12 @@ const DeviceConditionModal: React.FC<Props> = ({
         if (!validate()) return;
 
         setSaving(true);
+
+        if (threshold === null) {
+            return;
+        }
+
+        console.log("du skaltil at bruge " + threshold)
 
         try {
             if (view === "devices") {
@@ -226,7 +308,7 @@ const DeviceConditionModal: React.FC<Props> = ({
                                     {renderError("sensorType")}
                                 </label>
 
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-2 items-center">
                                     <select
                                         className="border border-gray-300 rounded px-3 py-2 flex-shrink-0 text-[--color-primary] bg-[--color-background]"
                                         value={operator}
@@ -237,14 +319,16 @@ const DeviceConditionModal: React.FC<Props> = ({
                                         <option value="<=">{"<="}</option>
                                     </select>
                                     <input
-                                        type="number"
-                                        step="any"
+                                        type={sensorType === "Temperature" ? "text" : "number"}
+                                        inputMode={sensorType === "Temperature" ? "decimal" : undefined}
+                                        step={sensorType === "Temperature" ? undefined : "any"}
                                         className="border border-gray-300 rounded px-3 py-2 flex-grow text-[--color-primary] bg-[--color-background]"
                                         placeholder="Threshold"
-                                        value={threshold}
-                                        onChange={e => setThreshold(e.target.value === "" ? "" : Number(e.target.value))}
+                                        value={thresholdInput}
+                                        onChange={(e) => onThresholdChange(e.target.value)}
                                         disabled={saving}
                                     />
+                                    <span>{getUnit(sensorType)}</span>
                                 </div>
                                 <p
                                     className={`text-sm h-5 ml-2 block ${

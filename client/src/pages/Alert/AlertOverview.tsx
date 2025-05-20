@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import useAlertsRest, {Alert} from "../../hooks/useAlertsRest.tsx";
-import {formatDateTimeForUserTZ, TitleTimeHeader} from "../import";
+import {formatDateTimeForUserTZ, TitleTimeHeader, useConvertTemperatureInSentence} from "../import";
 import {MyAlertConditionRoute} from "../../routeConstants";
 import {useNavigate} from "react-router-dom";
 
@@ -11,6 +11,7 @@ const AlertOverview = () => {
     const {alerts, loading} = useAlertsRest();
     const navigate = useNavigate();
     const allYears = [...new Set(alerts.map(a => getYear(a.alertTime)))].sort((a, b) => b - a);
+    const { convertTemperatureInSentence } = useConvertTemperatureInSentence();
 
     const filteredAlerts = selectedYear
         ? alerts.filter((a) => getYear(a.alertTime) === selectedYear)
@@ -94,7 +95,7 @@ const AlertOverview = () => {
                                         className="bg-[var(--color-surface)] p-fluid rounded-xl shadow-md whitespace-pre-line cursor-pointer text-fluid"
                                         onClick={() => handleAlertClick(alert)}
                                     >
-                                        {alert.alertDesc}
+                                        {convertTemperatureInSentence(alert.alertDesc)}
                                     </div>
                                 </div>
                             ))}

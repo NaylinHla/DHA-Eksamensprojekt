@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Application.Validation
 {
@@ -47,37 +48,49 @@ namespace Application.Validation
 
             if (sensorType == "Temperature")
             {
-                if (SingleConditionTempRegex().Match(condition) is { Success: true } match1)
+                var singleMatch = SingleConditionTempRegex().Match(condition);
+                if (singleMatch.Success)
                 {
-                    return double.TryParse(match1.Groups[2].Value, out var value) && IsValueInRange(sensorType, value);
+                    var raw = singleMatch.Groups[2].Value.Replace(',', '.');
+                    return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
+                           && IsValueInRange(sensorType, val);
                 }
 
-                if (RangeConditionTempRegex().Match(condition) is not { Success: true } match2) return false;
-                if (!double.TryParse(match2.Groups[1].Value, out var val1)) return false;
-                if (!double.TryParse(match2.Groups[3].Value, out var val2)) return false;
+                var rangeMatch = RangeConditionTempRegex().Match(condition);
+                if (!rangeMatch.Success) return false;
+
+                var raw1 = rangeMatch.Groups[1].Value.Replace(',', '.');
+                var raw2 = rangeMatch.Groups[3].Value.Replace(',', '.');
+                if (!double.TryParse(raw1, NumberStyles.Float, CultureInfo.InvariantCulture, out var val1))
+                    return false;
+                if (!double.TryParse(raw2, NumberStyles.Float, CultureInfo.InvariantCulture, out var val2))
+                    return false;
 
                 var min = Math.Min(val1, val2);
                 var max = Math.Max(val1, val2);
                 return AreBothValuesInRange(sensorType, min, max);
-
             }
 
             {
-                if (SingleConditionOtherRegex().Match(condition) is not { Success: true } match) return false;
-                return double.TryParse(match.Groups[2].Value, out var value) && IsValueInRange(sensorType, value);
+                var match = SingleConditionOtherRegex().Match(condition);
+                if (!match.Success) return false;
+
+                var raw = match.Groups[2].Value.Replace(',', '.');
+                return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
+                       && IsValueInRange(sensorType, val);
             }
         }
 
-        // Temperature single condition allows optional minus
-        [GeneratedRegex(@"^(<=|>=)(-?\d+(\.\d+)?)$")]
+        // Temperature single condition allows optional minus, dot or comma
+        [GeneratedRegex(@"^(<=|>=)(-?\d+([.,]\d+)?)$")]
         private static partial Regex SingleConditionTempRegex();
 
-        // Temperature range condition allows negative numbers on both sides
-        [GeneratedRegex(@"^(-?\d+(\.\d+)?)-(-?\d+(\.\d+)?)$")]
+        // Temperature range condition allows negative numbers on both sides, dot or comma
+        [GeneratedRegex(@"^(-?\d+([.,]\d+)?)-(-?\d+([.,]\d+)?)$")]
         private static partial Regex RangeConditionTempRegex();
 
-        // Other sensors single condition only positive numbers (no minus)
-        [GeneratedRegex(@"^(<=|>=)(\d+(\.\d+)?)$")]
+        // Other sensors single condition only positive numbers (no minus), dot or comma
+        [GeneratedRegex(@"^(<=|>=)(\d+([.,]\d+)?)$")]
         private static partial Regex SingleConditionOtherRegex();
     }
 }

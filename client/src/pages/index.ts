@@ -7,7 +7,7 @@ export {default as WeatherView} from './Weather/WeatherView'
 export {default as PlantsView} from './PlantsView/PlantsView.tsx'
 export {default as NotFoundPage} from './Misc/NotFound'
 export {default as MyDevicePage} from './MyDevice/MyDevicePage'
-export {default as AlertConditionsPage} from './AlertConditionsPage/AlertConditionsPage'
+export {default as AlertConditionsPage} from './AlertConditions/AlertConditionsPage'
 
 // ********** Other Components **********
 export {default as AboutPage} from './Other/AboutPage.tsx'

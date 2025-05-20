@@ -6,6 +6,7 @@ import {JwtAtom} from '../../atoms';
 import {useAlertConditions} from '../../hooks/useAlertConditions';
 import {alertConditionClient} from '../../apiControllerClients';
 import {useLocation} from "react-router-dom";
+import {useDisplayTemperature} from '../import';
 
 export default function AlertConditionsPage() {
     const location = useLocation();
@@ -19,7 +20,7 @@ export default function AlertConditionsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [jwt] = useAtom(JwtAtom);
     const [showSpinner, setShowSpinner] = useState(false);
-
+    const {convert, unit} = useDisplayTemperature();
     const SENSOR_TYPES = ['Temperature', 'Humidity', 'AirPressure', 'AirQuality'];
 
     useEffect(() => {
@@ -147,9 +148,9 @@ export default function AlertConditionsPage() {
 
             {/* Content */}
             <div className="relative flex-1 overflow-hidden px-4 sm:px-6 pb-6">
-                {view === 'devices' && filteredConditions.length > 0 && (
+                {view === 'devices' && (
                     <div
-                        className="w-full sm:absolute sm:left-0 sm:top-4 sm:bottom-4 pl-8 md:pl-12 sm:w-32 sm:pr-6 pb-4 overflow-x-auto sm:overflow-visible">
+                        className="w-full z-2 sm:absolute sm:left-0 sm:top-4 sm:bottom-4 pl-8 md:pl-12 sm:w-32 sm:pr-6 pb-4 overflow-x-auto sm:overflow-visible">
                         <aside
                             className="flex sm:flex-col flex-row sm:space-y-2 gap-2 sm:gap-0 p-2 sm:p-0 items-center p-fluid space-y-2 text-fluid">
                             {selectedSensorType && (
@@ -213,7 +214,43 @@ export default function AlertConditionsPage() {
                                         className="bg-[var(--color-surface)] p-4 shadow rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
                                     >
                                         <div>
-                                            <strong>{cond.sensorType}</strong> {cond.condition}
+                                            <strong>{cond.sensorType}</strong>{' '}
+                                            {(() => {
+                                                if (!cond.condition) return '';
+
+                                                const conditionStr = cond.condition;
+
+                                                // Only convert temperature conditions and parse operators like <=30
+                                                if (cond.sensorType === 'Temperature') {
+                                                    const match = conditionStr.match(/^([<>=!]*)(-?\d+(\.\d+)?)$/);
+                                                    if (!match) return conditionStr;
+
+                                                    const [, operator, numStr] = match;
+                                                    const num = Number(numStr);
+                                                    if (Number.isNaN(num)) return conditionStr;
+
+                                                    const converted = convert(num);
+                                                    return `${operator}${converted}${unit}`;
+                                                }
+
+                                                // For other sensor types, just append proper unit without conversion
+                                                let unitStr: string;
+                                                switch (cond.sensorType) {
+                                                    case 'Humidity':
+                                                        unitStr = '%';
+                                                        break;
+                                                    case 'AirPressure':
+                                                        unitStr = 'hPa';
+                                                        break;
+                                                    case 'AirQuality':
+                                                        unitStr = 'ppm';
+                                                        break;
+                                                    default:
+                                                        unitStr = '';
+                                                }
+
+                                                return `${conditionStr}${unitStr}`;
+                                            })()}
                                         </div>
                                         <div
                                             className={`flex items-center max-w-[150px] ${selectedDeviceId ? 'justify-center' : 'space-x-2 truncate'}`}>
