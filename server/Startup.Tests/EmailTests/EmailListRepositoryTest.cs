@@ -26,8 +26,8 @@ public class EmailListRepositoryTest
         _dbContext.Dispose();
     }
 
-    private MyDbContext _dbContext = null!;
-    private EmailListRepository _repository = null!;
+    private MyDbContext _dbContext;
+    private EmailListRepository _repository;
 
     [Test]
     public void Add_ShouldAddEmail()
@@ -39,7 +39,7 @@ public class EmailListRepositoryTest
 
         var result = _dbContext.EmailList.ToList();
 
-        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result[0].Email, Is.EqualTo("test@example.com"));
     }
 
@@ -55,7 +55,7 @@ public class EmailListRepositoryTest
 
         var result = _repository.GetAllEmails();
 
-        Assert.That(result.Count, Is.EqualTo(2));
+        Assert.That(result, Has.Count.EqualTo(2));
         Assert.That(result, Does.Contain("a@example.com"));
         Assert.That(result, Does.Contain("b@example.com"));
     }
