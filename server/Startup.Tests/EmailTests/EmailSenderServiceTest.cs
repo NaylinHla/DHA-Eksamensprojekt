@@ -6,6 +6,7 @@ using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
 using Core.Domain.Entities;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
@@ -20,18 +21,22 @@ public class EmailSenderServiceTest
     private JwtEmailTokenService _jwtService;
     private Mock<ISmtpClient> _smtpMock;
     private SmtpClientFactory _factory;
+    private Mock<IValidator<AddEmailDto>> _addEmailValidatorMock;
+    private Mock<IValidator<RemoveEmailDto>> _removeEmailValidatorMock;
     
     [SetUp]
     public void Setup()
     {
         _emailRepo = new Mock<IEmailListRepository>();
+        _addEmailValidatorMock = new Mock<IValidator<AddEmailDto>>();
+        _removeEmailValidatorMock = new Mock<IValidator<RemoveEmailDto>>();
 
         var appOptions = new AppOptions
         {
             EMAIL_SENDER_USERNAME = "fakeUser",
             EMAIL_SENDER_PASSWORD = "fakePass",
             JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
-            EnableEmailSending = false
+            EnableEmailSending = true
         };
 
         var jwtOptionsMock = new Mock<IOptions<AppOptions>>();
@@ -45,7 +50,6 @@ public class EmailSenderServiceTest
         _smtpMock.SetupProperty(c => c.EnableSsl);
         _smtpMock.SetupProperty(c => c.UseDefaultCredentials);
         _smtpMock.SetupProperty(c => c.Credentials);
-        
         _factory = () => _smtpMock.Object;
         
         
@@ -54,8 +58,8 @@ public class EmailSenderServiceTest
             _emailRepo.Object, 
             _jwtService,
             _factory,
-            Mock.Of<IValidator<AddEmailDto>>(), 
-            Mock.Of<IValidator<RemoveEmailDto>>());
+            _addEmailValidatorMock.Object, 
+            _removeEmailValidatorMock.Object);
     }
 
     
@@ -65,6 +69,10 @@ public class EmailSenderServiceTest
     {
         var dto = new AddEmailDto { Email = "newuser@example.com" };
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(false);
+        
+        _addEmailValidatorMock
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
         await _service.AddEmailAsync(dto);
 
@@ -89,11 +97,79 @@ public class EmailSenderServiceTest
     {
         var dto = new RemoveEmailDto { Email = "delete@example.com" };
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(true);
+        
+         _removeEmailValidatorMock
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
-        await _service.RemoveEmailAsync(dto);
+        Assert.DoesNotThrowAsync(() => _service.RemoveEmailAsync(dto));
 
         _emailRepo.Verify(r => r.RemoveByEmail(dto.Email), Times.Once);
         _emailRepo.Verify(r => r.Save(), Times.Once);
+    }
+    
+    [Test]
+    public async Task RemoveEmailAsync_ShouldSendGoodbye_WithExactSubjectAndBody()
+    {
+        // Arrange: existing email
+        const string email = "bye@example.com";
+        _emailRepo.Setup(r => r.EmailExists(email)).Returns(true);
+
+        // Skip validation failures
+        _removeEmailValidatorMock
+            .Setup(v => v.ValidateAsync(It.IsAny<RemoveEmailDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        // Capture the message
+        MailMessage? sent = null;
+        _smtpMock
+            .Setup(c => c.SendMailAsync(It.IsAny<MailMessage>()))
+            .Callback<MailMessage>(m => sent = m)
+            .Returns(Task.CompletedTask);
+
+        var dto = new RemoveEmailDto { Email = email };
+
+        // Act
+        await _service.RemoveEmailAsync(dto);
+
+        // Assert
+        Assert.That(sent, Is.Not.Null, "Expected an email to be sent");
+        Assert.Multiple(() =>
+        {
+            Assert.That(sent.Subject, Is.EqualTo($"Goodbye from Meet Your Plants"));
+            Assert.That(sent.Body, Does.Contain("You've been unsubscribed from our email list. We're sad to see you go!"));
+        });
+    }
+    
+    [Test]
+    public async Task AddEmailAsync_ShouldSendConfirmation_WithExactSubjectAndLink()
+    {
+        // Arrange: new email
+        var email = "newuser@example.com";
+        _emailRepo.Setup(r => r.EmailExists(email)).Returns(false);
+
+        _addEmailValidatorMock
+            .Setup(v => v.ValidateAsync(It.IsAny<AddEmailDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        MailMessage? sent = null;
+        _smtpMock
+            .Setup(c => c.SendMailAsync(It.IsAny<MailMessage>()))
+            .Callback<MailMessage>(m => sent = m)
+            .Returns(Task.CompletedTask);
+
+        var dto = new AddEmailDto { Email = email };
+
+        // Act
+        await _service.AddEmailAsync(dto);
+
+        // Assert
+        Assert.That(sent, Is.Not.Null, "Expected a confirmation email");
+        Assert.Multiple(() =>
+        {
+            Assert.That(sent.Subject, Is.EqualTo("Welcome to Meet Your Plants!"));
+            Assert.That(sent.Body, Does.Match("Thank you for subscribing to our email list. We’re excited to share updates with you!"));
+        });
     }
 
     [Test]
@@ -106,17 +182,6 @@ public class EmailSenderServiceTest
 
         _emailRepo.Verify(r => r.RemoveByEmail(It.IsAny<string>()), Times.Never);
         _emailRepo.Verify(r => r.Save(), Times.Never);
-    }
-
-    [Test]
-    public Task SendEmailAsync_ShouldNotSend_WhenDisabled()
-    {
-        _emailRepo.Setup(r => r.GetAllEmails()).Returns(["user1@example.com"]);
-
-        Assert.DoesNotThrowAsync(() => _service.SendEmailAsync("Subject", "Body"));
-        
-        _smtpMock.Verify(c => c.SendMailAsync(It.IsAny<MailMessage>()), Times.Never);
-        return Task.CompletedTask;
     }
 
     [Test]
@@ -190,7 +255,6 @@ public class EmailSenderServiceTest
         smtp.Setup(c => c.SendMailAsync(It.IsAny<MailMessage>())).Returns(Task.CompletedTask);
         
         SmtpClientFactory factory = () => smtp.Object;
-        
         var service = new EmailSenderService(
             monitorMock.Object, 
             repo.Object, 
