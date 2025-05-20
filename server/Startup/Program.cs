@@ -92,11 +92,6 @@ public class Program
 
     private static async Task ConfigureMiddleware(WebApplication app)
     {
-        // FeatureHub Flag Test: FeatureToggleTest
-        var fhContext = app.Services.GetRequiredService<IClientContext>();
-        var isFeatureEnabled = fhContext["FeatureToggleTest"].IsEnabled;
-        Console.WriteLine($"[FeatureHub] 'FeatureToggleTest' is {(isFeatureEnabled ? "ON" : "OFF")}");
-
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         var serializedAppOptions = JsonSerializer.Serialize(appOptions);
