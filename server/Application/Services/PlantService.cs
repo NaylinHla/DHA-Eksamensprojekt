@@ -56,9 +56,10 @@ public class PlantService(
     {
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         
-        var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
+        var plantToDelete = plantRepo.GetPlantByIdAsync(plantId)
+                            ?? throw new KeyNotFoundException();
         
-        if (!plantToDelete.Result.IsDead)
+        if (plantToDelete.Result is { IsDead: false })
         {
             MonitorService.Log.Error("User tried to delete plant that is not dead");
             throw new ValidationException("Plant is not dead. Delete plant first by marking it as dead.");
@@ -78,7 +79,8 @@ public class PlantService(
         await plantEditValidator.ValidateAndThrowAsync(dto);
         
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        var plant = await plantRepo.GetPlantByIdAsync(plantId);
+        var plant = await plantRepo.GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
             MonitorService.Log.Error("User tried to edit plant that does not belong to them");
@@ -97,7 +99,8 @@ public class PlantService(
     public async Task<Plant> MarkPlantAsDeadAsync(Guid plantId, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Mark Plant As Dead Async method in PlantService");
-        var plant = await plantRepo.GetPlantByIdAsync(plantId);
+        var plant = await plantRepo.GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
         
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.MarkPlantAsDeadAsync(plant.PlantId);
@@ -109,7 +112,8 @@ public class PlantService(
     public async Task<Plant> WaterPlantAsync(Guid plantId, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Water Plant Async method in PlantService");
-        var plant = await plantRepo.GetPlantByIdAsync(plantId);
+        var plant = await plantRepo.GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
 
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.WaterPlantAsync(plant.PlantId);

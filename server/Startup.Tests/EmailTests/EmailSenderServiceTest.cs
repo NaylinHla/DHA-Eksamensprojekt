@@ -71,8 +71,7 @@ public class EmailSenderServiceTest
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(false);
         
         _addEmailValidatorMock
-            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
-            .ReturnsAsync(new ValidationResult());
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None));
 
         await _service.AddEmailAsync(dto);
 
@@ -99,8 +98,7 @@ public class EmailSenderServiceTest
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(true);
         
          _removeEmailValidatorMock
-            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
-            .ReturnsAsync(new ValidationResult());
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None));
 
         Assert.DoesNotThrowAsync(() => _service.RemoveEmailAsync(dto));
 
