@@ -11,10 +11,11 @@ export function useCountryLocation(): CityHit {
 
     useEffect(() => {
         const payload = parseJwt(jwt);
+        if (!payload) return;
         console.log("JWT payload in useCountryLocation →", payload);
-        if (!payload || !payload.country) return;
-
-        const country = payload.country;
+        const country = payload.country ?? payload.Country;
+        if (!country) return;
+        
         const abort   = new AbortController();
 
         (async () => {

@@ -1,4 +1,7 @@
-﻿export interface JwtPayload { country?: string }
+﻿export interface JwtPayload { 
+    country?: string; 
+    Country?: string; 
+}
 
 function decodeSegment(seg: string): string {
     // 1. URL → standard alphabet
