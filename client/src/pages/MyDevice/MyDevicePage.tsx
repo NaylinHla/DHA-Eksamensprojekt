@@ -80,7 +80,7 @@ export default function MyDevicePage() {
                 });
                 setPreferences(initial);
             })
-            .catch(() => toast.error("Failed to fetch devices"))
+            .catch(() => toast.error("Failed to fetch devices", {id: `Fetch-error`,}))
             .finally(() => {
                 // Cancel spinner timer if request finished before 200ms
                 if (showSpinnerTimeout) {
@@ -88,6 +88,7 @@ export default function MyDevicePage() {
                     showSpinnerTimeout = null;
                 }
                 setLoading(false);
+                setHasFetched(true);
             });
         return () => {
             if (showSpinnerTimeout) {
@@ -117,7 +118,7 @@ export default function MyDevicePage() {
             userDeviceClient
                 .deleteUserDevice(id, jwt)
                 .then(() => {
-                    toast.success(`Device "${deviceName}" removed successfully!`);
+                    toast.success(`Device "${deviceName}" removed successfully!`, {id: `Removed-succes`,})
                     setDeviceData((prev) => prev.filter((d) => d.deviceId !== id));
                     setPreferences((prev) => {
                         const newPref = {...prev};
@@ -126,7 +127,7 @@ export default function MyDevicePage() {
                     });
                 })
                 .catch((e) => {
-                    toast.error(`Failed to remove device: ${e.message}`);
+                    toast.error(`Failed to remove device: ${e.message}`, {id: `Removed-error`,})
                 })
                 .finally(() => {
                     setIsModalOpen(false);
@@ -135,6 +136,8 @@ export default function MyDevicePage() {
         }
     };
 
+    const [hasFetched, setHasFetched] = useState(false);
+    const initializing = !hasFetched && loading;
 
     const cancelRemoveDevice = () => {
         setIsModalOpen(false);
@@ -153,7 +156,7 @@ export default function MyDevicePage() {
                         <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm}/>
                     </div>
 
-                    {loading ? (
+                    {initializing ? (
                         <div className="my-10">{Spinner}</div>
                     ) : (
                         <div
@@ -298,8 +301,8 @@ export default function MyDevicePage() {
                                                 };
                                                 userDeviceClient
                                                     .adminChangesPreferences(dto, jwt)
-                                                    .then(() => toast.success("Preferences sent"))
-                                                    .catch((e) => toast.error("Error: " + e.message));
+                                                    .then(() => toast.success("Preferences sent", {id: `Preferences-succes`,}))
+                                                    .catch((e) => toast.error("Error: " + e.message, {id: `Preferences-error`,}));
                                             }}
                                         >
                                             Change preferences
@@ -353,7 +356,7 @@ export default function MyDevicePage() {
                             setPreferences(initialPref);
 
                         })
-                        .catch(() => toast.error("Failed to refresh device list"))
+                        .catch(() => toast.error("Failed to refresh device list", {id: `Refresh-error`,}))
                         .finally(() => setLoading(false));
                     setEditModalOpen(false);
                 }}
