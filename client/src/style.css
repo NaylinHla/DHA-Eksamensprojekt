@@ -47,7 +47,7 @@ html {
     default: false;
     prefersdark: false;
     color-scheme: "dark";
-    --color-cream: oklch(0.92 0.0147 102.47);
+    --color-cream: oklch(21.15% 0.012 254.09);
     --color-surface: oklch(28% 0.015 255);
     --color-base-100: oklch(25.33% 0.016 252.42);
     --color-base-200: oklch(23.26% 0.014 253.1);
@@ -98,4 +98,46 @@ html {
         @apply outline-none ring-2 ring-offset-2;
         --tw-ring-color: var(--n-content);
     }
+}
+
+
+@layer utilities {
+    /* fluid font size (for general text) */
+    .text-fluid {
+        font-size: clamp(0.85rem, 1vw, 1.25rem);
+    }
+    /* fluid heading size */
+    .text-fluid-lg {
+        font-size: clamp(2.5rem, 2vw, 4rem);
+    }
+    .text-fluid-header {
+        font-size: clamp(1.5rem,3vw,3rem);
+    }
+    /* fluid padding */
+    .p-fluid {
+        padding: clamp(1rem, 1vw, 2rem);
+    }
+    /* fluid gap */
+    .gap-fluid {
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+    }
+    .gap-fluid-lg {
+        gap: clamp(0.20rem, 2vw, 2rem);
+    }
+    /* fluid icon size */
+    .icon-fluid {
+        width: clamp(0.75rem, 1vw, 2rem);
+        height: clamp(0.75rem, 1vw, 2rem);
+    }
+    /* Card size */
+    .card-fluid {
+        width: clamp(10rem,14vw,18rem);
+        height: clamp(12rem,20vw,22rem);
+    }
+    
+    /* Modal Size */
+    .modal-fluid {
+        width: clamp(10rem,14vw,30rem);
+        height: clamp(12rem,20vw,50rem);
+        }
 }

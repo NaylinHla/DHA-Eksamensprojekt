@@ -34,16 +34,18 @@ import { cssVar } from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
-type Point = { time: string; display: string; value: number };
+type Point = { time: string; display: string; value: number; };
 type TabKey = "temperature" | "humidity" | "airPressure" | "airQuality";
 
 export default function HistoryPage() {
+    // dates
     const today = new Date();
     const monthAgo = new Date(today);
     monthAgo.setMonth(today.getMonth() - 1);
     const isoToday = today.toISOString().slice(0, 10);
     const isoMonthAgo = monthAgo.toISOString().slice(0, 10);
 
+    // atoms & state
     const [greenhouseData, setGreenhouseData] = useAtom(GreenhouseSensorDataAtom);
     const [latestSensorData, setLatestSensorData] = useState<Record<string, SensorHistoryWithDeviceDto>>({});
     const [jwt] = useAtom(JwtAtom);
@@ -63,16 +65,20 @@ export default function HistoryPage() {
         airQuality: useRef<ChartJS | null>(null),
     };
 
+    // WebSocket bindings
     const { subscribe, unsubscribe } = useTopicManager();
     const prevTopic = useRef<string | null>(null);
+
     const rangeFromRef = useRef(rangeFrom);
     const rangeToRef = useRef(rangeTo);
+    useEffect(() => { rangeFromRef.current = rangeFrom; rangeToRef.current = rangeTo; }, [rangeFrom, rangeTo]);
 
     useEffect(() => {
         rangeFromRef.current = rangeFrom;
         rangeToRef.current = rangeTo;
     }, [rangeFrom, rangeTo]);
 
+    // Tab Helper
     const pretty: Record<TabKey, string> = {
         temperature: "Temperature",
         humidity: "Humidity",
@@ -80,6 +86,15 @@ export default function HistoryPage() {
         airQuality: "Air Quality",
     };
 
+    /* const unit: Record<TabKey, string> = {
+        temperature: "°C",
+        humidity: "%",
+        airPressure: "hPa",
+        airQuality: "ppm",
+    }; */
+
+
+    //  Chart Helpers
     function appendPointToChart(
         chartRef: React.RefObject<ChartJS | null>,
         point: { time: string; value: number },
@@ -88,12 +103,15 @@ export default function HistoryPage() {
         const chart = chartRef.current;
         if (!chart) return;
 
+        // Ensure arrays exist
         if (!Array.isArray(chart.data.labels)) chart.data.labels = [];
         if (!Array.isArray(chart.data.datasets[0].data)) chart.data.datasets[0].data = [];
 
+        // 1) Append new
         chart.data.labels.push(point.time);
         (chart.data.datasets[0].data as number[]).push(point.value);
 
+        // 2) Pop oldest if over limit
         if (chart.data.labels.length > maxPoints) {
             chart.data.labels.shift();
             (chart.data.datasets[0].data as number[]).shift();
@@ -113,6 +131,7 @@ export default function HistoryPage() {
             )
         );
 
+        /* Push to charts (only if chart exists yet) */
         logs.forEach(r => {
             const iso = r.time instanceof Date ? r.time.toISOString() : String(r.time);
             if (!iso) return;
@@ -123,17 +142,20 @@ export default function HistoryPage() {
         });
     }, 1000);
 
+    /* Websocket Data */
     useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
         const logs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
         const deviceId = dto.logs?.[0]?.deviceId;
         if (!logs.length || !deviceId) return;
 
+        // Update the latestSensorData for this device
         const latestLog = logs[logs.length - 1];
         setLatestSensorData(prev => ({
             ...prev,
             [deviceId]: { ...latestLog, deviceId },
         }));
 
+        // Only update chart if logs are in date range
         const from = new Date(rangeFromRef.current);
         const to = new Date(rangeToRef.current);
         to.setHours(23, 59, 59, 999);
@@ -148,6 +170,7 @@ export default function HistoryPage() {
         if (unique.length) throttledAppend(unique);
     });
 
+    // subscribe to topic changes
     useEffect(() => {
         if (!selectedDeviceId) return;
         const newTopic = `GreenhouseSensorData/${selectedDeviceId}`;
@@ -159,6 +182,7 @@ export default function HistoryPage() {
         return () => void unsubscribe(newTopic).catch(() => {});
     }, [selectedDeviceId]);
 
+    // Fetch devices
     useEffect(() => {
         if (!jwt) return;
         setLoadingDevices(true);
@@ -173,6 +197,7 @@ export default function HistoryPage() {
             .finally(() => setLoadingDevices(false));
     }, [jwt]);
 
+    // load history data
     useEffect(() => {
         if (!jwt || !selectedDeviceId) return;
         setLoadingData(true);
@@ -188,6 +213,7 @@ export default function HistoryPage() {
         return () => clearTimeout(debounced);
     }, [jwt, selectedDeviceId, rangeFrom, rangeTo]);
 
+    // load recent data
     useEffect(() => {
         if (!jwt) return;
         greenhouseDeviceClient
@@ -206,6 +232,7 @@ export default function HistoryPage() {
         return arr.filter((_, idx) => idx % step === 0);
     }
 
+    //  Build series
     const series = useMemo(() => {
         const recs = greenhouseData.find(d => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
         const unique: SensorHistoryDto[] = [];
@@ -223,6 +250,7 @@ export default function HistoryPage() {
             prev = r;
         }
 
+        // 2) Down-sample
         const sampled = downSampleRecords(unique, 500);
 
         const build = (key: keyof SensorHistoryDto): Point[] =>
@@ -244,6 +272,7 @@ export default function HistoryPage() {
         };
     }, [greenhouseData, selectedDeviceId, rangeFrom, rangeTo]);
 
+    // UI Elements
     const Spinner = (
         <div className="flex justify-center items-center h-32">
             <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
@@ -261,16 +290,12 @@ export default function HistoryPage() {
         airQuality: "ppm",
     };
 
-    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null> }> = ({
-                                                                                                                                  tabKey,
-                                                                                                                                  data,
-                                                                                                                                  label,
-                                                                                                                                  chartRef,
-                                                                                                                              }) =>
+    // Re-Usable Chart
+    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => (
         data.length ? (
             <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden mb-6 px-4 pt-4">
-                <h3 className="text-lg font-semibold mb-3">{label}</h3>
-                <div className="h-50 w-full">
+                <h3 className="text-lg font-semibold mb-3 text-fluid">{label}</h3>
+                <div className="w-full h-[clamp(8rem,20vw,40rem)]">
                     <Line
                         ref={chartRef as any}
                         data={{
@@ -331,7 +356,8 @@ export default function HistoryPage() {
             </div>
         ) : (
             <div className="text-gray-500 mb-6">No {label} data</div>
-        );
+        )
+    );
 
     const fields: (keyof SensorHistoryWithDeviceDto)[] = ["temperature", "humidity", "airPressure", "airQuality"];
     const noData = !series.temperature.length && !series.humidity.length && !series.airPressure.length && !series.airQuality.length;
@@ -342,10 +368,9 @@ export default function HistoryPage() {
             <TitleTimeHeader title="History"/>
 
             {/* Filters & controls */}
-            <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">
+            <div className="flex flex-wrap items-start gap-fluid lg:items-center lg:justify-between p-fluid w-full">
                 {/* Current status */}
-                <div
-                    className="bg-[var(--color-surface)] shadow rounded-2xl p-4 w-full sm:flex-1 flex flex-col justify-between">
+                <div className="bg-[var(--color-surface)] shadow rounded-2xl p-fluid w-full sm:flex-1 flex flex-col justify-between">
                     {loadingDevices || loadingData ? Spinner : (() => {
                         const latest = latestSensorData[selectedDeviceId!];
                         if (!latest || fields.some(f => latest[f] == null || latest[f] === 0)) return <p
@@ -353,12 +378,12 @@ export default function HistoryPage() {
                         return (
                             <>
                                 <div className="flex justify-between mb-2">
-                                    <h2 className="font-bold">Current Status</h2>
-                                    <span className="text-xs text-gray-500">
+                                    <h2 className="font-bold text-fluid-header">Current Status</h2>
+                                    <span className="text-fluid text-muted-foreground text-gray-500">
                                     Last updated:&nbsp;{formatDateTimeForUserTZ(latest.time)}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-1 text-sm">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-fluid text-fluid">
                                     {fields.map(f => {
                                         const key = f as TabKey;
                                         let value = (latest as any)[f];
@@ -384,15 +409,15 @@ export default function HistoryPage() {
             </div>
 
             {/* Charts */}
-            <main className="flex-1 overflow-y-auto px-6 pb-6">
+            <main className="flex-1 overflow-y-auto p-fluid">
                 <div className="bg-[var(--color-surface)] shadow rounded-2xl">
                     <div className="px-4 pt-4 flex flex-wrap items-center gap-4 sm:gap-6">
                         
                         {/* Device selector */}
                         <div className="flex items-center gap-2">
-                            <label className="font-medium text-sm">Device:</label>
+                            <label className="font-medium text-fluid">Device:</label>
                             <select
-                                className="select select-xs bg-[var(--color-surface)]"
+                                className="select bg-[var(--color-surface)] text-fluid"
                                 value={selectedDeviceId || ""}
                                 onChange={e => setSelectedDeviceId(e.target.value)}
                                 disabled={loadingDevices}
@@ -411,7 +436,7 @@ export default function HistoryPage() {
                         
                         {/* Date pickers */}
                         <div className="flex items-center gap-2 text-sm ml-auto">
-                            <label className="font-medium text-sm">From:</label>
+                            <label className="font-medium text-fluid">From:</label>
                             <input
                                 type="date"
                                 value={rangeFrom}
@@ -423,10 +448,10 @@ export default function HistoryPage() {
                                     }
                                     setRangeFrom(v);
                                 }}
-                                className="input input-xs bg-[var(--color-surface)] ml-1"
+                                className="input input-xs bg-[var(--color-surface)] ml-1 text-fluid"
                             />
-                            <label className="font-medium text-sm">To:</label>
                             
+                            <label className="font-medium text-fluid">To:</label>
                             <input
                                 type="date"
                                 value={rangeTo}
@@ -438,7 +463,7 @@ export default function HistoryPage() {
                                     }
                                     setRangeTo(v);
                                 }}
-                                className="input input-xs bg-[var(--color-surface)] ml-1"
+                                className="input input-xs bg-[var(--color-surface)] ml-1 text-fluid"
                             />
                         </div>
                     </div>
@@ -448,7 +473,7 @@ export default function HistoryPage() {
                         {(Object.keys(pretty) as TabKey[]).map(key => (
                             <a
                                 key={key}
-                                className={`tab flex-1 tab-bordered${tab === key ? " tab-active" : ""}`}
+                                className={`tab flex-1 tab-bordered${tab === key ? " tab-active" : ""} text-fluid`}
                                 onClick={() => setTab(key)}
                             >
                                 {pretty[key]}
@@ -458,7 +483,7 @@ export default function HistoryPage() {
                     <hr className="border-primary"/>
                     
                     {/* active chart */}
-                    <div className="p-4">
+                    <div className="p-fluid">
                         {loadingData ? Spinner : noData ? (
                             <div className="p-8 text-center text-gray-500">
                                 No data available for the selected date range.

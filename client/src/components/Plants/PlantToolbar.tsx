@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {Search} from "lucide-react";
+import {SearchBar} from "../index.ts";
 
 
 interface Props {
@@ -9,30 +10,27 @@ interface Props {
     onToggleDead: () => void;
 }
 
-const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggleDead}) => {
-    const [term, setTerm] = useState("");
+const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onToggleDead }) => {
+    const [searchTerm, setSearchTerm] = useState("");
 
     return (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
-                <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-64">
-                    <Search className="absolute h-4 w-4 left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
-                    <input
-                        placeholder="Search"
-                        value={term}
-                        onChange={(e) => {
-                            setTerm(e.target.value);
-                            onSearch(e.target.value);
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <SearchBar 
+                        searchTerm={searchTerm} 
+                        onSearch={term => {
+                            setSearchTerm(term);
+                            onSearch(term);
                         }}
-                        className="pl-9 w-full"
-                    />
+                        />
                 </div>
 
-                <label className="inline-flex items-center gap-2 text-sm">
+                <label className="inline-flex items-center gap-2 text-[clamp(0.8rem,1vw,1.25rem)]">
                     <input
                         type="checkbox"
-                        className="checkbox checkbox-xs"
+                        className="checkbox"
                         checked={showDead}
                         onChange={onToggleDead}
                     />
@@ -42,7 +40,7 @@ const PlantsToolbar: React.FC<Props> = ({onSearch, onWaterAll, showDead, onToggl
 
             <button
                 onClick={onWaterAll}
-                className="Btn btn-neutral bg-transparent rounded-2xl self-start lg:self-auto"
+                className="btn border-neutral bg-transparent btn-lg hover:text-white hover:bg-neutral self-start lg:self-auto"
             >
                 Water all plants
             </button>
