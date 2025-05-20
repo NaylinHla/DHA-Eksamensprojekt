@@ -39,7 +39,8 @@ public class UserDeviceServiceTests
             Id = id.ToString(),
             Role = "User",
             Email = "test@example.com",
-            Exp = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
+            Exp = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Country = "Denmark"
         };
     }
 
