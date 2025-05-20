@@ -15,7 +15,7 @@ const SearchBar: React.FC<SearchBarProps> = ({searchTerm, onSearch}) => {
                 placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => onSearch(e.target.value)}
-                className="pl-9 w-full text-[clamp(0.85rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
+                className="pl-9 w-full text-[clamp(0.85rem,0.5vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
             />
         </div>
     );

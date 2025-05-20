@@ -15,7 +15,7 @@ export const StatCard: React.FC<StatCardProps> = ({title, loading, value, emphas
             <p
                 className={`
           font-bold
-          text-[clamp(2.5rem,4vw,5rem)]
+          text-[clamp(2.5rem,2.5vw,5rem)]
           ${emphasisClass}
         `}
             >
