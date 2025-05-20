@@ -680,7 +680,7 @@
         "operationId": "FeatureTest_CheckToggle",
         "responses": {
           "200": {
-            "description": "",
+            "description": "Returns the current state of the feature toggle as a binary string.",
             "content": {
               "application/octet-stream": {
                 "schema": {
