@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Check, X} from "lucide-react";
 import {useAtom} from "jotai";
-import {ConditionAlertPlantResponseDto, JwtAtom} from "../../atoms";
+import {ConditionAlertPlantResponseDto, JwtAtom, UserIdAtom} from "../../atoms";
 import {alertConditionClient, plantClient, userDeviceClient} from "../../apiControllerClients";
 import {
     ConditionAlertPlantCreateDto,
@@ -32,6 +32,7 @@ const DeviceConditionModal: React.FC<Props> = ({
                                                    existingConditions = [],
                                                }) => {
     const [jwt] = useAtom(JwtAtom);
+    const [userId] = useAtom(UserIdAtom);
     const backdrop = useRef<HTMLDivElement>(null);
 
     const navigate = useNavigate();
@@ -80,9 +81,7 @@ const DeviceConditionModal: React.FC<Props> = ({
 
     async function fetchPlants() {
         try {
-            const {sub, Id} = JSON.parse(atob(jwt.split(".")[1]));
-            const uid = (sub || Id) ?? "";
-            const allPlants = await plantClient.getAllPlants(uid, jwt);
+            const allPlants = await plantClient.getAllPlants(userId, jwt);
 
             const existingIds = new Set(existingConditions.map(c => c.plantId));
             setPlants(allPlants.filter(p => !existingIds.has(p.plantId)));
@@ -146,7 +145,13 @@ const DeviceConditionModal: React.FC<Props> = ({
             onCreated();
             onClose();
         } catch (err: any) {
-            toast.error(err?.message || "Error creating condition");
+            const status = err?.response?.status || err?.status;
+
+            if (status === 409) {
+                toast.error("A condition with these values and sensor already exists in this device.");
+            } else {
+                toast.error(err?.message || "Error creating condition");
+            }
         } finally {
             setSaving(false);
         }

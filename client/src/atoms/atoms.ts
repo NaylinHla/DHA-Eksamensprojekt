@@ -1,30 +1,32 @@
-import { AlertResponseDto} from "./import";
-import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { AlertResponseDto } from "./import";
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 
 const getInitialJwt = () => {
-    if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('jwt');
-        return stored ?? '';
+    if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("jwt");
+        return stored ?? "";
     }
-    return ''; // fallback for SSR
+    return ""; // fallback for SSR
 };
 
-export const JwtAtom = typeof window !== 'undefined'
-    ? atomWithStorage<string>('jwt', '')
-    : atom('');
+export const JwtAtom = typeof window !== "undefined"
+    ? atomWithStorage<string>("jwt", "")
+    : atom("");
 
 export const AlertsAtom = atom<AlertResponseDto[]>([]);
 
 export const RandomUidAtom = atom<string>(getOrGenerateUid());
 
-function getOrGenerateUid(): string {
-    if (typeof window === 'undefined') return '';
+export const UserIdAtom = atomWithStorage<string>("userId", ""); // ✅ New Atom
 
-    const existing = localStorage.getItem('randomUid');
+function getOrGenerateUid(): string {
+    if (typeof window === "undefined") return "";
+
+    const existing = localStorage.getItem("randomUid");
     if (existing) return existing;
 
     const newUid = crypto.randomUUID();
-    localStorage.setItem('randomUid', newUid);
+    localStorage.setItem("randomUid", newUid);
     return newUid;
 }

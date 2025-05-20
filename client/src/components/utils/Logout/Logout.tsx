@@ -5,14 +5,16 @@ import {
     SelectedDeviceIdAtom,
     SubscribedTopicsAtom,
     UserSettingsAtom,
-    useAtom
+    useAtom, UserIdAtom
 } from "../../import";
 import { SignInRoute } from "../../../routeConstants";
 import { useNavigate } from "react-router";
 import { useUser } from "../../../LoggedInUserData/UserContext.tsx";
+import {useTopicManager} from "../../../hooks";
 
 export const useLogout = () => {
     const [, setJwt] = useAtom(JwtAtom);
+    const [userId, setUserId] = useAtom(UserIdAtom);
     const [, setSubscribedTopics] = useAtom(SubscribedTopicsAtom);
     const [, setGreenhouseSensorDataAtom] = useAtom(GreenhouseSensorDataAtom);
     const [, setRandomUidAtom] = useAtom(RandomUidAtom);
@@ -20,10 +22,16 @@ export const useLogout = () => {
     const [, setUserSettings] = useAtom(UserSettingsAtom);
     const { reset } = useUser();
     const navigate = useNavigate();
+    const { unsubscribe } = useTopicManager();
 
     const logout = () => {
 
-        setJwt(null);
+        if (userId) {
+            unsubscribe(`alerts-${userId}`).then();
+        }
+
+        setUserId("")
+        setJwt("");
         localStorage.removeItem("jwt");
 
         setSubscribedTopics([]);

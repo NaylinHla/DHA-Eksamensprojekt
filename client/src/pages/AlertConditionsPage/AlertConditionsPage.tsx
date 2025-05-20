@@ -5,8 +5,11 @@ import {useAtom} from 'jotai';
 import {JwtAtom} from '../../atoms';
 import {useAlertConditions} from '../../hooks/useAlertConditions';
 import {alertConditionClient} from '../../apiControllerClients';
+import {useLocation} from "react-router-dom";
 
 export default function AlertConditionsPage() {
+    const location = useLocation();
+    const {autoSelectDevice} = location.state || {};
     const [view, setView] = useState<'plants' | 'devices'>('plants');
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
     const [selectedSensorType, setSelectedSensorType] = useState<string | null>(null);
@@ -18,6 +21,14 @@ export default function AlertConditionsPage() {
     const [showSpinner, setShowSpinner] = useState(false);
 
     const SENSOR_TYPES = ['Temperature', 'Humidity', 'AirPressure', 'AirQuality'];
+
+    useEffect(() => {
+        if (autoSelectDevice) {
+            setView('devices');
+        } else {
+            setView('plants');
+        }
+    }, [autoSelectDevice]);
 
     const {
         devices,
@@ -173,7 +184,7 @@ export default function AlertConditionsPage() {
                     }`}
                 >
                     {showSpinner ? (
-                        <div className="flex justify-center items-center w-full h-48">{Spinner}</div>
+                        <div className="flex justify-center items-center w-full h-28">{Spinner}</div>
                     ) : !loading && filteredConditions.length === 0 ? (
                         <div className="flex justify-center items-center h-48">
                             <p className="text-gray-400">

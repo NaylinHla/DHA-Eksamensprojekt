@@ -38,6 +38,7 @@ import {
     TermsPage,
     useAtom,
 } from "./import";
+import {useGlobalAlertToasts} from "../hooks/useGlobalAlertToasts";
 
 export default function ApplicationRoutes() {
     const navigate = useNavigate();
@@ -63,6 +64,8 @@ export default function ApplicationRoutes() {
 
         return <Outlet/>;
     }
+
+    useGlobalAlertToasts();
 
     return (
         <>
