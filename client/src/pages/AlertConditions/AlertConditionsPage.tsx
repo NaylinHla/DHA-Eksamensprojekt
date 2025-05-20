@@ -3,7 +3,7 @@ import {Plus, Trash2} from 'lucide-react';
 import {ConfirmModal, DeviceConditionModal, SearchBar, TitleTimeHeader} from '../../components';
 import {useAtom} from 'jotai';
 import {JwtAtom} from '../../atoms';
-import {useAlertConditions} from '../../hooks/useAlertConditions';
+import {EnrichedConditionAlertUserDevice, useAlertConditions} from '../../hooks/useAlertConditions';
 import {alertConditionClient} from '../../apiControllerClients';
 import {useLocation} from "react-router-dom";
 import {useDisplayTemperature} from '../import';
@@ -22,6 +22,7 @@ export default function AlertConditionsPage() {
     const [showSpinner, setShowSpinner] = useState(false);
     const {convert, unit} = useDisplayTemperature();
     const SENSOR_TYPES = ['Temperature', 'Humidity', 'AirPressure', 'AirQuality'];
+    const [editCondition, setEditCondition] = useState<EnrichedConditionAlertUserDevice | null>(null);
 
     useEffect(() => {
         if (autoSelectDevice) {
@@ -79,6 +80,24 @@ export default function AlertConditionsPage() {
             setDeleteLoading(false);
         }
     };
+
+    function parseOperatorFromCondition(condition: string | string[]) {
+        if (condition.includes('>=')) return '>=';
+        if (condition.includes('<=')) return '<=';
+        return '';
+    }
+
+    function parseThresholdFromCondition(condition: string | string[]) {
+        const op = parseOperatorFromCondition(condition);
+        if (!op) return null;
+        if (typeof condition === 'string') {
+            const parts = condition.split(op);
+            if (parts.length > 1) {
+                return Number(parts[1].trim());
+            }
+        }
+        return null;
+    }
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
@@ -212,6 +231,17 @@ export default function AlertConditionsPage() {
                                     <li
                                         key={cond.conditionAlertUserDeviceId}
                                         className="bg-[var(--color-surface)] p-4 shadow rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
+                                        onDoubleClick={() => {
+                                            setEditCondition({
+                                                conditionAlertUserDeviceId: cond.conditionAlertUserDeviceId,
+                                                userDeviceId: cond.userDeviceId,
+                                                deviceName: cond.deviceName,
+                                                sensorType: cond.sensorType,
+                                                condition: cond.condition,
+                                            });
+                                            setShowCreateModal(true);
+                                        }}
+
                                     >
                                         <div>
                                             <strong>{cond.sensorType}</strong>{' '}
@@ -286,7 +316,10 @@ export default function AlertConditionsPage() {
             />
             <DeviceConditionModal
                 isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
+                onClose={() => {
+                    setShowCreateModal(false);
+                    setEditCondition(null);
+                }}
                 onCreated={fetchConditions}
                 view={view}
                 selectedDeviceId={selectedDeviceId}
@@ -295,6 +328,18 @@ export default function AlertConditionsPage() {
                     conditionAlertPlantId: c.conditionAlertPlantId,
                     waterNotify: c.waterNotify
                 }))}
+                isEdit={!!editCondition && view === 'devices'}
+                editingCondition={
+                    editCondition && view === 'devices' && editCondition.userDeviceId
+                        ? {
+                            conditionId: editCondition.conditionAlertUserDeviceId || '',
+                            deviceId: editCondition.userDeviceId,
+                            sensorType: editCondition.sensorType || '',
+                            operator: parseOperatorFromCondition(editCondition.condition || ''),
+                            threshold: parseThresholdFromCondition(editCondition.condition || '') ?? 0,
+                        }
+                        : undefined
+                }
             />
         </div>
     );

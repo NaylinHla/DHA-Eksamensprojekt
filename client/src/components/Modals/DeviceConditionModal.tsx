@@ -1,7 +1,13 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Check, X} from "lucide-react";
 import {useAtom} from "jotai";
-import {ConditionAlertPlantResponseDto, JwtAtom, UserIdAtom, UserSettingsAtom,} from "../../atoms";
+import {
+    ConditionAlertPlantResponseDto,
+    ConditionAlertUserDeviceEditDto,
+    JwtAtom,
+    UserIdAtom,
+    UserSettingsAtom,
+} from "../../atoms";
 import {alertConditionClient, plantClient, userDeviceClient,} from "../../apiControllerClients";
 import {
     ConditionAlertPlantCreateDto,
@@ -21,6 +27,14 @@ interface Props {
     view: "plants" | "devices";
     selectedDeviceId?: string;
     existingConditions: ConditionAlertPlantResponseDto[];
+    isEdit?: boolean;
+    editingCondition?: {
+        conditionId : string;
+        deviceId: string;
+        sensorType: string;
+        operator: string;
+        threshold: number;
+    };
 }
 
 const DeviceConditionModal: React.FC<Props> = ({
@@ -30,6 +44,8 @@ const DeviceConditionModal: React.FC<Props> = ({
                                                    view,
                                                    selectedDeviceId = "",
                                                    existingConditions = [],
+                                                   isEdit = false,
+                                                   editingCondition,
                                                }) => {
     const [jwt] = useAtom(JwtAtom);
     const [userId] = useAtom(UserIdAtom);
@@ -45,6 +61,7 @@ const DeviceConditionModal: React.FC<Props> = ({
 
     // Devices state
     const [devices, setDevices] = useState<UserDeviceResponseDto[]>([]);
+    const [conditionId, setConditionId] = useState("")
     const [deviceId, setDeviceId] = useState("");
     const [sensorType, setSensorType] = useState("Temperature");
     const [operator, setOperator] = useState(">=");
@@ -104,16 +121,26 @@ const DeviceConditionModal: React.FC<Props> = ({
 
         if (view === "devices") {
             fetchDevices().then();
-            setDeviceId(selectedDeviceId || "");
-            setSensorType("Temperature");
-            setOperator(">=");
-            setThresholdInput("");
-            setThreshold(null);
+
+            if (isEdit && editingCondition) {
+                setDeviceId(editingCondition.deviceId);
+                setConditionId(editingCondition.conditionId);
+                setSensorType(editingCondition.sensorType);
+                setOperator(editingCondition.operator);
+                setThresholdInput(editingCondition.threshold.toString());
+                setThreshold(editingCondition.threshold);
+            } else {
+                setDeviceId(selectedDeviceId || "");
+                setSensorType("Temperature");
+                setOperator(">=");
+                setThresholdInput("");
+                setThreshold(null);
+            }
         } else {
             fetchPlants().then();
             setSelectedPlantId("");
         }
-    }, [isOpen, view, selectedDeviceId]);
+    }, [isOpen, view, selectedDeviceId, isEdit, editingCondition]);
 
     async function fetchDevices() {
         try {
@@ -162,7 +189,7 @@ const DeviceConditionModal: React.FC<Props> = ({
             } else if (threshold === null || isNaN(threshold)) {
                 errs.threshold = "Threshold must be a valid number.";
             } else {
-                const val = Number(threshold);
+                Number(threshold);
                 const limits: Record<string, [number, number?]> = {
                     Temperature: [-40, 130],
                     Humidity: [0, 100],
@@ -207,17 +234,26 @@ const DeviceConditionModal: React.FC<Props> = ({
             return;
         }
 
-        console.log("du skaltil at bruge " + threshold)
-
         try {
             if (view === "devices") {
-                const dto: ConditionAlertUserDeviceCreateDto = {
-                    userDeviceId: deviceId,
-                    sensorType,
-                    condition: `${operator}${threshold}`,
-                };
-                await alertConditionClient.createConditionAlertUserDevice(dto, jwt);
-                toast.success("Device condition created");
+                if (isEdit && editingCondition) {
+                    const dto: ConditionAlertUserDeviceEditDto = {
+                        userDeviceId: deviceId,
+                        sensorType,
+                        condition: `${operator}${threshold}`,
+                        conditionAlertUserDeviceId: conditionId
+                    };
+                    await alertConditionClient.editConditionAlertUserDevice(dto, jwt);
+                    toast.success("Device condition updated");
+                } else {
+                    const dto: ConditionAlertUserDeviceCreateDto = {
+                        userDeviceId: deviceId,
+                        sensorType,
+                        condition: `${operator}${threshold}`,
+                    };
+                    await alertConditionClient.createConditionAlertUserDevice(dto, jwt);
+                    toast.success("Device condition created");
+                }
             } else {
                 const dto: ConditionAlertPlantCreateDto = {plantId: selectedPlantId};
                 await alertConditionClient.createConditionAlertPlant(dto, jwt);
@@ -279,7 +315,7 @@ const DeviceConditionModal: React.FC<Props> = ({
                                         className="border border-gray-300 rounded px-3 py-2 w-full text-[--color-primary] bg-[--color-background]"
                                         value={deviceId}
                                         onChange={e => setDeviceId(e.target.value)}
-                                        disabled={saving}
+                                        disabled={saving || isEdit} // disable on edit
                                     >
                                         <option value="">Select a device</option>
                                         {devices.map(d => (
@@ -377,7 +413,7 @@ const DeviceConditionModal: React.FC<Props> = ({
                             type="button"
                         >
                             <Check size={14}/>
-                            {saving ? "Saving…" : "Save"}
+                            {saving ? "Saving…" : isEdit ? "Update" : "Save"}
                         </button>
                     ) : (
                         <button
