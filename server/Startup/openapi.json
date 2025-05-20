@@ -672,6 +672,27 @@
         }
       }
     },
+    "/api/FeatureTest/toggle": {
+      "get": {
+        "tags": [
+          "FeatureTest"
+        ],
+        "operationId": "FeatureTest_CheckToggle",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/GreenhouseDevice/GetAllSensorHistoryByDeviceAndTimePeriodIdDto": {
       "get": {
         "tags": [

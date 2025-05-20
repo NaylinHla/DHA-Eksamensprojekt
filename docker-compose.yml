@@ -1,4 +1,11 @@
 services:
+  featurehub:
+    image: featurehub/party-server:latest
+    restart: always
+    volumes:
+      - featurehub-h2-data:/db
+    ports:
+      - 8080:8085
   seq:
     image: datalust/seq
     ports:
@@ -10,4 +17,5 @@ services:
       - ACCEPT_EULA=Y
 
 volumes:
+  featurehub-h2-data:
   rps_seq_data:
