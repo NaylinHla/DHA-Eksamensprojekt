@@ -243,7 +243,7 @@ public class EmailSenderServiceTest
         var service = new EmailSenderService(
             optsMonitor.Object, 
             repo.Object, 
-            jwtSvc, 
+            jwtSvc,
             factory,
             Mock.Of<IValidator<AddEmailDto>>(), 
             Mock.Of<IValidator<RemoveEmailDto>>());
@@ -266,6 +266,7 @@ public class EmailSenderServiceTest
                 Assert.That(m.Body, Is.Not.Null.Or.Empty);
                 Assert.That(m.Body, Does.Contain("Hello plant lovers!"));
                 Assert.That(m.Body, Does.Contain("unsubscribe"));
+                Assert.That(m.Body, Does.Contain("https://meetyourplants.site/api/email/unsubscribe?token="));
             });
             Assert.Multiple(() =>
             {

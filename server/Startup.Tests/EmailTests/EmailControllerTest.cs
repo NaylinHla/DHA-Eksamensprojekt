@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
@@ -7,6 +8,8 @@ using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
@@ -18,11 +21,13 @@ public class EmailControllerTest
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
     private User _testUser;
+    private Mock<IEmailSender> _emailSenderMock;
     
     [SetUp]
     public async Task Setup()
     {
         _testUser = MockObjects.GetUser();
+        _emailSenderMock = new Mock<IEmailSender>();
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -31,6 +36,9 @@ public class EmailControllerTest
                 {
                     services.DefaultTestConfig();
                     services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
+                    
+                    services.RemoveAll<IEmailSender>();
+                    services.AddSingleton(_emailSenderMock.Object);
                 });
             });
 
@@ -47,18 +55,58 @@ public class EmailControllerTest
     {
         _client.Dispose();
         _factory.Dispose();
+        _emailSenderMock.Reset();
     }
 
+    
     [Test]
-    public async Task SubscribeToEmailList_ShouldReturnOk()
+    public async Task SendEmail_ShouldInvokeEmailSenderAndReturnSuccessMessage()
     {
-        var dto = new AddEmailDto { Email = "subscribe_test@example.com" };
-        var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        // Arrange
+        var request = new EmailRequest
+        {
+            Subject = "Test Subject",
+            Message = "Hello world!"
+        };
 
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.That(body, Is.EqualTo("Subscription confirmed and email sent.")); 
+        // Act
+        var response = await _client.PostAsJsonAsync("api/email/send", request);
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(content, Is.EqualTo("Email sent successfully."));
+        });
+        _emailSenderMock.Verify(
+            es => es.SendEmailAsync("Test Subject", "Hello world!"),
+            Times.Once
+        );
     }
+    
+    [Test]
+    public async Task SubscribeToEmailList_ShouldInvokeAddEmailAsync()
+    {
+        // Arrange
+        var dto = new AddEmailDto { Email = "new@example.com" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
+
+        // Assert
+        _emailSenderMock.Verify(
+            es => es.AddEmailAsync(It.Is<AddEmailDto>(d => d.Email == "new@example.com")),
+            Times.Once
+        );
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(body, Is.EqualTo("Subscription confirmed and email sent."));
+        });
+    }
+
 
     [Test]
     public async Task UnsubscribeFromEmailList_ShouldReturnOk()
@@ -72,18 +120,25 @@ public class EmailControllerTest
     }
 
     [Test]
-    public async Task UnsubscribeFromEmailListViaToken_ShouldReturnOk()
+    public async Task UnsubscribeFromEmailLink_ShouldReturnOkAndCorrectMessage_WhenTokenValid()
     {
+        // Arrange
         using var scope = _factory.Services.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtEmailTokenService>();
-        var token = jwtService.GenerateUnsubscribeToken(_testUser.Email);
+        var token = jwtService.GenerateUnsubscribeToken("user@example.com");
 
-        var response = await _client.GetAsync($"/api/email/unsubscribe?token={token}");
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        
+        // Act
+        var response = await _client.GetAsync($"api/email/unsubscribe?token={token}");
         var body = await response.Content.ReadAsStringAsync();
-        Assert.That(body, Is.EqualTo("You have been unsubscribed."));
+
+        Assert.Multiple(() =>
+        {
+            // Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(body, Is.EqualTo("You have been unsubscribed."));
+        });
     }
+
 
     [Test]
     public async Task UnsubscribeFromEmailListViaToken_ShouldReturnBadRequest_WhenTokenInvalid()
