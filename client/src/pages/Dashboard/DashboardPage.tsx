@@ -14,7 +14,7 @@ import {
     JwtAtom,
     SelectedDeviceIdAtom,
     SensorHistoryWithDeviceDto,
-    UserDevice,
+    UserDevice, StatCard, CircleStatGrid, CircleStat, PlantCarousel,
     UserSettingsAtom,
 } from "../import";
 import {
@@ -22,12 +22,10 @@ import {
     plantClient,
     userDeviceClient,
 } from "../../apiControllerClients.ts";
-import { cssVar } from "../../components/utils/Theme/theme.ts";
-import { CardPlant } from "../../components/Modals/PlantCard";
-import PlantCarousel from "../../components/Modals/PlantCarousel.tsx";
-
+import {CardPlant} from "../../components/Plants/PlantCard.tsx";
 ChartJS.register(CategoryScale, LinearScale, Legend, Tooltip);
 
+// Helpers
 const greeting = () => {
     const h = new Date().getHours();
     if (h < 5) return "night";
@@ -39,6 +37,7 @@ const greeting = () => {
 type PlantStatus = CardPlant & { needsWater: boolean };
 
 export default function DashboardPage() {
+    
     const [jwt] = useAtom(JwtAtom);
     const [selectedDeviceId, setDeviceId] = useAtom(SelectedDeviceIdAtom);
     const [userSettings] = useAtom(UserSettingsAtom);
@@ -55,7 +54,7 @@ export default function DashboardPage() {
 
     const [latest, setLatest] = useState<Record<string, SensorHistoryWithDeviceDto>>({});
     const [loadingLive, setLoadingLive] = useState(true);
-
+    
     useEffect(() => {
         if (!jwt) return;
         setLD(true);
@@ -66,6 +65,7 @@ export default function DashboardPage() {
             .finally(() => setLD(false));
     }, [jwt]);
 
+    // Fetch latest snapshot of device readings
     useEffect(() => {
         if (!jwt) return;
         let cancelled = false;
@@ -77,7 +77,10 @@ export default function DashboardPage() {
                 const recs = res?.sensorHistoryWithDeviceRecords ?? [];
                 if (cancelled) return;
 
+                /* map deviceId -> latest record */
                 setLatest(Object.fromEntries(recs.filter(r => r.deviceId).map(r => [r.deviceId!, r])));
+
+                /* pick a default device on first run */
                 if (!selectedDeviceId && recs.length) setDeviceId(recs[0].deviceId!);
             } catch {
                 toast.error("Failed to load latest greenhouse data");
@@ -91,6 +94,7 @@ export default function DashboardPage() {
         return () => { cancelled = true; clearInterval(id); };
     }, [jwt]);
 
+    // Fetch Weather outside
     useEffect(() => {
         (async () => {
             try {
@@ -123,6 +127,7 @@ export default function DashboardPage() {
         })();
     }, [unit]);
 
+    // Fetch Plants
     useEffect(() => {
         if (!jwt) return;
         (async () => {
@@ -161,6 +166,8 @@ export default function DashboardPage() {
     }, [userSettings]);
 
     const needsWater = plants.some(p => p.needsWater);
+
+    // Live data reading for circles
     const live = latest[selectedDeviceId ?? ""];
 
     const circleReadings = useMemo(() => ({
@@ -176,67 +183,46 @@ export default function DashboardPage() {
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
             <TitleTimeHeader title="Dashboard" />
 
-            <h2 className="text-2xl font-bold px-6 pt-4 pb-2">{`Good ${greet}!`}</h2>
+            {/* greeting */}
+            <h2 className="font-bold text-fluid-header px-6 pt-[clamp(0.75rem,1.5vw,1.5rem)] pb-[clamp(0.5rem,1vw,1rem)]">{`Good ${greet}!`}</h2>
 
+            {/* stat cards */}
             <div className="grid gap-6 px-6 md:grid-cols-3">
                 <StatCard title="Temperature" loading={loadingWX}
-                          value={weather ? `${Math.round(weather.temp)}${unit}` : "–"} />
+                          value={weather ? `${Math.round(weather.temp)}${unit}` : "–"} cls={""} />
                 <StatCard title="Humidity" loading={loadingWX}
-                          value={`${Math.round(weather?.humidity ?? 0)}%`} />
+                          value={`${Math.round(weather?.humidity ?? 0)}%`} cls={""} />
                 <StatCard title="Need Watering" loading={loadingPlants}
                           value={needsWater ? "Yes" : "No"} cls={needsWater ? "text-error" : "text-success"} />
             </div>
+            
+            {/* main row */}
+            <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-fluid px-6 py-6">
 
-            <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-6 px-6 py-6 overflow-y-auto">
-                <div className="card w-full lg:flex-1 lg:basis-0 rounded-xl bg-[var(--color-surface)] shadow flex flex-col">
-                    <div className="card-body">
-                        <h3 className="text-lg font-semibold mb-6 text-center">Your Device:</h3>
-
+            {/* circle card */}
+                <div className="card flex-1 bg-[var(--color-surface)] shadow flex flex-col gap-fluid h-[clamp(12rem,30vw,33rem)]">
+                    <h2 className="text-fluid-header text-center ">Your Device:</h2>
+                    <div className="card-body p-fluid">
                         {loadingLive ? (
                             <p className="text-center">Loading…</p>
                         ) : live ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 place-items-center">
-                                <CircleStat label="Temperature" unit={unit} color={cssVar("--color-primary")}
-                                            value={convert(live.temperature)} />
-                                <CircleStat label="Humidity" unit="%" color={cssVar("--color-success")}
-                                            value={circleReadings.humidity} />
-                                <CircleStat label="Pressure" unit="hPa" color={cssVar("--color-info")}
-                                            value={circleReadings.pressure} />
-                                <CircleStat label="Air Quality" unit="ppm" color={cssVar("--color-warning")}
-                                            value={circleReadings.quality} />
-                            </div>
+                            <CircleStatGrid>
+                                <CircleStat label="Temperature" unit={unit} colorToken="primary" value={convert(circleReadings.temperature)}/>
+                                <CircleStat label="Humidity" unit="%" colorToken="success" value={circleReadings.humidity}/>
+                                <CircleStat label="Pressure" unit="hPa" colorToken="info"    value={circleReadings.pressure}/>
+                                <CircleStat label="Air Quality" unit="ppm" colorToken="warning" value={circleReadings.quality}/>
+                            </CircleStatGrid>
                         ) : (
-                            <p className="text-center text-gray-500">
+                            <p className="text-fluid text-center text-gray-500">
                                 {Object.keys(latest).length ? "No data" : "No devices connected"}
                             </p>
                         )}
                     </div>
                 </div>
 
-                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col" plants={plants} />
+                {/* plant carousel */}
+                <PlantCarousel className="lg:flex-1 lg:basis-0 flex flex-col h-[clamp(13rem,30vw,33rem)]" plants={plants}/>
             </main>
         </div>
     );
 }
-
-const StatCard: React.FC<{ title: string; loading: boolean; value: string; cls?: string }> =
-    ({ title, loading, value, cls = "" }) => (
-        <div className="card shadow rounded-xl bg-[var(--color-surface)]">
-            <div className="card-body text-center">
-                <p className="text-lg">{title}</p>
-                <p className={`text-5xl font-bold ${cls}`}>{loading ? "–" : value}</p>
-            </div>
-        </div>
-    );
-
-const CircleStat: React.FC<{ label: string; value: number | null; unit: string; color: string }> =
-    ({ label, value, unit, color }) => (
-        <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28 rounded-full border-4 flex items-center justify-center" style={{ borderColor: color }}>
-                <span className="text-xl font-bold select-none">
-                    {value == null ? "—" : `${value.toFixed(1)}${unit}`}
-                </span>
-            </div>
-            <p className="mt-2 text-sm text-center text-gray-500">{label}</p>
-        </div>
-    );

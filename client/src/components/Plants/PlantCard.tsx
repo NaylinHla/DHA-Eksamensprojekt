@@ -4,7 +4,8 @@ import PlantIcon from "../../assets/Favicon/Plant.svg?react";
 import {JwtAtom, PlantClient} from "../../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
-import ConfirmModal from "./ConfirmModal.tsx";
+import {ConfirmModal} from "../index.ts";
+
 
 const plantClient = new PlantClient(
     import.meta.env.VITE_API_URL ?? "http://localhost:5000"
@@ -62,9 +63,13 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
         <>
             <button
                 onClick={() => onClick?.(plant)}
-                className={`cursor-pointer relative flex flex-col justify-between rounded-2xl bg-card border bg-[var(--color-surface)] shadow-sm p-3 w-48 h-56 hover:shadow-md transition-shadow ${deadStyle}`}
+                className={`
+          relative flex flex-col justify-between rounded-2xl border shadow-sm p-3
+          bg-[var(--color-surface)] hover:shadow-md transition-shadow w-[clamp(10rem,14vw,18rem)] h-[clamp(14rem,20vw,22rem)]] p-fluid
+          ${deadStyle}
+        `}
             >
-                {/* Delete ‑*/}
+                {/* delete */}
                 {!hideDelete && (
                     <X
                         onClick={openConfirm}
@@ -72,34 +77,41 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
                     />
                 )}
 
-                {/* placeholder image */}
+                {/* placeholder / image */}
                 <div className="flex-1 flex items-center justify-center">
-                    <PlantIcon className="h-16 w-16 text-base-content"/>
+                    <PlantIcon className="h-[clamp(3rem,4.5vw,5rem)] w-auto text-base-content" />
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="font-medium truncate max-w-[60%]">{plant.name}</span>
+                {/* footer */}
+                <div className="flex items-center justify-between text-fluid mt-[clamp(0.5rem,1vw,1rem)]">
+          <span className="font-medium truncate max-w-[60%] text-[clamp(.8rem,1vw,1rem)]">
+            {plant.name}
+          </span>
 
-                    {!hideWater &&
-                        <Droplet onClick={e => {
-                            e.stopPropagation();
-                            onWater?.();
-                        }}  className="h-4 w-4 cursor-pointer text-blue-500"/>
-                    }
+                    {!hideWater && (
+                        <Droplet
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onWater?.();
+                            }}
+                            className="h-4 w-4 cursor-pointer text-blue-500"
+                        />
+                    )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{dueText}</p>
+                <p className="text-[clamp(.6rem,.9vw,.75rem)] text-muted-foreground mt-1">
+                    {dueText}
+                </p>
             </button>
+
             <ConfirmModal
                 isOpen={confirmOpen}
                 title="Remove plant?"
                 subtitle={`“${plant.name}” will be moved to dead plants`}
                 confirmVariant="error"
                 onConfirm={confirmDelete}
-                onCancel={closeConfirm}
+                onCancel={() => setConfirmOpen(false)}
             />
         </>
-
     );
 };
 

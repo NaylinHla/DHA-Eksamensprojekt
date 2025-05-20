@@ -166,94 +166,78 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
         if (loading || !full) return <p>Loading…</p>;
         return (
             <Fragment>
-                <Pill className="flex justify-between items-center">
+                <Pill className="flex justify-between items-center text-fluid">
                     <span>{full.plantName}</span>
                 </Pill>
 
-                {full.plantType && <Pill>Plant Type: {full.plantType}</Pill>}
+                {full.plantType && <Pill className="text-fluid">Plant Type: {full.plantType}</Pill>}
 
-                <Pill className="flex justify-between items-center">
-          <span>
-            Last watered:{" "}
-              {full.lastWatered
-                  ? format(new Date(full.lastWatered), "dd/MM/yyyy")
-                  : "never"}
-          </span>
+                <Pill className="flex justify-between items-center text-fluid">
+                  <span>
+                    Last watered:{" "}
+                      {full.lastWatered
+                          ? format(new Date(full.lastWatered), "dd/MM/yyyy")
+                          : "never"}
+                  </span>
                     <button onClick={waterNow} title="Water now">
                         <Droplet size={18} className="text-blue-500"/>
                     </button>
                 </Pill>
 
                 {full.planted && (
-                    <Pill>Planted: {format(new Date(full.planted), "dd/MM/yyyy")}</Pill>
+                    <Pill className="text-fluid">Planted: {format(new Date(full.planted), "dd/MM/yyyy")}</Pill>
                 )}
 
                 {full.waterEvery && (
-                    <Pill>Water every: {full.waterEvery} days</Pill>
+                    <Pill className="text-fluid">Water every: {full.waterEvery} days</Pill>
                 )}
 
-                {full.plantNotes && <Pill>Notes: {full.plantNotes}</Pill>}
+                {full.plantNotes && <Pill className="text-fluid">Notes: {full.plantNotes}</Pill>}
             </Fragment>
         );
     };
 
     const renderEdit = () => (
         <Fragment>
-            <label className="flex flex-col gap-1">
+            <label className="text-fluid flex flex-col gap-1">
                 <span>Name:</span>
                 <input
                     placeholder="Plant Name"
                     value={data.plantName}
                     onChange={(e) => upd("plantName", e.target.value)}
-                    className="rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
                 />
             </label>
 
-            <label className="flex flex-col gap-1">
+            <label className="text-fluid flex flex-col gap-1">
                 <span>Type / species:</span>
                 <input
                     placeholder="Plant Type"
                     value={data.plantType ?? ""}
                     onChange={(e) => upd("plantType", e.target.value)}
-                    className="rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
                 />
             </label>
 
-            <label className="flex flex-col gap-1">
-                <span>Planted on:</span>
-                <input
-                    type="date"
-                    value={
-                        data.planted
-                            ? format(data.planted, "yyyy-MM-dd")        // date‑fns helper
-                            : ""
-                    }
-                    onChange={e =>
-                        upd("planted", new Date(e.target.value))
-                    }
-                    className="rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
-                />
-            </label>
-
-            <label className="flex flex-col gap-1">
+            <label className="text-fluid flex flex-col gap-1">
                 <span>Water every (days):</span>
                 <input
                     type="number"
                     min={1}
                     value={data.waterEvery ?? ""}
                     onChange={(e) => upd("waterEvery", Number(e.target.value))}
-                    className="rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className="text-fluid text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
                 />
             </label>
 
-            <label className="flex flex-col gap-1">
+            <label className="text-fluid flex flex-col gap-1">
                 <span>Notes</span>
                 <textarea
                     placeholder="Notes go here"
                     rows={3}
                     value={data.plantNotes ?? ""}
                     onChange={(e) => upd("plantNotes", e.target.value)}
-                    className="rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
                 />
             </label>
         </Fragment>
@@ -265,7 +249,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
             ref={backdrop}
             className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
         >
-            <div className="bg-[var(--color-cream)] rounded-2xl w-full max-w-md p-6 relative flex flex-col gap-4">
+            <div className="bg-base-100 rounded-2xl w-full max-w-md p-6 relative flex flex-col gap-4">
                 <button
                     className="absolute right-4 top-4 text-muted-foreground"
                     onClick={onClose}
@@ -274,7 +258,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                 </button>
 
                 {/* Title */}
-                <h2 className="text-xl font-semibold">
+                <h2 className="font-semibold text-fluid">
                     {plant
                         ? isEditing
                             ? "Edit plant"
