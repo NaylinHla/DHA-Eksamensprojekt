@@ -10,7 +10,7 @@ public sealed class UserDeviceEditDtoValidator : AbstractValidator<UserDeviceEdi
         RuleFor(x => x.DeviceName)
             .NotEmpty().WithMessage("DeviceName cannot be empty")
             .MinimumLength(2).WithMessage("DeviceName must be at least 2 characters.")
-            .MaximumLength(50).WithMessage("DeviceName cannot be longer than 50 characters.")
+            .MaximumLength(50).WithMessage("DeviceName cannot be longer than 30 characters.")
             .When(x => x.DeviceName is not null);
         
         RuleFor(x => x.DeviceDescription)
@@ -18,7 +18,7 @@ public sealed class UserDeviceEditDtoValidator : AbstractValidator<UserDeviceEdi
             .When(x => x.DeviceDescription is not null);
         
         RuleFor(x => x.WaitTime)
-            .Matches("^[0-9]{1,5}$")
+            .Matches("^[0-9]{1,6}$")
             .When(x => x.WaitTime is not null);
     }
 }

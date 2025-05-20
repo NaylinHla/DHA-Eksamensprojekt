@@ -7,6 +7,7 @@ import {useAtom} from "jotai";
 import {useLogout} from "../index.ts";
 import {JwtAtom} from "../../atoms";
 import useDropdown from "../../hooks/useDropdown.ts";
+import {MyAlertConditionRoute, MyDeviceOverviewInRoute, ProfileRoute} from "../../routeConstants";
 
 export default function NavBar() {
     const [jwt] = useAtom(JwtAtom);
@@ -129,7 +130,7 @@ export default function NavBar() {
                             >
                                 <li>
                                     <Link
-                                        to="/profile"
+                                        to={ProfileRoute}
                                         onClick={() => profileDrop.setOpen(false)}
                                         className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                                     >
@@ -138,7 +139,7 @@ export default function NavBar() {
                                 </li>
                                 <li>
                                     <Link
-                                        to="/myalertcondition"
+                                        to={MyAlertConditionRoute}
                                         onClick={() => myAlertConditionDrop.setOpen(false)}
                                         className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                                     >
@@ -147,7 +148,7 @@ export default function NavBar() {
                                 </li>
                                 <li>
                                     <Link
-                                        to="/mydevice"
+                                        to={MyDeviceOverviewInRoute}
                                         onClick={() => myDeviceDrop.setOpen(false)}
                                         className="block px-4 py-2 text-green-600 hover:bg-gray-100"
                                     >
@@ -163,6 +164,7 @@ export default function NavBar() {
                                     </button>
                                 </li>
                             </ul>
+
                         )}
                     </div>
                 </>

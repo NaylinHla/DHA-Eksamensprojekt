@@ -1753,58 +1753,33 @@
       "ConditionAlertUserDeviceCreateDto": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "userDeviceId",
-          "sensorType",
-          "condition"
-        ],
         "properties": {
           "userDeviceId": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 1
+            "type": "string"
           },
           "sensorType": {
-            "type": "string",
-            "maxLength": 50,
-            "minLength": 1,
-            "pattern": "^(Temperature|Humidity|AirPressure|AirQuality)$"
+            "type": "string"
           },
           "condition": {
-            "type": "string",
-            "maxLength": 20,
-            "minLength": 1,
-            "pattern": "^(<=|>=)\\d+(\\.\\d+)?$"
+            "type": "string"
           }
         }
       },
       "ConditionAlertUserDeviceEditDto": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "conditionAlertUserDeviceId",
-          "userDeviceId"
-        ],
         "properties": {
           "conditionAlertUserDeviceId": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 1
+            "type": "string"
           },
           "userDeviceId": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 1
+            "type": "string"
           },
           "sensorType": {
-            "type": "string",
-            "maxLength": 50,
-            "pattern": "^(Temperature|Humidity|AirPressure|AirQuality)$"
+            "type": "string"
           },
           "condition": {
-            "type": "string",
-            "maxLength": 20,
-            "pattern": "^(<=|>=)\\d+(\\.\\d+)?$"
+            "type": "string"
           }
         }
       },

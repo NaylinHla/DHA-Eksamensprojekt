@@ -1,5 +1,24 @@
 import {Outlet, Route, Routes, useLocation, useNavigate,} from "react-router";
-import {DashboardRoute, SettingsRoute, SignInRoute,} from "../routeConstants.ts";
+import {
+    AboutRoute,
+    AdvertisementRoute,
+    AlertsRoute,
+    CareerRoute,
+    ContactUsRoute,
+    CookiesRoute,
+    DashboardRoute,
+    HistoryRoute,
+    MarketingRoute,
+    MyAlertConditionRoute,
+    MyDeviceOverviewInRoute,
+    NotFoundRoute,
+    PlantRoute,
+    PrivacyRoute,
+    ProfileRoute,
+    SignInRoute,
+    TermsRoute,
+    WeatherRoute,
+} from "../routeConstants.ts";
 import {AlertConditionsPage, AuthScreen, ContactUsPage, PlantsView, UserSettings, WeatherView,} from "../pages";
 import React, {useEffect, useState} from "react";
 import {Footer, NavBar} from "./index";
@@ -53,35 +72,31 @@ export default function ApplicationRoutes() {
                     {/* Public Routes */}
                     <Route
                         path={SignInRoute}
-                        element={
-                            <AuthScreen
-                                onLogin={() => navigate(DashboardRoute)}
-                            />
-                        }
+                        element={<AuthScreen onLogin={() => navigate(DashboardRoute)}/>}
                     />
-                    <Route path="/about" element={<AboutPage/>}/>
-                    <Route path="/contact-us" element={<ContactUsPage/>}/>
-                    <Route path="/career" element={<CareerPage/>}/>
-                    <Route path="/advertisement" element={<AdvertisementPage/>}/>
-                    <Route path="/marketing" element={<MarketingPage/>}/>
-                    <Route path="/terms" element={<TermsPage/>}/>
-                    <Route path="/privacy" element={<PrivacyPage/>}/>
-                    <Route path="/cookies" element={<CookiesPage/>}/>
+                    <Route path={AboutRoute} element={<AboutPage/>}/>
+                    <Route path={ContactUsRoute} element={<ContactUsPage/>}/>
+                    <Route path={CareerRoute} element={<CareerPage/>}/>
+                    <Route path={AdvertisementRoute} element={<AdvertisementPage/>}/>
+                    <Route path={MarketingRoute} element={<MarketingPage/>}/>
+                    <Route path={TermsRoute} element={<TermsPage/>}/>
+                    <Route path={PrivacyRoute} element={<PrivacyPage/>}/>
+                    <Route path={CookiesRoute} element={<CookiesPage/>}/>
 
                     {/* Protected Routes */}
                     <Route element={<RequireAuth/>}>
                         <Route path={DashboardRoute} element={<DashboardPage/>}/>
-                        <Route path="/history" element={<HistoryPage/>}/>
-                        <Route path={SettingsRoute} element={<UserSettings/>}/>
-                        <Route path="/alerts" element={<AlertPage/>}/>
-                        <Route path="/myDevice" element={<MyDevicePage/>}/>
-                        <Route path="/myalertcondition" element={<AlertConditionsPage/>}/>
-                        <Route path="/plants" element={<PlantsView/>}/>
-                        <Route path="/weather" element={<WeatherView/>}/>
+                        <Route path={HistoryRoute} element={<HistoryPage/>}/>
+                        <Route path={ProfileRoute} element={<UserSettings/>}/>
+                        <Route path={AlertsRoute} element={<AlertPage/>}/>
+                        <Route path={MyDeviceOverviewInRoute} element={<MyDevicePage/>}/>
+                        <Route path={MyAlertConditionRoute} element={<AlertConditionsPage/>}/>
+                        <Route path={PlantRoute} element={<PlantsView/>}/>
+                        <Route path={WeatherRoute} element={<WeatherView/>}/>
                     </Route>
 
                     {/* Catch-all */}
-                    <Route path="/*" element={<NotFoundPage/>}/>
+                    <Route path={NotFoundRoute} element={<NotFoundPage/>}/>
                 </Routes>
             </div>
             <Footer/>
