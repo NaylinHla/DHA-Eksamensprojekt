@@ -43,16 +43,22 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit, exter
         const newPassword = fd.get("new") as string;
         const confirm = fd.get("confirm") as string;
 
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
         const newErrors: Partial<PasswordDto> = {};
 
-        if (!oldPassword) newErrors.oldPassword = "Current password is required";
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
+        if (!oldPassword) {
+            newErrors.oldPassword = "Current password is required";
+        } else if (!passwordRegex.test(oldPassword)) {
+            newErrors.oldPassword =
+                "Current password must be ≥6 chars, include uppercase, lowercase, number & special character";
+        }
+
 
         if (!newPassword) {
             newErrors.newPassword = "New password is required";
         } else if (!passwordRegex.test(newPassword)) {
             newErrors.newPassword =
-                "At least 6 chars, including uppercase, lowercase, and special character.";
+                "At least 6 chars, including uppercase, lowercase, number & special character";
         }
 
         if (confirm !== newPassword) {

@@ -44,7 +44,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const { subscribe } = useTopicManager();
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
     const passwordErrorMsg =
-        "At least 6 chars, including uppercase, lowercase, and special character.";
+        "≥6 chars, incl. min. 1 uppercase, lowercase, digit & special.";
 
     // ANIMATION ---
     useLayoutEffect(() => {
@@ -146,9 +146,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             setUserId(Id);
 
             onLogin?.();
-        } catch (err) {
+        } catch (err: any) {
             console.error("Login error", err);
-            toast.error("Incorrect email or password.", { id: "login-failed" });
+            setLoginErrors({
+                email: " ",
+                password: "Incorrect email or password.",
+            });
         }
     };
 
@@ -332,12 +335,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                         {requiredHint(loginErrors.email)}
 
                         <label className="label -mt-8 py-0 text-white">Password</label>
-                        <input
+                        <PasswordField
                             name="password"
                             placeholder="Password"
-                            type="password"
-                            className={`bg-white input input-bordered input-sm w-full text-black ${loginErrors.password ? errorClass : ""}`}
-                            required
+                            className={`bg-white ${loginErrors.password && errorClass}`}
                         />
                         {requiredHint(loginErrors.password)}
 
