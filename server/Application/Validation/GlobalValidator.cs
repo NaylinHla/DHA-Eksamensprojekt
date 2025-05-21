@@ -46,39 +46,39 @@ namespace Application.Validation
         {
             if (!IsConditionFormatValid(condition, sensorType)) return false;
 
-            if (sensorType == "Temperature")
+            if (sensorType != "Temperature") return IsOtherSensorConditionValueInRange(condition, sensorType);
+            var singleMatch = SingleConditionTempRegex().Match(condition);
+            if (singleMatch.Success)
             {
-                var singleMatch = SingleConditionTempRegex().Match(condition);
-                if (singleMatch.Success)
-                {
-                    var raw = singleMatch.Groups[2].Value.Replace(',', '.');
-                    return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
-                           && IsValueInRange(sensorType, val);
-                }
-
-                var rangeMatch = RangeConditionTempRegex().Match(condition);
-                if (!rangeMatch.Success) return false;
-
-                var raw1 = rangeMatch.Groups[1].Value.Replace(',', '.');
-                var raw2 = rangeMatch.Groups[3].Value.Replace(',', '.');
-                if (!double.TryParse(raw1, NumberStyles.Float, CultureInfo.InvariantCulture, out var val1))
-                    return false;
-                if (!double.TryParse(raw2, NumberStyles.Float, CultureInfo.InvariantCulture, out var val2))
-                    return false;
-
-                var min = Math.Min(val1, val2);
-                var max = Math.Max(val1, val2);
-                return AreBothValuesInRange(sensorType, min, max);
-            }
-
-            {
-                var match = SingleConditionOtherRegex().Match(condition);
-                if (!match.Success) return false;
-
-                var raw = match.Groups[2].Value.Replace(',', '.');
+                var raw = singleMatch.Groups[2].Value.Replace(',', '.');
                 return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
                        && IsValueInRange(sensorType, val);
             }
+
+            var rangeMatch = RangeConditionTempRegex().Match(condition);
+            if (!rangeMatch.Success) return false;
+
+            var raw1 = rangeMatch.Groups[1].Value.Replace(',', '.');
+            var raw2 = rangeMatch.Groups[3].Value.Replace(',', '.');
+            if (!double.TryParse(raw1, NumberStyles.Float, CultureInfo.InvariantCulture, out var val1))
+                return false;
+            if (!double.TryParse(raw2, NumberStyles.Float, CultureInfo.InvariantCulture, out var val2))
+                return false;
+
+            var min = Math.Min(val1, val2);
+            var max = Math.Max(val1, val2);
+            return AreBothValuesInRange(sensorType, min, max);
+
+        }
+
+        private static bool IsOtherSensorConditionValueInRange(string condition, string sensorType)
+        {
+            var match = SingleConditionOtherRegex().Match(condition);
+            if (!match.Success) return false;
+
+            var raw = match.Groups[2].Value.Replace(',', '.');
+            return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
+                   && IsValueInRange(sensorType, val);
         }
 
         // Temperature single condition allows optional minus, dot or comma

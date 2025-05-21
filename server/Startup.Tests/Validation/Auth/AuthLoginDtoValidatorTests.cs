@@ -42,6 +42,6 @@ public class AuthLoginDtoValidatorTests
     private static AuthLoginDto Valid() => new()
     {
         Email = "valid@email.com",
-        Password = "ValidPassword"
+        Password = "ValidPassword!1"
     };
 }

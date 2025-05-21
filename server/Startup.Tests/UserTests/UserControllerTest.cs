@@ -68,7 +68,7 @@ public class UserControllerTest
         // Log in and set JWT
         var loginResp = await _client.PostAsJsonAsync(
             "/api/auth/login", 
-            new { _testUser.Email, Password = "pass" });
+            new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         
         var authDto = await loginResp.Content
@@ -134,7 +134,7 @@ public class UserControllerTest
         _client.DefaultRequestHeaders.Remove("Authorization");
         _testUser.Email = patchDto.NewEmail;
         
-        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
+        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.That(authDto, Is.Not.Null);
@@ -154,8 +154,8 @@ public class UserControllerTest
     {
         var patchDto = new PatchUserPasswordDto
         {
-            OldPassword = "pass",
-            NewPassword = "newPass123"
+            OldPassword = "Secret25!",
+            NewPassword = "newPass123!"
         };
 
         _passwordValidatorMock.Setup(v => v.ValidateAsync(patchDto, CancellationToken.None));
@@ -169,8 +169,8 @@ public class UserControllerTest
     {
         var patchDto = new PatchUserPasswordDto
         {
-            OldPassword = "wrongPass",
-            NewPassword = "newPass123"
+            OldPassword = "wrongPass!25",
+            NewPassword = "newPass123!"
         };
 
         var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);
@@ -234,7 +234,7 @@ public class UserControllerTest
     public async Task PatchUserPassword_ShouldReturnBadRequest_WhenValidationFails()
     {
         // Arrange invalid DTO
-        var dto = new PatchUserPasswordDto { OldPassword = "pass", NewPassword = "" };
+        var dto = new PatchUserPasswordDto { OldPassword = "Secret25!", NewPassword = "" };
         _passwordValidatorMock
             .Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()));
 
@@ -275,8 +275,8 @@ public class UserControllerTest
 
         var patchDto = new PatchUserPasswordDto
         {
-            OldPassword = "pass",
-            NewPassword = "newPass123"
+            OldPassword = "Secret25!",
+            NewPassword = "newPass123!"
         };
 
         var response = await _client.PatchAsJsonAsync($"api/User/{UserController.PatchUserPasswordRoute}", patchDto);

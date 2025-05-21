@@ -31,7 +31,7 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
         db.Users.Add(_testUser);
         await db.SaveChangesAsync();
 
-        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
+        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         var dto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
         _jwt = dto!.Jwt;

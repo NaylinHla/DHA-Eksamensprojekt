@@ -96,6 +96,6 @@ public class AuthRegisterDtoValidatorTests
         Email = "valid@email.com",
         Birthday = DateTime.UtcNow.AddYears(-18),
         Country = "ValidCountry",
-        Password = "ValidPassword"
+        Password = "ValidPassword!1"
     };
 }

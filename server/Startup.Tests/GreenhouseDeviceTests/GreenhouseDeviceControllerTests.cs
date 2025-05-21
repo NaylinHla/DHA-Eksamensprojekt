@@ -36,7 +36,7 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
         // Login to get JWT
         var loginResp = await _client.PostAsJsonAsync(
             "/api/auth/login",
-            new { _testUser.Email, Password = "pass" }
+            new { _testUser.Email, Password = "Secret25!" }
         );
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
@@ -369,10 +369,13 @@ public class GreenhouseDeviceControllerTests : WebApplicationFactory<Program>
             $"/api/GreenhouseDevice/{GreenhouseDeviceController.DeleteDataRoute}?deviceId={foreignDeviceId}"
         );
 
-        // Assert: should be forbidden
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
-        Assert.That(Newtonsoft.Json.Linq.JObject.Parse(await response.Content.ReadAsStringAsync())["title"]?.ToString(),
-            Is.EqualTo("You do not own this device."));
+        Assert.Multiple(async () =>
+        {
+            // Assert: should be forbidden
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+            Assert.That(Newtonsoft.Json.Linq.JObject.Parse(await response.Content.ReadAsStringAsync())["title"]?.ToString(),
+                Is.EqualTo("You do not own this device."));
+        });
     }
     
     [Test]

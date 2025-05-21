@@ -64,7 +64,7 @@ public class AuthTests : WebApplicationFactory<Program>
             new AuthRegisterDto
             {
                 Email = user.Email,
-                Password = "pass",
+                Password = "Secret25!",
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Country = user.Country,
@@ -101,7 +101,7 @@ public class AuthTests : WebApplicationFactory<Program>
             AuthController.LoginRoute, new AuthLoginDto
             {
                 Email = user.Email,
-                Password = "pass"
+                Password = "Secret25!"
             });
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
@@ -119,7 +119,7 @@ public class AuthTests : WebApplicationFactory<Program>
             new AuthLoginDto
             {
                 Email = user.Email,
-                Password = "invalid password"
+                Password = "Invalidpassword1!"
             });
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
