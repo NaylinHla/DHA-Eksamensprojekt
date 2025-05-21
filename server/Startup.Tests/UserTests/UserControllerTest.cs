@@ -6,6 +6,7 @@ using Application.Models.Dtos.RestDtos.Request;
 using Core.Domain.Entities;
 using FluentValidation;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -19,50 +20,65 @@ public class UserControllerTest
 {
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
+    private IServiceScopeFactory _scopeFactory;
+    
     private User _testUser;
     
     private Mock<IValidator<PatchUserEmailDto>> _emailValidatorMock;
     private Mock<IValidator<PatchUserPasswordDto>> _passwordValidatorMock;
     
-    [SetUp]
-    public async Task Setup()
+    [OneTimeSetUp]
+    public void Setup()
     {
         _emailValidatorMock = new Mock<IValidator<PatchUserEmailDto>>();
         _passwordValidatorMock = new Mock<IValidator<PatchUserPasswordDto>>();
-        
+
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Testing");
                 builder.ConfigureServices(services =>
-                {
-                    services.DefaultTestConfig();
-                });
+                    services.DefaultTestConfig());
             });
 
         _client = _factory.CreateClient();
-
-        // Seed test user
-        _testUser = MockObjects.GetUser();
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-            db.Users.Add(_testUser);
-            await db.SaveChangesAsync();
-        }
-
-        // Log in and set JWT
-        var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
-        loginResp.EnsureSuccessStatusCode();
-        var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
-        Assert.That(authDto, Is.Not.Null);
-        _client.DefaultRequestHeaders.Add("Authorization", authDto.Jwt);
+        _scopeFactory = _factory.Services.GetRequiredService<IServiceScopeFactory>();
     }
 
-    [TearDown]
+    [OneTimeTearDown]
     public void TearDown()
     {
         _client.Dispose();
         _factory.Dispose();
+    }
+
+    [SetUp]
+    public async Task BeforeEach()
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        await db.Database.EnsureDeletedAsync();
+        await db.Database.EnsureCreatedAsync();
+        
+        _testUser = MockObjects.GetUser();
+        db.Users.Add(_testUser);
+        await db.SaveChangesAsync();
+        
+        // Log in and set JWT
+        var loginResp = await _client.PostAsJsonAsync(
+            "/api/auth/login", 
+            new { _testUser.Email, Password = "pass" });
+        loginResp.EnsureSuccessStatusCode();
+        
+        var authDto = await loginResp.Content
+            .ReadFromJsonAsync<AuthResponseDto>();
+        Assert.That(authDto, Is.Not.Null);
+        
+        _client.DefaultRequestHeaders.Remove("Authorization");
+        _client.DefaultRequestHeaders.Add(
+            "Authorization", 
+            authDto.Jwt);
     }
 
     [Test]
@@ -173,7 +189,7 @@ public class UserControllerTest
     public async Task PatchUserEmail_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
         // Delete the user manually to simulate "not found"
-        using var scope = _factory.Services.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
         var user = db.Users.First();
         db.Users.Remove(user);
@@ -247,7 +263,7 @@ public class UserControllerTest
     [Test]
     public async Task PatchUserPassword_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
 
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
@@ -285,7 +301,7 @@ public class UserControllerTest
     [Test]
     public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
         var user = db.Users.First();
         db.Users.Remove(user);

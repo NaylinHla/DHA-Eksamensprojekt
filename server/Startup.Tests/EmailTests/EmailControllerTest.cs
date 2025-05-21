@@ -7,7 +7,9 @@ using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
@@ -21,22 +23,28 @@ public class EmailControllerTest
 {
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
+    private IServiceScopeFactory _scopeFactory;
+    
+    
     private User _testUser;
     private Mock<IEmailSender> _emailSenderMock;
     
     [OneTimeSetUp]
     public async Task SetupOneTime()
     {
-        _testUser = MockObjects.GetUser();
         _emailSenderMock = new Mock<IEmailSender>();
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Testing");
+                
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig();
+                    services.DefaultTestConfig(useTestContainer: false, useInMemory: true);
+                    
                     services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
+                    services.PostConfigure<AppOptions>(opts => opts.Seed = false);
                     
                     services.RemoveAll<IEmailSender>();
                     services.AddSingleton(_emailSenderMock.Object);
@@ -44,6 +52,7 @@ public class EmailControllerTest
             });
 
         _client = _factory.CreateClient();
+        _scopeFactory = _factory.Services.GetRequiredService<IServiceScopeFactory>();
     }
 
     [OneTimeTearDown]
@@ -56,8 +65,14 @@ public class EmailControllerTest
     [SetUp]
     public async Task Setup()
     {
-        using var scope = _factory.Services.CreateScope();
+        
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        await db.Database.EnsureDeletedAsync();
+        await db.Database.EnsureCreatedAsync();
+        
+        _testUser = MockObjects.GetUser();
         db.EmailList.Add(new EmailList { Email = _testUser.Email });
         await db.SaveChangesAsync();
     }
@@ -133,7 +148,7 @@ public class EmailControllerTest
     public async Task UnsubscribeFromEmailLink_ShouldReturnOkAndCorrectMessage_WhenTokenValid()
     {
         // Arrange
-        using var scope = _factory.Services.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtEmailTokenService>();
         var token = jwtService.GenerateUnsubscribeToken("user@example.com");
 
@@ -156,6 +171,9 @@ public class EmailControllerTest
         const string invalidToken = "this.is.invalid";
         var response = await _client.GetAsync($"/api/email/{EmailController.UnsubscribeFromEmailLinkRoute}?token={invalidToken}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("Invalid or expired token."));
     }
 
     [Test]

@@ -24,7 +24,7 @@ public class PlantService(
 
     } 
 
-    public async Task<List<Plant>> GetAllPlantsAsync(Guid userId, JwtClaims claims)
+    public async Task<List<Plant?>> GetAllPlantsAsync(Guid userId, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Get All Plants Async method in PlantService");
         if (userId == Guid.Parse(claims.Id)) return await plantRepo.GetAllPlantsAsync(userId);

@@ -118,7 +118,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     }
 
 
-    private static PlantResponseDto ToDto(Plant p)
+    private static PlantResponseDto ToDto(Plant? p)
     {
         return new PlantResponseDto
         {

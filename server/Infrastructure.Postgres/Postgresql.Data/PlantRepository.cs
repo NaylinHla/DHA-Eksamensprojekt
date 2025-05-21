@@ -1,6 +1,5 @@
 ﻿using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;
-using Core.Domain.Exceptions;
 using Infrastructure.Logging;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.EntityFrameworkCore;
@@ -9,13 +8,13 @@ namespace Infrastructure.Postgres.Postgresql.Data;
 
 public class PlantRepository(MyDbContext ctx) : IPlantRepository
 {
-    public Task<List<Plant>> GetAllPlantsAsync(Guid userId)
+    public Task<List<Plant?>> GetAllPlantsAsync(Guid userId)
     {
         MonitorService.Log.Debug("Entered Get All Plants method in PlantRepository");
         return ctx.UserPlants
             .AsNoTracking()
             .Where(up => up.UserId == userId)
-            .Select(up => up.Plant!)
+            .Select(up => up.Plant)
             .ToListAsync();
     }
 
@@ -58,7 +57,8 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
             .ToListAsync();
         ctx.UserPlants.RemoveRange(links);
 
-        var plant = await GetPlantByIdAsync(plantId);
+        var plant = await GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
         ctx.Plants.Remove(plant);
 
         await ctx.SaveChangesAsync();
@@ -73,7 +73,8 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public async Task<Plant> MarkPlantAsDeadAsync(Guid plantId)
     {
         MonitorService.Log.Debug("Entered Mark Plant as Dead method in PlantRepository");
-        var plant = await GetPlantByIdAsync(plantId);
+        var plant = await GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
         plant.IsDead = true;
         await ctx.SaveChangesAsync();
         return plant;
@@ -82,7 +83,8 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public async Task<Plant> WaterPlantAsync(Guid plantId)
     {
         MonitorService.Log.Debug("Entered Water Plant method in PlantRepository");
-        var plant = await GetPlantByIdAsync(plantId);
+        var plant = await GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException();
         plant.LastWatered = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
         return plant;
@@ -91,10 +93,28 @@ public class PlantRepository(MyDbContext ctx) : IPlantRepository
     public async Task WaterAllPlantsAsync(Guid userId)
     {
         MonitorService.Log.Debug("Entered Water All Plants method in PlantRepository");
-        await ctx.Plants
-            .Where(p => p.UserPlants.Any(up => up.UserId == userId))
-            .ExecuteUpdateAsync(p => p.SetProperty(
-                pl => pl.LastWatered,
-                _ => DateTime.UtcNow));
+        
+        var isInMemory = ctx.Database.ProviderName?.EndsWith("InMemory", StringComparison.OrdinalIgnoreCase) == true;
+
+        if (isInMemory)
+        {
+            var plants = await ctx.Plants
+                .Where(p => p.UserPlants.Any(up => up.UserId == userId))
+                .ToListAsync();
+            
+            foreach (var plant in plants)
+            {
+                plant.LastWatered = DateTime.UtcNow;
+            }
+            await ctx.SaveChangesAsync();
+        }
+        else
+        {
+            await ctx.Plants
+                .Where(p => p.UserPlants.Any(up => up.UserId == userId))
+                .ExecuteUpdateAsync(p => p.SetProperty(
+                    pl => pl.LastWatered,
+                    _ => DateTime.UtcNow));
+        }
     }
 }
