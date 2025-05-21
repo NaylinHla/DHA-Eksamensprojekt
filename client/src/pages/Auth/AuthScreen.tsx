@@ -12,13 +12,20 @@ type AuthScreenProps = {
 };
 
 interface RegisterErrors {
-    firstName?: boolean;
-    lastName?: boolean;
-    email?: boolean;
-    birthday?: boolean;
-    country?: boolean;
-    password?: boolean;
-    confirmPassword?: "required" | "mismatch";
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    birthday?: string;
+    country?: string;
+    password?: string;
+    confirmPassword?: string;
+}
+
+interface ValidationErrors {
+    email?: string;
+    password?: string;
+
+    [key: string]: string | undefined;
 }
 
 const authClient = new AuthClient("http://localhost:5000");
@@ -33,6 +40,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const registerFormRef = useRef<HTMLFormElement>(null);
     const loginFormRef = useRef<HTMLFormElement>(null);
+    const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
     const { subscribe } = useTopicManager();
 
     // ANIMATION ---
@@ -82,6 +90,24 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const fade = (visible: boolean) =>
         visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none";
 
+    const validateEmailAndPassword = (email: string, password: string): ValidationErrors => {
+        const errors: ValidationErrors = {};
+
+        if (!email) {
+            errors.email = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = "Email is not valid";
+        }
+
+        if (!password) {
+            errors.password = "Password is required";
+        } else if (password.length < 4) {
+            errors.password = "Password must be at least 4 characters.";
+        }
+
+        return errors;
+    };
+
 
     // HANDLERS ---
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -89,6 +115,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
         const formData = new FormData(e.currentTarget);
         const email = formData.get("email") as string;
         const password = formData.get("password") as string;
+
+        const errors = validateEmailAndPassword(email, password);
+        setLoginErrors(errors);
+        if (Object.keys(errors).length > 0) return;
 
         try {
             const loginDto: AuthLoginDto = { email, password };
@@ -122,32 +152,56 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const firstName = (formData.get("firstName") as string)?.trim();
-        const lastName = (formData.get("lastName") as string)?.trim();
-        const email = (formData.get("email") as string)?.trim();
-        const birthdayRaw = formData.get("birthday") as string;
-        const country = (formData.get("country") as string)?.trim();
-        const password = (formData.get("password") as string)?.trim();
-        const confirmPassword = (formData.get("confirmPassword") as string)?.trim();
 
-        const errors: RegisterErrors = {};
-        if (!firstName) errors.firstName = true;
-        if (!lastName) errors.lastName = true;
-        if (!email) errors.email = true;
-        if (!birthdayRaw) errors.birthday = true;
-        if (!country) errors.country = true;
-        if (!password) errors.password = true;
-        if (!confirmPassword) errors.confirmPassword = "required";
-        if (
-            password &&
-            confirmPassword &&
-            password !== confirmPassword
-        ) {
-            errors.confirmPassword = "mismatch";
+        const firstName = formData.get("firstName")?.toString().trim() || "";
+        const lastName = formData.get("lastName")?.toString().trim() || "";
+        const email = formData.get("email")?.toString().trim() || "";
+        const birthdayRaw = formData.get("birthday") as string;
+        const country = formData.get("country")?.toString().trim() || "";
+        const password = formData.get("password")?.toString().trim() || "";
+        const confirmPassword = formData.get("confirmPassword")?.toString().trim() || "";
+
+        const errors: RegisterErrors = {};  // declare errors **first**
+
+        const emailPasswordErrors = validateEmailAndPassword(email, password);
+        Object.assign(errors, emailPasswordErrors);  // merge errors from that function
+
+        // FRONTEND VALIDATION Should match backend validation
+        if (!firstName) {
+            errors.firstName = "First name is required";
+        } else if (firstName.length < 2 || firstName.length > 30) {
+            errors.firstName = "2–30 characters required.";
+        }
+
+        if (!lastName) {
+            errors.lastName = "Last name is required";
+        } else if (lastName.length < 2 || lastName.length > 30) {
+            errors.lastName = "2–30 characters required.";
+        }
+
+        if (!birthdayRaw) {
+            errors.birthday = "Birthday is required";
+        } else {
+            const birthday = new Date(birthdayRaw);
+            const ageLimit = new Date();
+            ageLimit.setFullYear(ageLimit.getFullYear() - 5);
+            if (birthday > ageLimit) {
+                errors.birthday = "You must be at least 5 years old.";
+            }
+        }
+
+        if (!country) {
+            errors.country = "Country is required";
+        }
+
+        if (!confirmPassword) {
+            errors.confirmPassword = "Confirm password is required";
+        } else if (password !== confirmPassword) {
+            errors.confirmPassword = "Passwords do not match";
         }
 
         setRegisterErrors(errors);
-        if (Object.keys(errors).length) return;
+        if (Object.keys(errors).length > 0) return;
 
         try {
             const birthday = new Date(birthdayRaw);
@@ -161,19 +215,34 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             } as AuthRegisterDto);
             reset();
             toast.success("Registered successfully! You can now log in.");
-        } catch (error) {
-            console.error("Registration failed", error);
-            toast.error("Registration failed. Try again.");
+        } catch (error: any) {
+            console.error("Registration failed:", error);
+
+            let title = "";
+
+            try {
+                const parsed = JSON.parse(error.response);
+                title = parsed.title || "";
+            } catch (e) {
+                console.warn("Failed to parse error.response as JSON:", error.response);
+            }
+
+            if (title.includes("Email: User with that email already exists")) {
+                setRegisterErrors({email: "User with that email already exists"});
+            } else {
+                toast.error("Registration failed. Try again.");
+            }
         }
     };
 
-    const requiredHint = (flag?: boolean | string) => (
+
+    const requiredHint = (msg?: string) => (
         <p
-            className={`text-white text-xs text-left ${
-                flag ? "block mt-1" : "hidden"
+            className={`text-red-500 text-xs text-left transition-opacity duration-200 h-[1.25rem] ${
+                msg ? "opacity-100" : "opacity-0"
             }`}
         >
-            {flag === "mismatch" ? "*Mismatch" : "*Required"}
+            {msg || " "}
         </p>
     );
 
@@ -233,25 +302,31 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                     <form
                         ref={loginFormRef}
                         onSubmit={handleLogin}
-                        className={`absolute top-0 w-full space-y-2 transition-opacity duration-300 ${fade(
+                        className={`absolute top-0 w-full space-y-1 transition-opacity duration-300 ${fade(
                             mode === "login",
                         )}`}
+                        noValidate
                     >
                         <label className="label py-0 text-white">Email</label>
                         <input
                             name="email"
-                            type="email"
                             placeholder="Email"
-                            className="bg-white input input-bordered input-sm w-full text-black"
+                            type="email"
+                            className={`bg-white input input-bordered input-sm w-full text-black ${loginErrors.email ? errorClass : ""}`}
                             required
                         />
-                        <label className="label py-0 text-white">Password</label>
-                        <PasswordField
+                        {requiredHint(loginErrors.email)}
+
+                        <label className="label -mt-8 py-0 text-white">Password</label>
+                        <input
                             name="password"
                             placeholder="Password"
+                            type="password"
+                            className={`bg-white input input-bordered input-sm w-full text-black ${loginErrors.password ? errorClass : ""}`}
                             required
-                            className={"bg-white"}
                         />
+                        {requiredHint(loginErrors.password)}
+
                         <button className="btn text-white border-white bg-transparent btn-sm w-full">Login</button>
                     </form>
 
@@ -260,7 +335,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                         ref={registerFormRef}
                         onSubmit={handleRegister}
                         noValidate
-                        className={`absolute top-0 w-full -translate-y-24 space-y-2 transition-opacity duration-300 ${
+                        className={`absolute top-0 w-full -translate-y-24 space-y-1 transition-opacity duration-300 ${
                             mode === "register" ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                         }`}
                     >
@@ -272,7 +347,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                                     name="firstName"
                                     placeholder="First Name"
                                     className={`input input-bordered bg-white input-sm w-full text-black ${
-                                        registerErrors.firstName && errorClass
+                                        registerErrors.firstName ? errorClass : ""
                                     }`}
                                 />
                                 {requiredHint(registerErrors.firstName)}
@@ -284,7 +359,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                                     name="lastName"
                                     placeholder="Last Name"
                                     className={`input input-bordered bg-white input-sm w-full text-black ${
-                                        registerErrors.lastName && errorClass
+                                        registerErrors.lastName ? errorClass : ""
                                     }`}
                                 />
                                 {requiredHint(registerErrors.lastName)}
@@ -298,7 +373,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                             type="email"
                             placeholder="Email"
                             className={`input input-bordered bg-white input-sm w-full text-black ${
-                                registerErrors.email && errorClass
+                                registerErrors.email ? errorClass : ""
                             }`}
                         />
                         {requiredHint(registerErrors.email)}
@@ -311,7 +386,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                                     name="birthday"
                                     type="date"
                                     className={`input input-bordered bg-white input-sm w-full text-black ${
-                                        registerErrors.birthday && errorClass
+                                        registerErrors.birthday ? errorClass : ""
                                     }`}
                                 />
                                 {requiredHint(registerErrors.birthday)}
