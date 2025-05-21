@@ -35,8 +35,8 @@ public class EmailSenderServiceTest
         {
             EMAIL_SENDER_USERNAME = "fakeUser",
             EMAIL_SENDER_PASSWORD = "fakePass",
-            JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
-            EnableEmailSending = true
+            JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890"
+            
         };
 
         var jwtOptionsMock = new Mock<IOptions<AppOptions>>();
@@ -189,8 +189,7 @@ public class EmailSenderServiceTest
         {
             EMAIL_SENDER_USERNAME = "fakeUser",
             EMAIL_SENDER_PASSWORD = "fakePass",
-            JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
-            EnableEmailSending = true
+            JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890"
         };
 
         var monitorMock = new Mock<IOptionsMonitor<AppOptions>>();
@@ -235,7 +234,6 @@ public class EmailSenderServiceTest
             EMAIL_SENDER_USERNAME = "fakeUser",
             EMAIL_SENDER_PASSWORD = "fakePass",
             JWT_EMAIL_SECRET = "test-secret-key-123456789012345678901234567890",
-            EnableEmailSending = true
         };
 
         var monitorMock = new Mock<IOptionsMonitor<AppOptions>>();
@@ -276,8 +274,7 @@ public class EmailSenderServiceTest
         {
             EMAIL_SENDER_USERNAME = "user",
             EMAIL_SENDER_PASSWORD = "pwd",
-            JWT_EMAIL_SECRET      = "test‑secret‑key‑123456789012345678901234567890",
-            EnableEmailSending    = true
+            JWT_EMAIL_SECRET      = "test‑secret‑key‑123456789012345678901234567890"
         };
 
         var optsMonitor = new Mock<IOptionsMonitor<AppOptions>>();

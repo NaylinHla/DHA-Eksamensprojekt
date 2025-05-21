@@ -45,8 +45,8 @@ public class AppOptionsValidator
         {
             DbConnectionString = "abc",
             JwtSecret = "abc",
-            Seed = true,
-            EnableEmailSending = true
+            Seed = true
+            
         };
         var context = new ValidationContext(opts, null, null);
         Validator.ValidateObject(opts, context); //Does not throw
