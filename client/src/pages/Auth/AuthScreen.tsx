@@ -42,6 +42,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const loginFormRef = useRef<HTMLFormElement>(null);
     const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
     const { subscribe } = useTopicManager();
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
+    const passwordErrorMsg =
+        "At least 6 chars, including uppercase, lowercase, and special character.";
 
     // ANIMATION ---
     useLayoutEffect(() => {
@@ -57,7 +60,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
         } else {
             wrapper.style.height = "5rem";
         }
-    }, [mode, registerErrors]);
+
+        // Only clear errors if there are errors currently set
+        setRegisterErrors((prev) => {
+            if (Object.keys(prev).length === 0) return prev;
+            return {};
+        });
+
+        setLoginErrors((prev) => {
+            if (Object.keys(prev).length === 0) return prev;
+            return {};
+        });
+    }, [mode]);
 
     useEffect(() => {
         if (mode !== "login") {
@@ -101,8 +115,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
 
         if (!password) {
             errors.password = "Password is required";
-        } else if (password.length < 4) {
-            errors.password = "Password must be at least 4 characters.";
+        } else if (!passwordRegex.test(password)) {
+            errors.password = passwordErrorMsg;
         }
 
         return errors;

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAtom, useSetAtom } from "jotai";
 import {JwtAtom, User, UserSettingsAtom} from "../../atoms";
-import { useNavigate } from "react-router";
 import EmailModal from "../../components/Modals/EmailModal";
 import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal";
@@ -13,7 +12,7 @@ import { userClient, userSettingsClient } from "../../apiControllerClients";
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
 
-const UserSettings: React.FC<Props> = ({ onChange }) => {
+const UserSettings: React.FC<Props> = () => {
     const [jwt, setJwt] = useAtom(JwtAtom);
     const [settings] = useAtom(UserSettingsAtom);
     const setUserSettings = useSetAtom(UserSettingsAtom);
@@ -22,10 +21,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
-    
+    const [passwordErrors, setPasswordErrors] = useState<Partial<PasswordDto>>({});
+    const [emailErrors, setEmailErrors] = useState<{ old?: string; new?: string }>({});
     const [user, setUser] = useState<User | null>(null);
 
-    const navigate = useNavigate();
     const { logout } = useLogout();
 
     useEffect(() => {
@@ -74,7 +73,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     async function handlePasswordDto(dto: PasswordDto) {
         if (dto.newPassword !== dto.confirm) {
-            toast.error("Passwords don’t match");
+            setPasswordErrors({ confirm: "Passwords don’t match" });
             return;
         }
         try {
@@ -86,14 +85,28 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             });
             toast.success("Password updated");
             setOpenPassword(false);
+            setPasswordErrors({});
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
+            const status = e.response?.status ?? e.status ?? (e.response && e.response.statusCode);
+            const errorMessage =
+                (e.response && (e.response.title || e.response.message)) || e.message || "Unknown error";
+
+            if (status === 401 || /invalid/i.test(errorMessage)) {
+                setPasswordErrors({ oldPassword: "Old password is incorrect" });
+            } else {
+                toast.error(errorMessage || "Failed to change password");
+            }
         } finally {
             setSaving(false);
         }
     }
 
     async function handleEmail(oldMail: string, newMail: string) {
+        if (oldMail !== user?.email) {
+            setEmailErrors({ old: "This is not your current mail" });
+            return;
+        }
+
         try {
             setSaving(true);
             if (!jwt) return;
@@ -108,6 +121,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         } finally {
             setSaving(false);
         }
+        //setEmailErrors({ new: "Another user already use this mail"});
     }
 
     if (!settings) {
@@ -162,7 +176,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.celsius}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("celsius", value);
+                                    patchSetting("celsius", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         celsius: value,
@@ -178,7 +192,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.darkTheme}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("darktheme", value);
+                                    patchSetting("darktheme", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         darkTheme: value,
@@ -194,7 +208,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.confirmDialog}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("confirmdialog", value);
+                                    patchSetting("confirmdialog", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         confirmDialog: value,
@@ -244,16 +258,24 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 <PasswordModal
                     open={openPassword}
                     loading={saving}
-                    onClose={() => setOpenPassword(false)}
+                    onClose={() => {
+                        setOpenPassword(false);
+                        setPasswordErrors({});
+                    }}
                     onSubmit={handlePasswordDto}
+                    externalErrors={passwordErrors}
                 />
             )}
 
             <EmailModal
                 open={openEmail}
                 loading={saving}
-                onClose={() => setOpenEmail(false)}
+                onClose={() => {
+                    setOpenEmail(false);
+                    setEmailErrors({});
+                }}
                 onSubmit={handleEmail}
+                externalErrors={emailErrors}
             />
 
             <DeleteAccountModal
