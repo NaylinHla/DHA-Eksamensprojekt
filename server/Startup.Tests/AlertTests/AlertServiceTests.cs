@@ -419,5 +419,48 @@ namespace Startup.Tests.AlertTests
             _alertRepoMock.Verify(x => x.AddAlertAsync(It.IsAny<Alert>()), Times.Never);
             _wsMock.Verify(x => x.BroadcastToTopic(It.IsAny<string>(), It.IsAny<object>()), Times.Never);
         }
+        
+        [Test]
+        public async Task CheckAndTriggerScheduledPlantAlertsAsync_PlantNotDue_SkipsAlert()
+        {
+            var plantId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var conditionId = Guid.NewGuid();
+            const int interval = 7;
+
+            var plant = new Plant
+            {
+                PlantId = plantId,
+                PlantName = "Cactus",
+                UserPlants = new List<UserPlant> { new() { UserId = userId, PlantId = plantId } },
+                LastWatered = DateTime.UtcNow.AddDays(-3),
+                WaterEvery = interval,
+                IsDead = false
+            };
+
+            var conditionAlert = new ConditionAlertPlantResponseDto
+            {
+                ConditionAlertPlantId = conditionId,
+                PlantId = plantId,
+                WaterNotify = true
+            };
+
+            _condRepoMock
+                .Setup(x => x.GetAllConditionAlertPlantForAllUserAsync())
+                .ReturnsAsync([conditionAlert]);
+
+            _plantRepoMock
+                .Setup(x => x.GetPlantByIdAsync(plantId))
+                .ReturnsAsync(plant);
+
+            _plantRepoMock
+                .Setup(x => x.GetPlantOwnerUserId(plantId))
+                .ReturnsAsync(userId);
+
+            await _service.CheckAndTriggerScheduledPlantAlertsAsync();
+
+            _alertRepoMock.Verify(x => x.AddAlertAsync(It.IsAny<Alert>()), Times.Never);
+            _wsMock.Verify(x => x.BroadcastToTopic(It.IsAny<string>(), It.IsAny<object>()), Times.Never);
+        }
     }
 }

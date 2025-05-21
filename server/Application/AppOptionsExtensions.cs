@@ -18,7 +18,7 @@ public static class AppOptionsExtensions
         var validated = Validator.TryValidateObject(appOptions, new ValidationContext(appOptions), results, true);
         if (!validated)
             throw new MissingFieldException(
-                $"hey buddy, alex here. You're probably missing an environment variable / appsettings.json stuff / repo secret on github. Here's the technical error: " +
+                $"hey buddy, TDT here. You're probably missing an environment variable / appsettings.json stuff / repo secret on github. Here's the technical error: " +
                 $"{string.Join(", ", results.Select(r => r.ErrorMessage))}");
 
         return appOptions;

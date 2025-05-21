@@ -92,7 +92,18 @@ public class AlertService(
                 MonitorService.Log.Warning("User not found for PlantId: {PlantId}", alert.PlantId);
                 continue;
             }
-
+            
+            if (plant.WaterEvery.HasValue)
+            {
+                var last = plant.LastWatered ?? plant.Planted ?? DateTime.MinValue;
+                // next due = last + interval days
+                var nextDue = last.AddDays(plant.WaterEvery.Value);
+                if (DateTime.UtcNow < nextDue)
+                {
+                    continue;
+                }
+            }
+            
             var dto = new AlertCreateDto
             {
                 AlertName = $"Scheduled Water Alert for {plant.PlantName}",
