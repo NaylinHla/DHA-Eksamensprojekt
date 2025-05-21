@@ -1,16 +1,17 @@
-﻿using FeatureHubSDK;
+﻿using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class FeatureTestController(IClientContext featureHubContext) : ControllerBase
+public class FeatureTestController(IFeatureHubService featureHubService) : ControllerBase
 {
     [HttpGet("toggle")]
-    public IActionResult CheckToggle()
+    public async Task<IActionResult> CheckToggle()
     {
-        var isEnabled = featureHubContext["FeatureToggleTest"].IsEnabled;
+        var isEnabled = await featureHubService.IsFeatureEnabledAsync("FeatureToggleTest");
+
         return Ok(new
         {
             Feature = "FeatureToggleTest",

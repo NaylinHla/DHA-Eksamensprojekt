@@ -483,5 +483,5 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-server/Startup/appsettings.Development.json
+server/Startup/appsettings.json
 /server/Startup.Tests/coverage-report

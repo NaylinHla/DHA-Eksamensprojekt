@@ -15,7 +15,6 @@ using NSwag.Generation;
 using Scalar.AspNetCore;
 using Startup.Documentation;
 using Startup.Proxy;
-using FeatureHubSDK;
 
 namespace Startup;
 
@@ -35,21 +34,8 @@ public class Program
         // Load AppOptions
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
-        // FeatureHub setup (v2.5.1)
-        var apiKey = configuration["FeatureHub:ApiKey"];
-        var edgeUrl = configuration["FeatureHub:EdgeUrl"];
-
-        if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(edgeUrl))
-            throw new FeatureHubKeyInvalidException("Edge URL or SDK key is missing from configuration.");
-
-        var featureHubConfig = new EdgeFeatureHubConfig(edgeUrl, apiKey);
-        services.AddSingleton(featureHubConfig);
-        services.AddSingleton<IClientContext>(sp =>
-        {
-            var context = featureHubConfig.NewContext();
-            context.Build().Wait();
-            return context;
-        });
+        // FeatureHub setup
+        FeatureHubService.AddFeatureHub(services);
         
         // Application core services
         services.RegisterApplicationServices();
