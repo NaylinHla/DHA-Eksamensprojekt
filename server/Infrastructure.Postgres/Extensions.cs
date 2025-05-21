@@ -11,11 +11,20 @@ public static class Extensions
 {
     public static IServiceCollection AddDataSourceAndRepositories(this IServiceCollection services)
     {
-        services.AddDbContext<MyDbContext>((service, options) =>
+        
+        
+        services.AddDbContext<MyDbContext>((serviceProvider, options) =>
         {
-            var provider = services.BuildServiceProvider();
-            options.UseNpgsql(
-                provider.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue.DbConnectionString);
+            var appOpts = serviceProvider.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
+
+            if (appOpts.IsTesting)
+            {
+                options.UseInMemoryDatabase("TestDb");
+            }
+            else
+            {
+                options.UseNpgsql(appOpts.DbConnectionString);
+            }
             options.EnableSensitiveDataLogging();
         });
 

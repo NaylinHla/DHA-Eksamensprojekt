@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Application.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
@@ -20,17 +19,15 @@ public class AppOptionsValidator
             });
 
         _httpClient = factory.CreateClient();
-        _scopedServiceProvider = factory.Services.CreateScope().ServiceProvider;
     }
 
     [TearDown]
     public void TearDown()
     {
-        _httpClient?.Dispose();
+        _httpClient.Dispose();
     }
 
     private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
 
     [Test]
     public Task AppOptionsValidatorThrowsException()
@@ -48,7 +45,8 @@ public class AppOptionsValidator
         {
             DbConnectionString = "abc",
             JwtSecret = "abc",
-            Seed = true
+            Seed = true,
+            EnableEmailSending = true
         };
         var context = new ValidationContext(opts, null, null);
         Validator.ValidateObject(opts, context); //Does not throw

@@ -544,7 +544,7 @@
         }
       }
     },
-    "/api/Email/send": {
+    "/api/Email/SendEmail": {
       "post": {
         "tags": [
           "Email"
@@ -577,7 +577,7 @@
         }
       }
     },
-    "/api/Email/subscribe": {
+    "/api/Email/SubscribeToEmailList": {
       "post": {
         "tags": [
           "Email"
@@ -610,7 +610,7 @@
         }
       }
     },
-    "/api/Email/unsubscribe": {
+    "/api/Email/UnsubscribeFromEmailList": {
       "post": {
         "tags": [
           "Email"
@@ -641,7 +641,9 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/Email/UnsubscribeFromEmailLink": {
       "get": {
         "tags": [
           "Email"
@@ -1270,6 +1272,36 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/GetUser": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_GetUser",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }

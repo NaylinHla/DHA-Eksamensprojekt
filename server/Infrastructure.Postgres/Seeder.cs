@@ -10,12 +10,17 @@ public class Seeder(MyDbContext context, IOptionsMonitor<AppOptions> optionsMoni
     public async Task Seed()
     {
         await context.Database.EnsureCreatedAsync();
-        var outputPath = Path.Combine(Directory.GetCurrentDirectory() +
-                                      "/../Infrastructure.Postgres.Scaffolding/current_schema.sql");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-        await File.WriteAllTextAsync(outputPath,
-            "-- This schema is generated based on the current DBContext. Please check the class " + nameof(Seeder) +
-            " to see.\n" +
-            "" + context.Database.GenerateCreateScript());
+
+        if (context.Database.IsRelational() 
+            && !optionsMonitor.CurrentValue.IsTesting)
+        {
+            var outputPath = Path.Combine(Directory.GetCurrentDirectory() +
+                                    "/../Infrastructure.Postgres.Scaffolding/current_schema.sql");
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            await File.WriteAllTextAsync(outputPath,
+                "-- This schema is generated based on the current DBContext. Please check the class " + nameof(Seeder) +
+                " to see.\n" +
+                "" + context.Database.GenerateCreateScript());
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace Application.Interfaces;
 public interface IPlantService
 {
     Task<Plant?> GetPlantByIdAsync(Guid plantId, JwtClaims claims);
-    Task<List<Plant>> GetAllPlantsAsync(Guid userId, JwtClaims claims);
+    Task<List<Plant?>> GetAllPlantsAsync(Guid userId, JwtClaims claims);
 
     Task<Plant> CreatePlantAsync(Guid userId, PlantCreateDto dto);
     Task DeletePlantAsync(Guid plantId, JwtClaims claims);

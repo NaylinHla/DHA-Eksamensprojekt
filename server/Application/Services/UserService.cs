@@ -14,11 +14,20 @@ public class UserService(
     IValidator<PatchUserPasswordDto> patchUserPasswordValidator)
     : IUserService
 {
+    private const string UserNotFoundMessage = "User not found.";
+    
+    public async Task<User> GetUserByEmailAsync(string email)
+    {
+        var user = userRepository.GetUserOrNull(email) 
+                   ?? throw new KeyNotFoundException(UserNotFoundMessage);
+        return user;
+    }
+    
     public async Task<User> DeleteUser(DeleteUserDto request)
     {
         await deleteUserValidator.ValidateAndThrowAsync(request);
         var user = userRepository.GetUserOrNull(request.Email)
-            ?? throw new KeyNotFoundException("User not found.");
+            ?? throw new KeyNotFoundException(UserNotFoundMessage);
 
         // Base anonymized email
         const string baseEmail = "Deleted@User.com";
@@ -49,7 +58,7 @@ public class UserService(
     {
         await patchUserEmailValidator.ValidateAndThrowAsync(request);
         var user = userRepository.GetUserOrNull(request.OldEmail)
-            ?? throw new KeyNotFoundException("User not found.");
+            ?? throw new KeyNotFoundException(UserNotFoundMessage);
 
         user.Email = request.NewEmail;
         
@@ -63,7 +72,7 @@ public class UserService(
     {
         await patchUserPasswordValidator.ValidateAndThrowAsync(request);
         var user = userRepository.GetUserOrNull(email)
-            ?? throw new KeyNotFoundException("User not found.");
+            ?? throw new KeyNotFoundException(UserNotFoundMessage);
 
         securityService.VerifyPasswordOrThrow(request.OldPassword + user.Salt, user.Hash);
 
