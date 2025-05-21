@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Plus, Trash2} from 'lucide-react';
-import {ConfirmModal, DeviceConditionModal, LoadingSpinner, SearchBar, TitleTimeHeader} from '../../components';
+import {ConfirmModal, AlertConditionModal, LoadingSpinner, SearchBar, TitleTimeHeader} from '../../components';
 import {useAtom} from 'jotai';
 import {JwtAtom} from '../../atoms';
 import {EnrichedConditionAlertUserDevice, useAlertConditions} from '../../hooks/useAlertConditions';
@@ -303,7 +303,7 @@ export default function AlertConditionsPage() {
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteId(null)}
             />
-            <DeviceConditionModal
+            <AlertConditionModal
                 isOpen={showCreateModal}
                 onClose={() => {
                     setShowCreateModal(false);

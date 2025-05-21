@@ -37,7 +37,7 @@ interface Props {
     };
 }
 
-const DeviceConditionModal: React.FC<Props> = ({
+const AlertConditionModal: React.FC<Props> = ({
                                                    isOpen,
                                                    onClose,
                                                    onCreated,
@@ -430,4 +430,4 @@ const DeviceConditionModal: React.FC<Props> = ({
     );
 };
 
-export default DeviceConditionModal;
+export default AlertConditionModal;

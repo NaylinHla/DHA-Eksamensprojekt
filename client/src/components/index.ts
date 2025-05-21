@@ -27,4 +27,4 @@ export {default as UserDeviceModal} from './Modals/UserDeviceModal';
 export {default as DeleteAccountModal} from "./Modals/DeleteAccountModal";
 export {default as EmailModal} from "./Modals/EmailModal";
 export {default as PasswordModal} from "./Modals/PasswordModal";
-export {default as DeviceConditionModal} from './Modals/DeviceConditionModal';
+export {default as AlertConditionModal} from './Modals/AlertConditionModal';
