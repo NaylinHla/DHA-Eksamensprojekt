@@ -19,6 +19,7 @@ export {StatCard} from "./Stats/StatCard";
 export {default as SearchBar} from './Functional/SearchBar'
 export {default as IntervalSelector} from './Functional/IntervalSelector'
 export {default as UseCloseOnEscapeOrBackdrop} from './Functional/UseCloseOnEscapeOrBackdrop'
+export {default as LoadingSpinner} from './Functional/LoadingSpinner'
 
 // ********** Modals Components **********
 export {default as ConfirmModal} from './Modals/ConfirmModal';

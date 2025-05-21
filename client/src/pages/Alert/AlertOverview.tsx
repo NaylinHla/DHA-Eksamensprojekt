@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import useAlertsRest, {Alert} from "../../hooks/useAlertsRest.tsx";
-import {formatDateTimeForUserTZ, TitleTimeHeader, useConvertTemperatureInSentence} from "../import";
+import {formatDateTimeForUserTZ, LoadingSpinner, TitleTimeHeader, useConvertTemperatureInSentence} from "../import";
 import {MyAlertConditionRoute} from "../../routeConstants";
 import {useNavigate} from "react-router-dom";
 
@@ -71,15 +71,7 @@ const AlertOverview = () => {
                     {loading || filteredAlerts.length === 0 ? (
                         <div className="flex items-center justify-center mt-5">
                             {loading ? (
-                                <div className="flex justify-center items-center h-32">
-                                    <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"
-                                                className="opacity-25"/>
-                                        <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                              className="opacity-75"/>
-                                    </svg>
-                                    <span className="text-gray-500">Loading…</span>
-                                </div>
+                                <LoadingSpinner />
                             ) : (
                                 <div className="text-gray-400 text-fluid">No alerts found.</div>
                             )}

@@ -7,23 +7,11 @@ import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClien
 import {
     ConfirmModal,
     formatDateTimeForUserTZ,
-    IntervalSelector,
+    IntervalSelector, LoadingSpinner,
     SearchBar,
     TitleTimeHeader,
     UserDeviceModal
 } from "../import";
-
-// Spinner shown during loading
-const Spinner = (
-    <div className="flex justify-center items-center h-32">
-        <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"
-                    className="opacity-25"/>
-            <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" className="opacity-75"/>
-        </svg>
-        <span className="text-gray-500">Loading…</span>
-    </div>
-);
 
 // Helper function to format device values (temperature, humidity, etc.)
 const formatDeviceValue = (
@@ -157,7 +145,7 @@ export default function MyDevicePage() {
                     </div>
 
                     {initializing ? (
-                        <div className="my-10">{Spinner}</div>
+                        <div className="my-10"><LoadingSpinner /></div>
                     ) : (
                         <div
                             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-fluid">

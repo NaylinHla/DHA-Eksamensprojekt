@@ -1,11 +1,10 @@
 import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {AddPlantCard, PlantCard, PlantModal, PlantToolbar, TitleTimeHeader} from "../../components";
-import {JwtAtom, PlantResponseDto} from "../../atoms";
+import {JwtAtom, PlantResponseDto, UserIdAtom, UserSettingsAtom} from "../../atoms";
 import {useAtom} from "jotai";
 import {plantClient} from "../../apiControllerClients.ts";
 import {CardPlant} from "../../components/Plants/PlantCard.tsx";
 import ConfirmModal from "../../components/Modals/ConfirmModal";
-import { UserSettingsAtom } from "../../atoms";
 
 
 const toCard = (dto: PlantResponseDto): CardPlant => {
@@ -22,22 +21,13 @@ const toCard = (dto: PlantResponseDto): CardPlant => {
     return {id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days, isDead: !!dto.isDead};
 };
 
-function userIdFromJwt(token: string): string | null {
-    try {
-        const {sub, Id} = JSON.parse(atob(token.split(".")[1]));
-        return (sub || Id) ?? null;
-    } catch {
-        return null;
-    }
-}
-
 const PlantsView: React.FC = () => {
     const [jwt] = useAtom(JwtAtom);
+    const [userId] = useAtom(UserIdAtom);
     const [plants, setPlants] = useState<CardPlant[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
-    const [now, setNow] = useState(new Date());
     const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] = useState<CardPlant | null>(null);
     const [showDead, setShowDead] = useState(false);
@@ -50,16 +40,9 @@ const PlantsView: React.FC = () => {
 
     // Fetch plants
     const fetchPlants = useCallback(async () => {
-        if (!jwt) return;
-        const uid = userIdFromJwt(jwt);
-        if (!uid) {
-            setErr("Invalid token");
-            return;
-        }
-
         try {
             setLoading(true);
-            const list = await plantClient.getAllPlants(uid, jwt); // <‑‑ raw JWT
+            const list = await plantClient.getAllPlants(userId, jwt); // <‑‑ raw JWT
             setPlants(list.map(toCard));
             setErr(null);
         } catch (e: any) {
@@ -76,7 +59,7 @@ const PlantsView: React.FC = () => {
     // Water Plants
     const waterAll = async () => {
         try {
-            await plantClient.waterAllPlants(jwt);
+            await plantClient.waterAllPlants(userId, jwt);
             await fetchPlants();
         } catch (e: any) {
             alert(e.message ?? "Failed");
@@ -130,7 +113,7 @@ const PlantsView: React.FC = () => {
     // Search filter
     const visible = useMemo(() => {
         const t = search.trim().toLowerCase();
-    
+
         return plants
             .filter((p) => (showDead ? true : !p.isDead))
             .filter((p) => (t ? p.name.toLowerCase().includes(t) : true));
@@ -154,7 +137,8 @@ const PlantsView: React.FC = () => {
                     onToggleDead={() => setShowDead((d) => !d)}
                 />
 
-                <div className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]">
+                <div
+                    className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]">
                     {visible.map(p => (
                         <PlantCard
                             key={p.id}

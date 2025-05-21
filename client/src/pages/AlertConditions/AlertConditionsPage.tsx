@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Plus, Trash2} from 'lucide-react';
-import {ConfirmModal, DeviceConditionModal, SearchBar, TitleTimeHeader} from '../../components';
+import {ConfirmModal, DeviceConditionModal, LoadingSpinner, SearchBar, TitleTimeHeader} from '../../components';
 import {useAtom} from 'jotai';
 import {JwtAtom} from '../../atoms';
 import {EnrichedConditionAlertUserDevice, useAlertConditions} from '../../hooks/useAlertConditions';
@@ -50,17 +50,6 @@ export default function AlertConditionsPage() {
         }
         return () => clearTimeout(timer);
     }, [loading]);
-
-    const Spinner = (
-        <div className="flex justify-center items-center h-32">
-            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"
-                        className="opacity-25"/>
-                <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" className="opacity-75"/>
-            </svg>
-            <span className="text-gray-500">Loading…</span>
-        </div>
-    );
 
     const handleDelete = async () => {
         if (!deleteId) return;
@@ -204,7 +193,7 @@ export default function AlertConditionsPage() {
                     }`}
                 >
                     {showSpinner ? (
-                        <div className="flex justify-center items-center w-full h-28">{Spinner}</div>
+                        <div className="flex justify-center items-center w-full h-28"><LoadingSpinner /></div>
                     ) : !loading && filteredConditions.length === 0 ? (
                         <div className="flex justify-center items-center h-48">
                             <p className="text-gray-400">
