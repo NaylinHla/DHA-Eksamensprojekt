@@ -61,12 +61,9 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
     IValidator<AddEmailDto> addEmailValidator,
     IValidator<RemoveEmailDto> removeEmailValidator) : IEmailSender
 {
-    private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
 
     public async Task SendEmailAsync(string subject, string message)
     {
-        if (!ShouldSendEmails) return;
-
         await using var client = clientFactory();
         client.EnableSsl            = true;
         client.UseDefaultCredentials = false;
@@ -125,7 +122,6 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
 
     private async Task SendConfirmationEmailAsync(string toEmail)
     {
-        if (!ShouldSendEmails) return;
 
         await using var client = clientFactory();
         client.EnableSsl            = true;
@@ -147,8 +143,6 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
 
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
-        if (!ShouldSendEmails) return;
-
         await using var client = clientFactory();
         client.EnableSsl            = true;
         client.UseDefaultCredentials = false;

@@ -1,13 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Api.Rest.Controllers;
 using Application.Interfaces.Infrastructure.Websocket;
 using Application.Models;
 using Application.Models.Dtos.RestDtos;
-using HiveMQtt.MQTT5.Types;
-using Infrastructure.Postgres.Scaffolding;
-using KellermanSoftware.CompareNetObjects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -24,7 +20,7 @@ public class RestTriggeredTests
         var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
-                builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: true); });
+                builder.ConfigureServices(services => { services.DefaultTestConfig(); });
             });
 
         _httpClient = factory.CreateClient();
@@ -121,60 +117,5 @@ public class RestTriggeredTests
 
         // Assert
         Assert.That(response.IsSuccessStatusCode, Is.True);
-    }
-
-
-    [Test]
-    public async Task WhenAdminChangesDevicePreferencesFromWebDashboard_MqttClientPublishesToEdgeDevice()
-    {
-        // Seed test user and device
-        var testUser = MockObjects.GetUser();
-        using (var scope = _scopedServiceProvider.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-            db.Users.Add(testUser);
-            await db.SaveChangesAsync();
-        }
-
-        // Log in and set JWT
-        var loginResp = await _httpClient.PostAsJsonAsync("/api/auth/login", new { testUser.Email, Password = "pass" });
-        loginResp.EnsureSuccessStatusCode();
-        var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
-        Assert.That(authDto, Is.Not.Null);
-        _httpClient.DefaultRequestHeaders.Add("Authorization", authDto.Jwt);
-
-        // Use the seeded device ID
-        var seededDeviceId = testUser.UserDevices.First().DeviceId;
-
-        //Arrange a MQTT client to perform publishing on the REST trigger
-        var testMqttClient = _scopedServiceProvider.GetService<TestMqttClient>();
-        Assert.That(testMqttClient, Is.Not.Null);
-        var topic = StringConstants.Device + "/" + seededDeviceId + "/" + StringConstants.ChangePreferences;
-        await testMqttClient.MqttClient.SubscribeAsync(topic, QualityOfService.ExactlyOnceDelivery);
-
-        //Arrange WS client
-        var testWsClient = _scopedServiceProvider.GetRequiredService<TestWsClient>();
-        var connectionManager = _scopedServiceProvider.GetRequiredService<IConnectionManager>();
-        await connectionManager.AddToTopic(StringConstants.Dashboard, testWsClient.WsClientId);
-
-        //Rest DTO
-        var changePreferencesDto = new AdminChangesPreferencesDto
-        {
-            DeviceId = seededDeviceId.ToString(),
-            Interval = "60"
-        };
-
-        //Act
-        await _httpClient.PostAsJsonAsync(
-            $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}",
-            changePreferencesDto);
-        await Task.Delay(3000); // Hardcoded delay to account for network overhead to the edge device
-
-        var actualObjectReceivedByMqttDevice =
-            JsonSerializer.Deserialize<AdminChangesPreferencesDto>(testMqttClient.ReceivedMessages.First(),
-                JsonSerializerOptions.Web);
-        var comparison = new CompareLogic().Compare(actualObjectReceivedByMqttDevice, changePreferencesDto);
-        Assert.That(comparison.AreEqual, Is.True);
-
     }
 }

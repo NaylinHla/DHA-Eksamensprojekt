@@ -9,7 +9,6 @@ using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
@@ -30,7 +29,7 @@ public class EmailControllerTest
     private Mock<IEmailSender> _emailSenderMock;
     
     [OneTimeSetUp]
-    public async Task SetupOneTime()
+    public void SetupOneTime()
     {
         _emailSenderMock = new Mock<IEmailSender>();
 
@@ -43,7 +42,6 @@ public class EmailControllerTest
                 {
                     services.DefaultTestConfig(useTestContainer: false, useInMemory: true);
                     
-                    services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
                     services.PostConfigure<AppOptions>(opts => opts.Seed = false);
                     
                     services.RemoveAll<IEmailSender>();
