@@ -7,4 +7,6 @@ public interface IAlertService
 {
     Task<Alert> CreateAlertAsync(Guid userId, AlertCreateDto dto);
     Task<List<AlertResponseDto>> GetAlertsAsync(Guid userId, int? year = null);
+    Task CheckAndTriggerScheduledPlantAlertsAsync();
+    Task TriggerUserDeviceConditionAsync(IsAlertUserDeviceConditionMeetDto dto);
 }

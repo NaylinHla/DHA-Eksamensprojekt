@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAtom } from "jotai";
-import { JwtAtom } from "../../atoms";
+import { useAtom, useSetAtom } from "jotai";
+import { JwtAtom, UserSettingsAtom } from "../../atoms";
 import { useNavigate } from "react-router";
 import EmailModal from "../../components/Modals/EmailModal";
 import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal";
@@ -15,11 +15,10 @@ const LOCAL_KEY = "theme";
 
 const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [jwt, setJwt] = useAtom(JwtAtom);
-    const [saving, setSaving] = useState(false);
+    const [settings] = useAtom(UserSettingsAtom);
+    const setUserSettings = useSetAtom(UserSettingsAtom);
 
-    const [confirmWater, setConfirmWater] = useState(false);
-    const [celsius, setCelsius] = useState(true);
-    const [darkTheme, setDarkTheme] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
@@ -28,36 +27,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const { logout } = useLogout();
 
     useEffect(() => {
-        const theme = darkTheme ? "dark" : "light";
+        const theme = settings?.darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem(LOCAL_KEY, theme);
-    }, [darkTheme]);
-
-    useEffect(() => {
-        if (!jwt) {
-            setDarkTheme(false);
-            localStorage.removeItem(LOCAL_KEY);
-            document.documentElement.setAttribute("data-theme", "light");
-        }
-    }, [jwt]);
-
-    useEffect(() => {
-        async function fetchSettings() {
-            if (!jwt) return;
-            try {
-                if (!jwt) return;
-                const data = await userSettingsClient.getAllSettings(jwt);
-                setConfirmWater(data.confirmDialog ?? false);
-                setCelsius(data.celsius ?? false);
-                setDarkTheme(data.darkTheme ?? false);
-            } catch (e: any) {
-                toast.error("Could not load user settings");
-                console.error(e);
-            }
-        }
-
-        fetchSettings();
-    }, [jwt]);
+    }, [settings?.darkTheme]);
 
     async function patchSetting(name: string, value: boolean) {
         try {
@@ -122,63 +95,82 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
         }
     }
 
+    if (!settings) {
+        return <p className="p-6">Loading user settings...</p>;
+    }
+
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[--color-background] text-[--color-primary] font-display">
             <TitleTimeHeader title="User Profile" />
-            <section className="mx-4 my-6 lg:mx-8 flex flex-1 overflow-hidden rounded-lg">
-                <aside className="w-72 shrink-0 border-r border-gray-200 p-6 flex flex-col gap-4">
-                    <h2 className="text-xl font-semibold">Settings</h2>
+            <section className="flex flex-1 overflow-hidden rounded-lg p-fluid">
+                <aside className="w-[clamp(12rem,20vw,25rem)] shrink-0 border-r border-primary p-fluid flex flex-col gap-fluid">
+                <h2 className="text-fluid font-semibold">Settings:</h2>
                     <div className="flex flex-col gap-3">
-                        <button onClick={() => setOpenEmail(true)} className="btn btn-neutral bg-transparent btn-sm">
+                        <button onClick={() => setOpenEmail(true)} className="btn btn-lg border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
                             Change e-mail
                         </button>
-                        <button onClick={() => setOpenPassword(true)} className="btn btn-neutral bg-transparent btn-sm">
+                        <button onClick={() => setOpenPassword(true)} className="btn btn-lg border-neutral bg-transparent hover:text-white hover:bg-neutral text-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
                             Change password
                         </button>
-                        <button onClick={() => setOpenDelete(true)} className="btn btn-error btn-sm flex items-center gap-1">
-                            <Trash2 size={14} /> Delete my account
+                        <button onClick={() => setOpenDelete(true)} className="btn btn-lg btn-error flex items-center gap-[clamp(0.25rem,0.8vw,0.5rem)] text-fluid px-fluid py-[clamp(0.5rem,1vw,0.75rem)]">
+                            <Trash2 className="icon-fluid" /> Delete my account
                         </button>
                     </div>
 
                     <div className="divider my-1" />
                     <ul className="flex-1 flex flex-col gap-2 pr-1 overflow-y-auto">
                         <li className="flex justify-between items-center">
-                            <span>Celsius</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={celsius}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setCelsius(value);
-                                       patchSetting("celsius", value);
-                                   }} />
+                            <span className="text-fluid">Celsius</span>
+                            <input
+                                type="checkbox"
+                                className="toggle"
+                                checked={settings.celsius}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    patchSetting("celsius", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        celsius: value,
+                                    }));
+                                }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
-                            <span>Dark Theme</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={darkTheme}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setDarkTheme(value);
-                                       patchSetting("darktheme", value);
-                                   }} />
+                            <span className="text-fluid">Dark Theme</span>
+                            <input
+                                type="checkbox"
+                                className="toggle"
+                                checked={settings.darkTheme}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    patchSetting("darktheme", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        darkTheme: value,
+                                    }));
+                                }}
+                            />
                         </li>
                         <li className="flex justify-between items-center">
-                            <span>Confirm Water Dialog</span>
-                            <input type="checkbox" className="toggle toggle-sm"
-                                   checked={confirmWater}
-                                   onChange={(e) => {
-                                       const value = e.target.checked;
-                                       setConfirmWater(value);
-                                       patchSetting("confirmdialog", value);
-                                   }} />
+                            <span className="text-fluid">Confirm Water Dialog</span>
+                            <input
+                                type="checkbox"
+                                className="toggle"
+                                checked={settings.confirmDialog}
+                                onChange={(e) => {
+                                    const value = e.target.checked;
+                                    patchSetting("confirmdialog", value);
+                                    setUserSettings((prev) => ({
+                                        ...prev!,
+                                        confirmDialog: value,
+                                    }));
+                                }}
+                            />
                         </li>
                     </ul>
                 </aside>
-                <article className="relative flex-1 p-8 overflow-y-auto">
-                    <button className="absolute right-8 top-8 text-gray-300 hover:text-[--color-primary]" aria-label="edit">
-                        <Pencil size={20} />
-                    </button>
-                    <p className="italic text-gray-500">
+                <article className="relative flex-1 p-fluid overflow-y-auto">
+                    <p className="italic text-fluid text-gray-500">
                         User data will appear here once the <code>/api/User/GetCurrent</code> endpoint is available.
                     </p>
                 </article>

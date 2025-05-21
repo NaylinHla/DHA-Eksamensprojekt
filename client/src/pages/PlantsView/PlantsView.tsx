@@ -1,12 +1,11 @@
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import PlantCard, {CardPlant} from "../../components/Modals/PlantCard.tsx";
-import AddPlantCard from "../../components/Modals/AddPlantCard.tsx";
-import PlantModal from "../../components/Modals/PlantModal.tsx";
-import {TitleTimeHeader} from "../../components";
+import {AddPlantCard, PlantCard, PlantModal, PlantToolbar, TitleTimeHeader} from "../../components";
 import {JwtAtom, PlantResponseDto} from "../../atoms";
 import {useAtom} from "jotai";
-import PlantToolbar from "../../components/Modals/PlantToolbar.tsx";
 import {plantClient} from "../../apiControllerClients.ts";
+import {CardPlant} from "../../components/Plants/PlantCard.tsx";
+import ConfirmModal from "../../components/Modals/ConfirmModal";
+import { UserSettingsAtom } from "../../atoms";
 
 
 const toCard = (dto: PlantResponseDto): CardPlant => {
@@ -43,6 +42,12 @@ const PlantsView: React.FC = () => {
     const [selected, setSelected] = useState<CardPlant | null>(null);
     const [showDead, setShowDead] = useState(false);
 
+    const [userSettings] = useAtom(UserSettingsAtom);
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [pendingWaterId, setPendingWaterId] = useState<string | null>(null);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+
+
     // Fetch plants
     const fetchPlants = useCallback(async () => {
         if (!jwt) return;
@@ -77,7 +82,14 @@ const PlantsView: React.FC = () => {
             alert(e.message ?? "Failed");
         }
     };
+
     const waterOne = async (id: string) => {
+        if (userSettings?.confirmDialog) {
+            setPendingWaterId(id);
+            setConfirmModalOpen(true);
+            return;
+        }
+
         try {
             await plantClient.waterPlant(id, jwt);
             await fetchPlants();
@@ -86,6 +98,23 @@ const PlantsView: React.FC = () => {
         }
     };
 
+
+    // Confirm modal
+    const confirmWatering = async () => {
+        if (!pendingWaterId) return;
+        setConfirmLoading(true);
+
+        try {
+            await plantClient.waterPlant(pendingWaterId, jwt);
+            await fetchPlants();
+        } catch (e: any) {
+            alert(e.message ?? "Failed");
+        } finally {
+            setConfirmLoading(false);
+            setPendingWaterId(null);
+            setConfirmModalOpen(false);
+        }
+    };
 
     // Open helpers 
     const openNew = () => {
@@ -125,7 +154,7 @@ const PlantsView: React.FC = () => {
                     onToggleDead={() => setShowDead((d) => !d)}
                 />
 
-                <div className="grid gap-6 auto-rows-fr grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]">
+                <div className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]">
                     {visible.map(p => (
                         <PlantCard
                             key={p.id}
@@ -145,6 +174,15 @@ const PlantsView: React.FC = () => {
                 plant={selected}
                 onClose={closeMod}
                 onSaved={fetchPlants}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModalOpen}
+                title="Confirm Watering"
+                subtitle="Do you really want to water this plant now?"
+                onCancel={() => setConfirmModalOpen(false)}
+                onConfirm={confirmWatering}
+                loading={confirmLoading}
             />
         </div>
     );
