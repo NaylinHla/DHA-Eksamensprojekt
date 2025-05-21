@@ -104,14 +104,14 @@ html {
 @layer utilities {
     /* fluid font size (for general text) */
     .text-fluid {
-        font-size: clamp(0.85rem, 1vw, 1.25rem);
+        font-size: clamp(0.85rem, 0.5vw, 1.25rem);
     }
     /* fluid heading size */
     .text-fluid-lg {
-        font-size: clamp(2.5rem, 2vw, 4rem);
+        font-size: clamp(2.5rem, 1vw, 4rem);
     }
     .text-fluid-header {
-        font-size: clamp(1.5rem,3vw,3rem);
+        font-size: clamp(1.5rem,1.5vw,3rem);
     }
     /* fluid padding */
     .p-fluid {

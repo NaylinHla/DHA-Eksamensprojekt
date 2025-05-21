@@ -40,7 +40,8 @@ public class SecurityService(
                 Exp = DateTimeOffset.UtcNow.AddHours(1000)
                     .ToUnixTimeSeconds()
                     .ToString(),
-                Email = dto.Email
+                Email = dto.Email,
+                Country = user.Country
             })
         };
     }
@@ -82,7 +83,8 @@ public class SecurityService(
                 Id = user.UserId.ToString(),
                 Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
-                Email = user.Email
+                Email = user.Email,
+                Country = user.Country
             })
         };
     }

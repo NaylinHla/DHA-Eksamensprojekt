@@ -10,9 +10,10 @@ import { iconFromCode, cToF } from "../../components/utils/weather/weather.ts";
 import { TitleTimeHeader} from "../../components";
 import {CityHit, WXResp} from "../../types/WeatherTypes.ts";
 import {cssVar} from "../../components/utils/Theme/theme.ts";
+import {useCountryLocation} from "../../hooks/useCountryLocation.ts";
 
 ChartJS.register(LineElement, LinearScale, PointElement, CategoryScale);
-const DEFAULT_CITY: CityHit = {
+export const DEFAULT_CITY: CityHit = {
     name: "Copenhagen",
     country: "Denmark",
     latitude: 55.6761,
@@ -22,7 +23,9 @@ const DEFAULT_CITY: CityHit = {
 type Tab = "temp" | "rain" | "wind";
 
 const WeatherView: React.FC = () => {
-    const [city, setCity] = useState(DEFAULT_CITY);
+    const defaultLoc      = useCountryLocation();
+    const [city, setCity] = useState<CityHit>(defaultLoc);
+    const [manual, setManual] = useState(false);
     const [q, setQ]       = useState("");
     const [hits, setHits] = useState<CityHit[]>([]);
     const [unitC, setUnitC] = useState(true);
@@ -30,6 +33,11 @@ const WeatherView: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [wx, setWx] = useState<WXResp | null>(null);
 
+
+    useEffect(() => {
+        if (!manual) setCity(defaultLoc);
+    }, [defaultLoc, manual]);
+    
     // Live Search City
     useEffect(() => {
         if (q.length < 2) { setHits([]); return; }
@@ -88,7 +96,7 @@ const WeatherView: React.FC = () => {
                 borderColor: cssVar("--color-primary"),
             }],
         };
-    }, [wx, tab]);
+    }, [wx, tab, city]);
 
     // Helpers
     const toUnit = (c: number) => (unitC ? c : cToF(c));
@@ -114,7 +122,7 @@ const WeatherView: React.FC = () => {
                             {hits.map((h) => (
                                 <li
                                     key={h.name + h.latitude}
-                                    onClick={() => { setCity(h); setQ(""); setHits([]); }}
+                                    onClick={() => { setCity(h); setManual(true); setQ(""); setHits([]); }}
                                     className="px-3 py-1 hover:bg-base-200 cursor-pointer text-fluid"
                                 >
                                     {h.name}, {h.country}
@@ -164,6 +172,7 @@ const WeatherView: React.FC = () => {
                             </h3>
                             <div className="w-full h-[clamp(8rem,20vw,30rem)]">
                                 <Line
+                                    key={`${city.latitude}-${city.longitude}`}
                                     data={chart}
                                     options={{
                                         responsive: true,

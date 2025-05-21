@@ -35,13 +35,13 @@ export default function NavBar() {
             <div className="navbar-start">
                 <Link
                     to="/"
-                    className="normal-case font-bold flex items-center gap-fluid text-[clamp(1rem,2.8vw,2.25rem)]"
+                    className="normal-case font-bold flex items-center gap-fluid text-[clamp(1rem,1.5vw,2.25rem)]"
                 >
                     {/* Logo */}
                     <img
                         src={logo}
                         alt="Greenhouse logo"
-                        className="shrink-0 h-[clamp(3rem,5vw,6rem)] w-[clamp(3rem,5vw,6rem)]"
+                        className="shrink-0 h-[clamp(3rem,5vw,6rem)] w-[clamp(3rem,4vw,6rem)]"
                     />
 
                     {/* Application name */}
@@ -60,7 +60,7 @@ export default function NavBar() {
                                         <NavLink
                                             to={to}
                                             className={({isActive}) =>
-                                                `${isActive ? "font-semibold underline " : ""}text-[clamp(0.9rem,1.3vw,1.50rem)]`
+                                                `${isActive ? "font-semibold underline " : ""}text-[clamp(0.9rem,1vw,1.50rem)]`
                                             }
                                         >
                                             {label}
