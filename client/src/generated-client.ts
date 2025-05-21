@@ -595,7 +595,7 @@ export class EmailClient {
     }
 
     sendEmail(request: EmailRequest): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Email/send";
+        let url_ = this.baseUrl + "/api/Email/SendEmail";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(request);
@@ -637,7 +637,7 @@ export class EmailClient {
     }
 
     subscribeToEmailList(dto: AddEmailDto): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Email/subscribe";
+        let url_ = this.baseUrl + "/api/Email/SubscribeToEmailList";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
@@ -679,7 +679,7 @@ export class EmailClient {
     }
 
     unsubscribeFromEmailList(dto: RemoveEmailDto): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Email/unsubscribe";
+        let url_ = this.baseUrl + "/api/Email/UnsubscribeFromEmailList";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(dto);
@@ -721,7 +721,7 @@ export class EmailClient {
     }
 
     unsubscribeFromEmailLink(token: string | undefined): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/Email/unsubscribe?";
+        let url_ = this.baseUrl + "/api/Email/UnsubscribeFromEmailLink?";
         if (token === null)
             throw new Error("The parameter 'token' cannot be null.");
         else if (token !== undefined)

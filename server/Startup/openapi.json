@@ -554,7 +554,7 @@
         }
       }
     },
-    "/api/Email/send": {
+    "/api/Email/SendEmail": {
       "post": {
         "tags": [
           "Email"
@@ -587,7 +587,7 @@
         }
       }
     },
-    "/api/Email/subscribe": {
+    "/api/Email/SubscribeToEmailList": {
       "post": {
         "tags": [
           "Email"
@@ -620,7 +620,7 @@
         }
       }
     },
-    "/api/Email/unsubscribe": {
+    "/api/Email/UnsubscribeFromEmailList": {
       "post": {
         "tags": [
           "Email"
@@ -651,7 +651,9 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/Email/UnsubscribeFromEmailLink": {
       "get": {
         "tags": [
           "Email"
