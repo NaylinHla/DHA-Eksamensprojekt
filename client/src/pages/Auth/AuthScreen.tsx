@@ -134,7 +134,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             onLogin?.();
         } catch (err) {
             console.error("Login error", err);
-            toast.error("Login failed");
+            toast.error("Incorrect email or password.", { id: "login-failed" });
         }
     };
 
@@ -214,7 +214,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
                 password,
             } as AuthRegisterDto);
             reset();
-            toast.success("Registered successfully! You can now log in.");
+            toast.success("Registered successfully! You can now log in.", { id: "register-success" });
         } catch (error: any) {
             console.error("Registration failed:", error);
 
@@ -230,7 +230,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             if (title.includes("Email: User with that email already exists")) {
                 setRegisterErrors({email: "User with that email already exists"});
             } else {
-                toast.error("Registration failed. Try again.");
+                toast.error("Registration failed. Try again.", { id: "register-failed" });
             }
         }
     };
