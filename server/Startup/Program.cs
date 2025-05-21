@@ -54,7 +54,6 @@ public class Program
 
         // AppOptions override
         var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
-        services.Configure<AppOptions>(options => { options.EnableEmailSending = false; });
 
         // MQTT setup or fallback
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))

@@ -6,8 +6,8 @@ namespace Application.Models;
 
 public sealed class AppOptions
 {
-    [Required] public string JwtSecret { get; set; } = string.Empty!;
-    [Required] public string DbConnectionString { get; set; } = string.Empty!;
+    [Required] public string JwtSecret { get; set; }
+    [Required] public string DbConnectionString { get; set; }
     public bool Seed { get; set; } = true;
     public int PORT { get; set; } = 8080;
     public int WS_PORT { get; set; } = 8181;
@@ -16,7 +16,6 @@ public sealed class AppOptions
     public string MQTT_USERNAME { get; set; } = null!;
     public bool IsTesting { get; set; }
     
-    public bool EnableEmailSending { get; set; } = true;
     public string EMAIL_SENDER_USERNAME { get; set; } = null!;
     public string EMAIL_SENDER_PASSWORD { get; set; } = null!;
     public string JWT_EMAIL_SECRET { get; set; } = null!;
