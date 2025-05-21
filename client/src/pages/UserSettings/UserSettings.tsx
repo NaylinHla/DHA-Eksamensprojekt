@@ -41,7 +41,7 @@ const UserSettings: React.FC<Props> = () => {
                 setUser(u);
             } catch (error) {
                 console.error(error);
-                toast.error("Couldn't load user info");
+                toast.error("Couldn't load user info", { id: "loadUserInfo-failed" });
             }
         })();
     }, [jwt]);
@@ -60,12 +60,12 @@ const UserSettings: React.FC<Props> = () => {
             setSaving(true);
             if (!jwt) return;
             await userClient.deleteUser(jwt);
-            toast.success("Account deleted – goodbye!");
+            toast.success("Account deleted – goodbye!", { id: "accountDeleted-succes" });
             localStorage.removeItem("jwt");
             setJwt("");
             logout();
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
+            toast.error(e.message ?? "Failed", { id: "accountDeleted-failed" });
         } finally {
             setSaving(false);
         }
@@ -83,7 +83,7 @@ const UserSettings: React.FC<Props> = () => {
                 oldPassword: dto.oldPassword,
                 newPassword: dto.newPassword,
             });
-            toast.success("Password updated");
+            toast.success("Password updated", { id: "passwordChange-succes" });
             setOpenPassword(false);
             setPasswordErrors({});
         } catch (e: any) {
@@ -94,7 +94,7 @@ const UserSettings: React.FC<Props> = () => {
             if (status === 401 || /invalid/i.test(errorMessage)) {
                 setPasswordErrors({ oldPassword: "Old password is incorrect" });
             } else {
-                toast.error(errorMessage || "Failed to change password");
+                toast.error(errorMessage || "Failed to change password", { id: "passwordChange-failed" });
             }
         } finally {
             setSaving(false);
@@ -103,7 +103,7 @@ const UserSettings: React.FC<Props> = () => {
 
     async function handleEmail(oldMail: string, newMail: string) {
         if (oldMail !== user?.email) {
-            setEmailErrors({ old: "This is not your current mail" });
+            setEmailErrors({ old: "This is not your current email" });
             return;
         }
 
@@ -114,14 +114,25 @@ const UserSettings: React.FC<Props> = () => {
                 oldEmail: oldMail,
                 newEmail: newMail,
             });
-            toast.success("E-mail updated – please log in with the new address.");
+            toast.success("E-mail updated – please log in with the new address.", { id: "emailChange-succes" });
             setOpenEmail(false);
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
-        } finally {
+            const resp = typeof e.response === "string"
+                ? JSON.parse(e.response) || {}
+                : e.response || {};
+
+            const status = resp.status ?? e.status;
+            const title  = (resp.title ?? "").replace(/[\r\n]+/g, " ");
+
+            if (status === 400 && /email already used/i.test(title)) {
+                setEmailErrors({ new: "This email is already in use by another user" });
+            } else {
+                toast.error(title || e.message || "Failed to update email");
+            }
+
+    } finally {
             setSaving(false);
         }
-        //setEmailErrors({ new: "Another user already use this mail"});
     }
 
     if (!settings) {
@@ -224,8 +235,8 @@ const UserSettings: React.FC<Props> = () => {
                     {!user ? (
                         <p className="italic text-fluid">Loading profile…</p>
                     ) : (
-                        <div className="space-y-2 text-fluid">
-                            <h3 className="text-lg font-semibold">Account details</h3>
+                        <div className="space-y-2 ">
+                            <h3 className="text-lg md:text-xl lg:text-2xl font-semibold">Account details</h3>
 
                             <p>
                                 <span className="font-medium">Name:</span>{" "}
