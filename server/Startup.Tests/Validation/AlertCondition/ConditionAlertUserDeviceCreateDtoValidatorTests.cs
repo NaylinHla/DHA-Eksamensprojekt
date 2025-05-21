@@ -100,21 +100,47 @@ public class ConditionAlertUserDeviceCreateDtoValidatorTests
             .ShouldHaveValidationErrorFor(x => x.Condition);
     }
 
-    [TestCase("<=10")]
-    [TestCase(">=25.5")]
-    public void Condition_Should_Be_Valid(string condition)
-    {
-        var dto = Valid(condition: condition);
-        _validator.TestValidate(dto)
-            .ShouldNotHaveValidationErrorFor(x => x.Condition);
-    }
-
     [Test]
     public void Valid_Dto_Should_Pass()
     {
         var dto = Valid();
         _validator.TestValidate(dto)
             .ShouldNotHaveAnyValidationErrors();
+    }
+    
+    [TestCase("Temperature", "<=-41")]
+    [TestCase("Temperature", ">=131")]
+    [TestCase("Temperature", "<=-40.01")]
+    [TestCase("Temperature", ">=130.01")]
+    [TestCase("Humidity", "<=-1")]
+    [TestCase("Humidity", ">=101")]
+    [TestCase("Humidity", "<=-0.01")]
+    [TestCase("Humidity", ">=100.01")]
+    [TestCase("AirPressure", "<=0")]
+    [TestCase("AirPressure", "<=-0.01")]
+    [TestCase("AirQuality", "<=-1")]
+    [TestCase("AirQuality", ">=2001")]
+    [TestCase("AirQuality", "<=-0.01")]
+    [TestCase("AirQuality", ">=2000.01")]
+    public void Condition_Should_Have_Error_When_Value_Just_Outside_Range(string sensorType, string condition)
+    {
+        var dto = Valid(sensorType: sensorType, condition: condition);
+        _validator.TestValidate(dto)
+            .ShouldHaveValidationErrorFor(x => x.Condition);
+    }
+
+    [TestCase("Temperature", "<=-40")]
+    [TestCase("Temperature", ">=130")]
+    [TestCase("Humidity", "<=0")]
+    [TestCase("Humidity", ">=100")]
+    [TestCase("AirPressure", ">=0.01")]
+    [TestCase("AirQuality", "<=0")]
+    [TestCase("AirQuality", ">=2000")]
+    public void Condition_Should_Be_Valid_At_Range_Edges(string sensorType, string condition)
+    {
+        var dto = Valid(sensorType: sensorType, condition: condition);
+        _validator.TestValidate(dto)
+            .ShouldNotHaveValidationErrorFor(x => x.Condition);
     }
 
     // --- Helper Factory ---

@@ -15,7 +15,7 @@ public class UserDeviceCreateDtoValidatorTests
 
     [TestCase("")]
     [TestCase("1")]
-    [TestCase("DeviceNamesCannotBeLongerThan50CharactersAndThisIsLongerThanThat")]
+    [TestCase("DeviceNamesCannotBeLongerThan30CharactersAndThisIsLongerThanThat")]
     public void Invalid_DeviceName_Fails(string deviceName)
     {
         var dto = Valid();

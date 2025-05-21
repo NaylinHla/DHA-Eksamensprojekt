@@ -7,7 +7,6 @@ const intervalMultipliers = {
     Hour: 3600,
     Days: 86400,
     Week: 604800,
-    Month: 2592000,
 } as const;
 type Unit = keyof typeof intervalMultipliers;
 
@@ -16,11 +15,13 @@ interface IntervalSelectorProps {
     totalSeconds: number;
     /** Called any time user edits */
     onChange: (newTotalSeconds: number) => void;
+    onUnitChange?: (unit: Unit) => void;
 }
 
 const IntervalSelector: React.FC<IntervalSelectorProps> = ({
                                                                totalSeconds,
                                                                onChange,
+                                                               onUnitChange,
                                                            }) => {
     const [value, setValue] = useState(1);
     const [unit, setUnit] = useState<Unit>("Second");
@@ -45,6 +46,7 @@ const IntervalSelector: React.FC<IntervalSelectorProps> = ({
 
         setUnit(chosenUnit);
         setValue(chosenValue);
+        onUnitChange?.(chosenUnit);
     }, [totalSeconds]);
 
     const handleValue = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +59,7 @@ const IntervalSelector: React.FC<IntervalSelectorProps> = ({
         const u = e.target.value as Unit;
         setUnit(u);
         onChange(value * intervalMultipliers[u]);
+        onUnitChange?.(u);
     };
 
     return (

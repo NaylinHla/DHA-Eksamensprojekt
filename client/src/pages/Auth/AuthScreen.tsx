@@ -1,10 +1,11 @@
-import {useEffect, useLayoutEffect, useRef, useState} from "react";
+import React, {useEffect, useLayoutEffect, useRef, useState} from "react";
 import logo from "../../assets/Favicon/favicon.svg";
 import {AuthClient, AuthLoginDto, AuthRegisterDto} from "../../generated-client.ts";
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
-import {JwtAtom, useAtom} from "../../components/import";
+import {JwtAtom, useAtom, UserIdAtom} from "../../components/import";
 import toast from "react-hot-toast";
 import countries from "./countries.json";
+import {useTopicManager} from "../../hooks";
 
 type AuthScreenProps = {
     onLogin?: () => void;
@@ -24,14 +25,15 @@ const authClient = new AuthClient("http://localhost:5000");
 
 const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");
-    const [loggedIn, setLoggedIn] = useState(false);
-    const [, setJwt] = useAtom(JwtAtom);
-
+    const [loggedIn] = useState(false);
+    const [jwt, setJwt] = useAtom(JwtAtom);
+    const [, setUserId] = useAtom(UserIdAtom);
     const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({});
     const errorClass = "border-red-500 focus:border-red-600";
     const wrapperRef = useRef<HTMLDivElement>(null);
     const registerFormRef = useRef<HTMLFormElement>(null);
     const loginFormRef = useRef<HTMLFormElement>(null);
+    const { subscribe } = useTopicManager();
 
     // ANIMATION ---
     useLayoutEffect(() => {
@@ -93,14 +95,29 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
             const response = await authClient.login(loginDto);
             const { jwt } = response;
 
-            console.log("Got JWT:", jwt);
             localStorage.setItem("jwt", jwt);
             setJwt(jwt);
+
+            const { Id } = JSON.parse(atob(jwt.split(".")[1]));
+            setUserId(Id);
+
             onLogin?.();
         } catch (err) {
+            console.error("Login error", err);
             toast.error("Login failed");
         }
     };
+
+    useEffect(() => {
+        if (!jwt) return; // skip if JWT not available
+
+        try {
+            const { Id } = JSON.parse(atob(jwt.split(".")[1]));
+            subscribe(`alerts-${Id}`).then();
+        } catch (err) {
+            console.error("Subscription error", err);
+        }
+    }, [jwt, subscribe]);
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

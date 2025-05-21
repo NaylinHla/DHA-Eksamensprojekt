@@ -13,12 +13,11 @@ import {
 import { Line } from "react-chartjs-2";
 import toast from "react-hot-toast";
 import { useAtom } from "jotai";
-import { useDisplayTemperature } from "../../hooks/useDisplayTemperature";
+import { useDisplayTemperature } from "../../hooks";
 import {
     formatDateTimeForUserTZ,
-    GetRecentSensorDataForAllUserDeviceDto,
     GreenhouseSensorDataAtom,
-    JwtAtom,
+    JwtAtom, LoadingSpinner,
     SelectedDeviceIdAtom,
     SensorHistoryDto,
     SensorHistoryWithDeviceDto,
@@ -56,7 +55,7 @@ export default function HistoryPage() {
     const [rangeFrom, setRangeFrom] = useState(isoMonthAgo);
     const [rangeTo, setRangeTo] = useState(isoToday);
     const [tab, setTab] = useState<TabKey>("temperature");
-    const { convert, unit, useCelsius } = useDisplayTemperature();
+    const { convert, unit} = useDisplayTemperature();
 
     const chartRefs = {
         temperature: useRef<ChartJS | null>(null),
@@ -272,17 +271,6 @@ export default function HistoryPage() {
         };
     }, [greenhouseData, selectedDeviceId, rangeFrom, rangeTo]);
 
-    // UI Elements
-    const Spinner = (
-        <div className="flex justify-center items-center h-32">
-            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-            <span className="text-gray-500">Loading…</span>
-        </div>
-    );
-
     const unitMap: Record<TabKey, string> = {
         temperature: unit,
         humidity: "%",
@@ -371,7 +359,7 @@ export default function HistoryPage() {
             <div className="flex flex-wrap items-start gap-fluid lg:items-center lg:justify-between p-fluid w-full">
                 {/* Current status */}
                 <div className="bg-[var(--color-surface)] shadow rounded-2xl p-fluid w-full sm:flex-1 flex flex-col justify-between">
-                    {loadingDevices || loadingData ? Spinner : (() => {
+                    {loadingDevices || loadingData ? <LoadingSpinner /> : (() => {
                         const latest = latestSensorData[selectedDeviceId!];
                         if (!latest || fields.some(f => latest[f] == null || latest[f] === 0)) return <p
                             className="text-center text-gray-500">No data available</p>;
@@ -412,7 +400,7 @@ export default function HistoryPage() {
             <main className="flex-1 overflow-y-auto p-fluid">
                 <div className="bg-[var(--color-surface)] shadow rounded-2xl">
                     <div className="px-4 pt-4 flex flex-wrap items-center gap-4 sm:gap-6">
-                        
+
                         {/* Device selector */}
                         <div className="flex items-center gap-2">
                             <label className="font-medium text-fluid">Device:</label>
@@ -433,7 +421,7 @@ export default function HistoryPage() {
                                     ))}
                             </select>
                         </div>
-                        
+
                         {/* Date pickers */}
                         <div className="flex items-center gap-2 text-sm ml-auto">
                             <label className="font-medium text-fluid">From:</label>
@@ -450,7 +438,7 @@ export default function HistoryPage() {
                                 }}
                                 className="input input-xs bg-[var(--color-surface)] ml-1 text-fluid"
                             />
-                            
+
                             <label className="font-medium text-fluid">To:</label>
                             <input
                                 type="date"
@@ -467,7 +455,7 @@ export default function HistoryPage() {
                             />
                         </div>
                     </div>
-                    
+
                     {/* tab bar */}
                     <div className="tabs tabs-bordered rounded-t-2xl">
                         {(Object.keys(pretty) as TabKey[]).map(key => (
@@ -481,10 +469,10 @@ export default function HistoryPage() {
                         ))}
                     </div>
                     <hr className="border-primary"/>
-                    
+
                     {/* active chart */}
                     <div className="p-fluid">
-                        {loadingData ? Spinner : noData ? (
+                        {loadingData ? <LoadingSpinner /> : noData ? (
                             <div className="p-8 text-center text-gray-500">
                                 No data available for the selected date range.
                             </div>
@@ -494,7 +482,7 @@ export default function HistoryPage() {
                                 data={series[tab]}
                                 label={pretty[tab]}
                                 chartRef={chartRefs[tab]}
-                            /> 
+                            />
                             )}
                         </div>
                     </div>

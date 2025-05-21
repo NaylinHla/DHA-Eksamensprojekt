@@ -1919,14 +1919,14 @@ export interface ConditionAlertUserDeviceResponseDto {
 }
 
 export interface ConditionAlertUserDeviceCreateDto {
-    userDeviceId: string;
-    sensorType: string;
-    condition: string;
+    userDeviceId?: string;
+    sensorType?: string;
+    condition?: string;
 }
 
 export interface ConditionAlertUserDeviceEditDto {
-    conditionAlertUserDeviceId: string;
-    userDeviceId: string;
+    conditionAlertUserDeviceId?: string;
+    userDeviceId?: string;
     sensorType?: string;
     condition?: string;
 }
