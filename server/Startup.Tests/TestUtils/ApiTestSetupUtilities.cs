@@ -19,7 +19,8 @@ public static class ApiTestSetupUtilities
 {
     public static IServiceCollection DefaultTestConfig(
         this IServiceCollection services,
-        bool useTestContainer = true,
+        bool useTestContainer = false,
+        bool useInMemory = true,
         bool mockProxyConfig = true,
         bool makeWsClient = true,
         bool makeMqttClient = false,
@@ -40,16 +41,26 @@ public static class ApiTestSetupUtilities
             options.IsTesting = true;
         });
 
-        if (useTestContainer)
+        RemoveExistingService<DbContextOptions<MyDbContext>>(services);
+        
+        if (useInMemory)
+        {
+            services.AddDbContext<MyDbContext>(opt => 
+                opt.UseInMemoryDatabase("testDB"));
+        }
+        else if (useTestContainer)
         {
             var db = new PgCtxSetup<MyDbContext>();
-            RemoveExistingService<DbContextOptions<MyDbContext>>(services);
             services.AddDbContext<MyDbContext>(opt =>
             {
                 opt.UseNpgsql(db._postgres.GetConnectionString());
                 opt.EnableSensitiveDataLogging();
                 opt.LogTo(_ => { });
             });
+        }
+        else
+        {
+            throw new ArgumentException("Must choose either TestContainer or InMemory");
         }
 
         if (mockProxyConfig)

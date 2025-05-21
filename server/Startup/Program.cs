@@ -59,6 +59,7 @@ public class Program
         // Email-related services
         services.AddTransient<IEmailSender, EmailSenderService>();
         services.AddSingleton<JwtEmailTokenService>();
+        services.AddTransient<SmtpClientFactory>(_ => () => new SmtpClientWrapper("smtp.mailersend.net", 2525));
 
         // Websocket & REST APIs
         services.AddWebsocketInfrastructure();
@@ -95,7 +96,7 @@ public class Program
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         var serializedAppOptions = JsonSerializer.Serialize(appOptions);
-        logger.LogInformation("Serialized AppOptions: {serializedAppOptions}", serializedAppOptions);
+        logger.LogInformation("Serialized AppOptions: {SerializedAppOptions}", serializedAppOptions);
 
         using (var scope = app.Services.CreateScope())
         {

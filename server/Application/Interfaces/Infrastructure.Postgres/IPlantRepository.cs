@@ -5,7 +5,7 @@ namespace Application.Interfaces.Infrastructure.Postgres;
 public interface IPlantRepository
 {
     Task<Plant?> GetPlantByIdAsync(Guid plantId);
-    Task<List<Plant>> GetAllPlantsAsync(Guid userId);
+    Task<List<Plant?>> GetAllPlantsAsync(Guid userId);
 
     Task<Plant> AddPlantAsync(Guid userId, Plant plant);
     Task DeletePlantAsync(Guid plantId);

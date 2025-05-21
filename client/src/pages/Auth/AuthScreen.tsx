@@ -178,7 +178,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     );
 
     return (
-        <main className="relative flex min-h-screen flex-col items-center bg-primary font-display text-base-100 py-50 lg:py-100">
+        <main className="relative flex min-h-screen flex-col items-center bg-primary font-display text-base-100 py-50 lg:py-70">
             {/* Header */}
             <h1 className="absolute top-5 text-xl tracking-wider font-bold lg:text-3xl sm:text-3xl text-white">
                 Greenhouse Application

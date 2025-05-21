@@ -20,7 +20,7 @@ const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({title}) => {
             style={{ padding: "clamp(0.75rem,1.5vw,1.5rem) clamp(1.5rem,3.5vw,4rem)" }}
         >
             <h1 className="font-bold text-fluid-header text-[--color-primary]">{title}</h1>
-            <span className="text-fluid text-gray-600 whitespace-nowrap">
+            <span className="text-fluid text-[--color-primary] whitespace-nowrap">
         {formatDateTimeForUserTZ(currentTime)}
       </span>
         </header>

@@ -12,20 +12,33 @@ public class UserController(IUserService userService, ISecurityService securityS
     public const string DeleteUserRoute = nameof(DeleteUser);
     public const string PatchUserEmailRoute = nameof(PatchUserEmail);
     public const string PatchUserPasswordRoute = nameof(PatchUserPassword);
+    public const string GetUserRoute = nameof(GetUser);
 
+    [HttpGet]
+    [Route(GetUserRoute)]
+    public async Task<ActionResult<User>> GetUser(
+        [FromHeader] string authorization)
+    {
+        var claims = securityService.VerifyJwtOrThrow(authorization);
+        var user = await userService.GetUserByEmailAsync(claims.Email);
+        return Ok(user);
+    }
+    
     [HttpDelete]
     [Route(DeleteUserRoute)]
-    public async Task<ActionResult<User>> DeleteUser([FromHeader] string authorization)
+    public async Task<ActionResult<User>> DeleteUser(
+        [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var deletedUser = await userService.DeleteUser(new DeleteUserDto { Email = claims.Email });
         return Ok(deletedUser);
     }
 
-
     [HttpPatch]
     [Route(PatchUserEmailRoute)]
-    public async Task<ActionResult<User>> PatchUserEmail([FromHeader] string authorization, [FromBody] PatchUserEmailDto dto)
+    public async Task<ActionResult<User>> PatchUserEmail(
+        [FromHeader] string authorization, 
+        [FromBody] PatchUserEmailDto dto)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
 
@@ -40,7 +53,9 @@ public class UserController(IUserService userService, ISecurityService securityS
 
     [HttpPatch]
     [Route(PatchUserPasswordRoute)]
-    public async Task<ActionResult<User>> PatchUserPassword([FromHeader] string authorization, [FromBody] PatchUserPasswordDto dto)
+    public async Task<ActionResult<User>> PatchUserPassword(
+        [FromHeader] string authorization, 
+        [FromBody] PatchUserPasswordDto dto)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var updatedUser = await userService.PatchUserPassword(claims.Email, dto);
