@@ -1,5 +1,4 @@
-﻿
-using Application.Interfaces.Infrastructure.Postgres;
+﻿using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Core.Domain.Entities;
 using FluentValidation;

@@ -65,7 +65,7 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
     public async Task SendEmailAsync(string subject, string message)
     {
         await using var client = clientFactory();
-        client.EnableSsl            = true;
+        client.EnableSsl = true;
         client.UseDefaultCredentials = false;
         client.Credentials = new NetworkCredential(
             optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
@@ -98,7 +98,10 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
 
     public async Task AddEmailAsync(AddEmailDto dto)
     {
-        await addEmailValidator.ValidateAndThrowAsync(dto);
+        var emailResult = await addEmailValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!emailResult.IsValid)
+            throw new ValidationException(emailResult.Errors);
+        
         if (!emailListRepository.EmailExists(dto.Email))
         {
             emailListRepository.Add(new EmailList { Email = dto.Email });
@@ -110,7 +113,8 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
-        await removeEmailValidator.ValidateAndThrowAsync(dto);
+        await removeEmailValidator.ValidateAsync(dto);
+        
         if (!emailListRepository.EmailExists(dto.Email))
             return;
 
@@ -124,7 +128,7 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
     {
 
         await using var client = clientFactory();
-        client.EnableSsl            = true;
+        client.EnableSsl = true;
         client.UseDefaultCredentials = false;
         client.Credentials = new NetworkCredential(
             optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
@@ -144,7 +148,7 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
         await using var client = clientFactory();
-        client.EnableSsl            = true;
+        client.EnableSsl = true;
         client.UseDefaultCredentials = false;
         client.Credentials = new NetworkCredential(
             optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,

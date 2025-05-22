@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
-namespace Startup.Tests;
+namespace Startup.Tests.Auth;
 
 public class SecurityServiceTests
 {

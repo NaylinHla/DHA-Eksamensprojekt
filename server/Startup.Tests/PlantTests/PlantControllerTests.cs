@@ -4,6 +4,7 @@ using Api.Rest.Controllers;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
 using FluentValidation;
+using FluentValidation.Results;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -23,11 +24,13 @@ public class PlantControllerTests : WebApplicationFactory<Program>
     private string _jwt;
     
     private Mock<IValidator<PlantCreateDto>> _createPlantValidatorMock;
+    private Mock<IValidator<PlantEditDto>> _editPlantValidatorMock;
     
     [SetUp]
     public async Task Setup()
     {
         _createPlantValidatorMock = new Mock<IValidator<PlantCreateDto>>();
+        _editPlantValidatorMock = new Mock<IValidator<PlantEditDto>>();
         _client = CreateClient();
 
         _testUser = MockObjects.GetUser();
@@ -72,7 +75,9 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             IsDead = false
         };
 
-        _createPlantValidatorMock.Setup(v => v.ValidateAsync(createDto, CancellationToken.None));
+        _createPlantValidatorMock
+            .Setup(v => v.ValidateAsync(createDto, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
         // Act
         var resp = await _client.PostAsJsonAsync($"api/Plant/{PlantController.CreatePlantRoute}", createDto);
@@ -224,6 +229,10 @@ public class PlantControllerTests : WebApplicationFactory<Program>
             WaterEvery = 5,
             LastWatered = DateTime.UtcNow.Date
         };
+        
+        _editPlantValidatorMock
+            .Setup(v => v.ValidateAsync(patch, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
         // Act
         var resp = await _client.PatchAsJsonAsync(
@@ -545,6 +554,10 @@ public class PlantControllerTests : WebApplicationFactory<Program>
 
         // Assert
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        
+        var body = resp.Content.ReadAsStringAsync().Result;
+        Assert.That(body, Does.Contain("Plant is not dead. Mark plant as dead first before trying to delete it."));
+        
     }
     
     

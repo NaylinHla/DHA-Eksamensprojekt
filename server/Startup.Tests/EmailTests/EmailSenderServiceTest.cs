@@ -30,6 +30,13 @@ public class EmailSenderServiceTest
         _emailRepo = new Mock<IEmailListRepository>();
         _addEmailValidatorMock = new Mock<IValidator<AddEmailDto>>();
         _removeEmailValidatorMock = new Mock<IValidator<RemoveEmailDto>>();
+        
+        _addEmailValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<AddEmailDto>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ValidationResult());
+        _removeEmailValidatorMock
+            .Setup(v => v.ValidateAsync(
+                It.IsAny<ValidationContext<RemoveEmailDto>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
 
         var appOptions = new AppOptions
         {
@@ -71,7 +78,8 @@ public class EmailSenderServiceTest
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(false);
         
         _addEmailValidatorMock
-            .Setup(v => v.ValidateAsync(dto, CancellationToken.None));
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
         await _service.AddEmailAsync(dto);
 
@@ -98,7 +106,8 @@ public class EmailSenderServiceTest
         _emailRepo.Setup(r => r.EmailExists(dto.Email)).Returns(true);
         
          _removeEmailValidatorMock
-            .Setup(v => v.ValidateAsync(dto, CancellationToken.None));
+            .Setup(v => v.ValidateAsync(dto, CancellationToken.None))
+            .ReturnsAsync(new ValidationResult());
 
         Assert.DoesNotThrowAsync(() => _service.RemoveEmailAsync(dto));
 
@@ -111,11 +120,14 @@ public class EmailSenderServiceTest
     {
         // Arrange: existing email
         const string email = "bye@example.com";
-        _emailRepo.Setup(r => r.EmailExists(email)).Returns(true);
+        
+        var deleteEmailDto = new RemoveEmailDto { Email = email };
+        
+        _emailRepo.Setup(r => r.EmailExists(deleteEmailDto.Email)).Returns(true);
 
         // Skip validation failures
         _removeEmailValidatorMock
-            .Setup(v => v.ValidateAsync(It.IsAny<RemoveEmailDto>(), It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateAsync(deleteEmailDto, CancellationToken.None))
             .ReturnsAsync(new ValidationResult());
 
         // Capture the message
@@ -127,6 +139,13 @@ public class EmailSenderServiceTest
 
         var dto = new RemoveEmailDto { Email = email };
 
+        _removeEmailValidatorMock
+            .Setup(v => v.ValidateAsync(
+                It.Is<RemoveEmailDto>(x => x.Email == dto.Email),
+                CancellationToken.None
+            ))
+            .ReturnsAsync(new ValidationResult());
+        
         // Act
         await _service.RemoveEmailAsync(dto);
 
@@ -143,13 +162,9 @@ public class EmailSenderServiceTest
     public async Task AddEmailAsync_ShouldSendConfirmation_WithExactSubjectAndLink()
     {
         // Arrange: new email
-        var email = "newuser@example.com";
+        const string email = "newuser@example.com";
         _emailRepo.Setup(r => r.EmailExists(email)).Returns(false);
-
-        _addEmailValidatorMock
-            .Setup(v => v.ValidateAsync(It.IsAny<AddEmailDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
-
+        
         MailMessage? sent = null;
         _smtpMock
             .Setup(c => c.SendMailAsync(It.IsAny<MailMessage>()))
@@ -157,7 +172,6 @@ public class EmailSenderServiceTest
             .Returns(Task.CompletedTask);
 
         var dto = new AddEmailDto { Email = email };
-
         // Act
         await _service.AddEmailAsync(dto);
 
@@ -258,8 +272,13 @@ public class EmailSenderServiceTest
             factory,
             Mock.Of<IValidator<AddEmailDto>>(), 
             Mock.Of<IValidator<RemoveEmailDto>>());
+
+        var dto = new RemoveEmailDto()
+        {
+            Email = "bye@example.com"
+        };
         
-        await service.RemoveEmailAsync(new RemoveEmailDto { Email = "bye@example.com" });
+        await service.RemoveEmailAsync(dto);
             
         repo.Verify(r => r.RemoveByEmail("bye@example.com"), Times.Once);
         repo.Verify(r => r.Save(), Times.Once);
