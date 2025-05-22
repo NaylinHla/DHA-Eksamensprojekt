@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
-import { useSetAtom, useAtom } from 'jotai';
-import { UserSettingsAtom, JwtAtom } from '../atoms';
-import { userSettingsClient } from './../apiControllerClients';
-import toast from 'react-hot-toast';
+import {useEffect} from 'react';
+import {useAtom, useSetAtom} from 'jotai';
+import {JwtAtom, UserSettingsAtom} from '../atoms';
+import {userSettingsClient} from '../apiControllerClients';
 
 export default function UserSettingsInitializer() {
     const setUserSettings = useSetAtom(UserSettingsAtom);
@@ -25,7 +24,7 @@ export default function UserSettingsInitializer() {
             }
         };
 
-        fetchUserSettings();
+        fetchUserSettings().then();
     }, [jwt]);
 
     return null;
