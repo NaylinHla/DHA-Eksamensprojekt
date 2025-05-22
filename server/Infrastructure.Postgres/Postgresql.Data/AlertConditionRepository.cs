@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
@@ -8,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Postgres.Postgresql.Data;
 
-public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionRepository
+public partial class AlertConditionRepository(MyDbContext ctx) : IAlertConditionRepository
 
 {
     private const string AlertConditionNotFound = "Alert Condition not found.";
@@ -276,27 +278,79 @@ public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionReposito
             .Where(c => c.UserDeviceId == deviceId && !c.IsDeleted)
             .ToListAsync();
 
-        if (allConditions.Count == 0)
+        var latestAlerts = await ctx.Alerts
+            .Where(a => a.AlertDeviceConditionId != null
+                        && allConditions.Select(c => c.ConditionAlertUserDeviceId)
+                            .Contains(a.AlertDeviceConditionId.Value))
+            .GroupBy(a => a.AlertDeviceConditionId)
+            .Select(g => g.OrderByDescending(a => a.AlertTime).First())
+            .ToListAsync();
+
+        var latestDict = latestAlerts.ToDictionary(a => a.AlertDeviceConditionId!.Value);
+
+        var matched = new List<string>();
+        var cutoff  = DateTime.UtcNow.AddHours(-12); // If its same value after 12 hour we want to tell user
+
+        foreach (var cond in allConditions)
         {
-            MonitorService.Log.Debug("No active alert conditions for UserDeviceId: {UserDeviceId}", dto.UserDeviceId);
-            return [];
+            var reading = GetSensorValue(cond.SensorType, dto);
+            if (reading == null)
+                continue;
+
+            if (!TryParseCondition(cond.Condition, out var op, out var threshold))
+                continue;
+
+            if (!IsConditionMatched(op, reading.Value, threshold))
+                continue;
+
+            if (HasRecentDuplicateAlert(latestDict, cond.ConditionAlertUserDeviceId, op, threshold, reading.Value, cutoff))
+            {
+                continue;
+            }
+
+            matched.Add(cond.ConditionAlertUserDeviceId.ToString());
         }
 
-        var matchedConditionIds = allConditions
-            .Where(alert =>
-            {
-                var sensorValue = GetSensorValue(alert.SensorType, dto);
-                return sensorValue != null
-                       && TryParseCondition(alert.Condition, out var op, out var threshold)
-                       && IsConditionMatched(op, sensorValue.Value, threshold);
-            })
-            .Select(alert => alert.ConditionAlertUserDeviceId.ToString())
-            .ToList();
+        return matched;
+    }
 
-        MonitorService.Log.Debug("Total matched conditions for UserDeviceId {UserDeviceId}: {Count}", dto.UserDeviceId,
-            matchedConditionIds.Count);
+    private static bool HasRecentDuplicateAlert(
+        Dictionary<Guid, Alert> latestDict,
+        Guid conditionId,
+        string currentOp,
+        double currentThreshold,
+        double currentReading,
+        DateTime cutoffTime)
+    {
+        MonitorService.Log.Debug(
+            "Checking duplicate for ConditionId={ConditionId}, Op={Op}, Threshold={Th}, Reading={Rd}",
+            conditionId, currentOp, currentThreshold, currentReading);
 
-        return matchedConditionIds;
+        if (!latestDict.TryGetValue(conditionId, out var lastAlert))
+            return false;
+
+        if (lastAlert.AlertTime <= cutoffTime || string.IsNullOrEmpty(lastAlert.AlertDesc))
+            return false;
+
+        var desc = lastAlert.AlertDesc.Trim();
+        var m = MyRegex().Match(desc);
+        if (!m.Success)
+            return false;
+
+        var prevReadingTxt = m.Groups[1].Value.Replace(',', '.');
+        var prevOp = m.Groups[2].Value;      // "<=" or ">="
+        var prevThTxt = m.Groups[3].Value.Replace(',', '.');
+
+        if (!double.TryParse(prevReadingTxt, NumberStyles.Float, CultureInfo.InvariantCulture, out var prevReading)
+            || !double.TryParse(prevThTxt, NumberStyles.Float, CultureInfo.InvariantCulture, out var prevThreshold))
+            return false;
+
+        if (prevOp != currentOp || Math.Abs(prevThreshold - currentThreshold) > 0.001)
+            return false;
+
+        var delta = Math.Abs(prevReading - currentReading);
+
+        return delta <= 1.0; // We add buffer so small change in value do  nothing
     }
     
     public static float? GetSensorValue(string sensorType, IsAlertUserDeviceConditionMeetDto dto) => sensorType switch
@@ -327,6 +381,9 @@ public class AlertConditionRepository(MyDbContext ctx) : IAlertConditionReposito
         _ => false
     };
 
+    [GeneratedRegex(@"(\d+(?:[.,]\d+)?)\D*(<=|>=)\D*(\d+(?:[.,]\d+)?)")]
+    private static partial Regex MyRegex();
+    
     // ---- Save Changes ----
 
     public async Task SaveChangesAsync()

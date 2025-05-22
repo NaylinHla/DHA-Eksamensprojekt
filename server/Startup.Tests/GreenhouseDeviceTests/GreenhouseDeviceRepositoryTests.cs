@@ -223,20 +223,24 @@ public class GreenhouseDeviceRepositoryTests
 
         var sensorHistories = new List<SensorHistory>
         {
-            new SensorHistory
+            new()
             {
                 SensorHistoryId = Guid.NewGuid(),
                 DeviceId = deviceId,
                 Temperature = 22,
                 Humidity = 40,
+                AirPressure = 20,
+                AirQuality = 500,
                 Time = DateTime.UtcNow.AddMinutes(-15)
             },
-            new SensorHistory
+            new()
             {
                 SensorHistoryId = Guid.NewGuid(),
                 DeviceId = deviceId,
                 Temperature = 25,
                 Humidity = 45,
+                AirPressure = 22,
+                AirQuality = 550,
                 Time = DateTime.UtcNow.AddMinutes(-5)
             }
         };
@@ -258,6 +262,8 @@ public class GreenhouseDeviceRepositoryTests
             // Ensure the most recent sensor data is returned (should be the second sensor history with temperature 25)
             Assert.That(result[0].Temperature, Is.EqualTo(25));
             Assert.That(result[0].Humidity, Is.EqualTo(45));
+            Assert.That(result[0].AirPressure, Is.EqualTo(22));
+            Assert.That(result[0].AirQuality, Is.EqualTo(550));
             Assert.That(result[0].Time, Is.EqualTo(sensorHistories[1].Time)); // Latest time
         });
     }

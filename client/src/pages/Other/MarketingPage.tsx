@@ -31,7 +31,7 @@ const MarketingPage = () => {
                     <h1 className="text-3xl font-semibold text-[--color-primary] mb-4">
                         Welcome to Our Marketing Hub!
                     </h1>
-                    <p className="text-lg text-gray-700 mb-6">
+                    <p className="text-lg mb-6">
                         Discover the latest promotions, campaigns, and offers we have for you. Stay tuned for
                         exciting updates and exclusive deals!
                     </p>
@@ -46,13 +46,13 @@ const MarketingPage = () => {
                         <h2 className="text-2xl font-semibold text-[--color-primary] mb-4">
                             We Need Your Feedback!
                         </h2>
-                        <p className="text-gray-700 mb-4">
+                        <p className="mb-4">
                             We're considering changing the water icon to a watering can. Help us make this decision by sharing your opinion in our short survey!
                         </p>
 
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
-                                <label htmlFor="feedback" className="block text-gray-700 text-lg font-semibold mb-2">
+                                <label htmlFor="feedback" className="block text-lg font-semibold mb-2">
                                     How do you feel about changing water to a watering can?
                                 </label>
                                 <input
@@ -88,7 +88,7 @@ const MarketingPage = () => {
                         <h2 className="text-2xl font-semibold text-[--color-primary] mb-4">
                             Special Promotion 2
                         </h2>
-                        <p className="text-gray-700 mb-4">
+                        <p className="text-[--color-primary] mb-4">
                             Don't miss out on our second limited-time offer! Unlock exclusive benefits with our premium plan and experience the best features.
                         </p>
                         <button className="btn btn-neutral bg-transparent btn-sm">

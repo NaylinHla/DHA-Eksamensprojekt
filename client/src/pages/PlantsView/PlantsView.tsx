@@ -199,9 +199,10 @@ const PlantsView: React.FC = () => {
                         aria-busy={loading}
                     >
                         {shouldShowNoPlants && (
-                            <p className="col-span-full text-center p-6 text-muted">
-                                No plants found.
-                            </p>
+                            <div className="col-span-full text-center p-6 text-muted">
+                                <p>No plants found.</p>
+                                <AddPlantCard onClick={openNew} />
+                            </div>
                         )}
 
                         {visible.map((p) => (
@@ -215,7 +216,7 @@ const PlantsView: React.FC = () => {
                             />
                         ))}
 
-                        {!err && <AddPlantCard onClick={openNew} />}
+                        {!shouldShowNoPlants && !err && <AddPlantCard onClick={openNew} />}
                     </div>
                 )}
             </main>

@@ -196,7 +196,7 @@ export default function AlertConditionsPage() {
                         <div className="flex justify-center items-center w-full h-28"><LoadingSpinner /></div>
                     ) : !loading && filteredConditions.length === 0 ? (
                         <div className="flex justify-center items-center h-48">
-                            <p className="text-gray-400">
+                            <p className="text-[--color-primary]">
                                 No {view === 'plants' ? 'plant' : 'device'} conditions found.
                             </p>
                         </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { TitleTimeHeader } from "../import";
+import {ContactUsRoute} from "../../routeConstants";
 
 const AdvertisementPage = () => {
     return (
@@ -12,7 +13,7 @@ const AdvertisementPage = () => {
                     <h1 className="text-3xl font-semibold text-[--color-primary] mb-4">
                         Premium is on Sale – Don't Miss Out!
                     </h1>
-                    <p className="text-lg text-gray-700 mb-6">
+                    <p className="text-lg mb-6">
                         Our Premium plan is now available at a discounted price for a limited time! Upgrade today and enjoy all the exclusive features we offer.
                     </p>
 
@@ -21,7 +22,7 @@ const AdvertisementPage = () => {
                         <h2 className="text-2xl font-semibold text-[--color-primary] mb-2">
                             Get Premium Now at 25% Off!
                         </h2>
-                        <p className="text-gray-700 mb-4">
+                        <p className="mb-4">
                             This is your chance to upgrade to Premium for a reduced price! Gain access to exclusive content, advanced features, and personalized services.
                         </p>
                         <button className="bg-[--color-accent] text-white py-2 px-6 rounded-lg text-lg hover:bg-[--color-accent-dark] transition-all">
@@ -30,11 +31,11 @@ const AdvertisementPage = () => {
                     </div>
 
                     {/* Contact CTA */}
-                    <p className="text-lg text-gray-700 mb-4">
+                    <p className="text-lg mb-4">
                         Have any questions or need more details? We're here to help!
                     </p>
                     <a
-                        href="/contact-us"
+                        href={ContactUsRoute}
                         className="bg-[--color-accent] text-[--color-primary] py-2 px-6 rounded-lg text-lg hover:bg-[--color-accent-dark] transition-all"
                     >
                         Contact Us
