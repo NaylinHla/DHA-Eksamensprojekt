@@ -6,19 +6,12 @@ using Application.Models;
 
 namespace Application.Services
 {
-    public class FeatureHubService : IFeatureHubService
+    public class FeatureHubService(IClientContext context) : IFeatureHubService
     {
-        private readonly IClientContext _context;
-
-        public FeatureHubService(IClientContext context)
-        {
-            _context = context;
-        }
-
         public async Task<bool> IsFeatureEnabledAsync(string featureKey)
         {
-            await _context.Build(); // Ensure the context is ready
-            return _context[featureKey]?.IsEnabled ?? false;
+            await context.Build(); // Ensure the context is ready
+            return context[featureKey]?.IsEnabled ?? false;
         }
 
         public static void AddFeatureHub(IServiceCollection services)
@@ -39,9 +32,9 @@ namespace Application.Services
             services.AddSingleton<IClientContext>(provider =>
             {
                 var config = provider.GetRequiredService<EdgeFeatureHubConfig>();
-                var context = config.NewContext();
-                context.Build().Wait(); // sync startup
-                return context;
+                var clientContext = config.NewContext();
+                clientContext.Build().Wait(); // sync startup
+                return clientContext;
             });
 
             services.AddSingleton<IFeatureHubService, FeatureHubService>();

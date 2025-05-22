@@ -16,9 +16,9 @@ namespace Startup.Tests.UserSettingsTests;
 [TestFixture]
 public class UserSettingsControllerTests : WebApplicationFactory<Program>
 {
-    private HttpClient _client = null!;
-    private User _testUser = null!;
-    private string _jwt = null!;
+    private HttpClient _client;
+    private User _testUser;
+    private string _jwt;
 
     [SetUp]
     public async Task Setup()
@@ -34,21 +34,22 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
         var loginResp = await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         var dto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
-        _jwt = dto!.Jwt;
+        Assert.That(dto, Is.Not.Null);
+        _jwt = dto.Jwt;
         _client.DefaultRequestHeaders.Add("Authorization", _jwt);
     }
 
     [Test]
     public async Task GetAllSettings_ReturnsCorrectValues()
     {
-        var resp = await _client.GetAsync("/api/usersettings");
+        var resp = await _client.GetAsync("/api/userSettings");
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         var settings = await resp.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
+        Assert.That(settings, Is.Not.Null);
         Assert.Multiple(() =>
         {
-            Assert.That(settings, Is.Not.Null);
-            Assert.That(settings!.Celsius, Is.True);
+            Assert.That(settings.Celsius, Is.True);
             Assert.That(settings.DarkTheme, Is.False);
             Assert.That(settings.ConfirmDialog, Is.False);
             Assert.That(settings.SecretMode, Is.False);
@@ -56,16 +57,17 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
     }
 
     [Test]
-    public async Task PatchSetting_UpdatesCorrectField_Confirmdialog()
+    public async Task PatchSetting_UpdatesCorrectField_ConfirmDialog()
     {
         var patch = new UpdateUserSettingDto { Value = false };
 
-        var resp = await _client.PatchAsJsonAsync("/api/usersettings/confirmdialog", patch);
+        var resp = await _client.PatchAsJsonAsync("/api/userSettings/confirmDialog", patch);
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-        var fetch = await _client.GetAsync("/api/usersettings");
+        var fetch = await _client.GetAsync("/api/userSettings");
         var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
-        Assert.That(settings!.ConfirmDialog, Is.False);
+        Assert.That(settings, Is.Not.Null);
+        Assert.That(settings.ConfirmDialog, Is.False);
     }
     
     [Test]
@@ -73,12 +75,13 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
     {
         var patch = new UpdateUserSettingDto { Value = true };
 
-        var resp = await _client.PatchAsJsonAsync("/api/usersettings/celsius", patch);
+        var resp = await _client.PatchAsJsonAsync("/api/userSettings/celsius", patch);
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-        var fetch = await _client.GetAsync("/api/usersettings");
+        var fetch = await _client.GetAsync("/api/userSettings");
         var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
-        Assert.That(settings!.Celsius, Is.True);
+        Assert.That(settings, Is.Not.Null);
+        Assert.That(settings.Celsius, Is.True);
     }
     
     [Test]
@@ -86,12 +89,13 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
     {
         var patch = new UpdateUserSettingDto { Value = false };
 
-        var resp = await _client.PatchAsJsonAsync("/api/usersettings/darktheme", patch);
+        var resp = await _client.PatchAsJsonAsync("/api/userSettings/darkTheme", patch);
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-        var fetch = await _client.GetAsync("/api/usersettings");
+        var fetch = await _client.GetAsync("/api/userSettings");
         var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
-        Assert.That(settings!.DarkTheme, Is.False);
+        Assert.That(settings, Is.Not.Null);
+        Assert.That(settings.DarkTheme, Is.False);
     }
     
     [Test]
@@ -102,18 +106,23 @@ public class UserSettingsControllerTests : WebApplicationFactory<Program>
         var resp = await _client.PatchAsJsonAsync("/api/usersettings/secretmode", patch);
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-        var fetch = await _client.GetAsync("/api/usersettings");
+        var fetch = await _client.GetAsync("/api/userSettings");
         var settings = await fetch.Content.ReadFromJsonAsync<UserSettingsResponseDto>();
-        Assert.That(settings!.SecretMode, Is.False);
+        Assert.That(settings, Is.Not.Null);
+        Assert.That(settings.SecretMode, Is.False);
     }
 
     [Test]
     public async Task PatchSetting_InvalidName_ReturnsBadRequest()
     {
         var patch = new UpdateUserSettingDto { Value = true };
-        var resp = await _client.PatchAsJsonAsync("/api/usersettings/invalidflag", patch);
+        var resp = await _client.PatchAsJsonAsync("/api/userSettings/invalidFlag", patch);
 
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        
+        var body = await resp.Content.ReadAsStringAsync();
+        Assert.That(body, Does.Contain("Invalid setting name"));
+        
     }
 
     [TearDown]
