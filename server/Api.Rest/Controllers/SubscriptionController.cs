@@ -7,7 +7,6 @@ namespace Api.Rest.Controllers;
 
 [ApiController]
 public class SubscriptionController(
-    ISecurityService securityService,
     IConnectionManager connectionManager,
     IWebsocketSubscriptionService websocketSubscriptionService) : ControllerBase
 {

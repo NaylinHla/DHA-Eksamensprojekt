@@ -43,7 +43,7 @@ export function setup() {
 }
 
 // k6 Test Configuration
-export let options = {
+export const options = {
     scenarios: {
         spike_alerts: {
             executor: 'ramping-arrival-rate',
