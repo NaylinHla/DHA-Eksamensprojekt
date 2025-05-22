@@ -1,4 +1,6 @@
-﻿export const CircleStatGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
+﻿import React from "react";
+
+export const CircleStatGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
     <div
         className="
       grid gap-x-8 gap-y-6

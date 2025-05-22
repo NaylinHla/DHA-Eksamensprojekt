@@ -14,7 +14,11 @@ import {
     JwtAtom,
     SelectedDeviceIdAtom,
     SensorHistoryWithDeviceDto,
-    UserDevice, StatCard, CircleStatGrid, CircleStat, PlantCarousel,
+    UserDevice,
+    StatCard,
+    CircleStatGrid,
+    CircleStat,
+    PlantCarousel,
     UserSettingsAtom,
 } from "../import";
 import {
@@ -22,10 +26,10 @@ import {
     plantClient,
     userDeviceClient,
 } from "../../apiControllerClients.ts";
-import {CardPlant} from "../../components/Plants/PlantCard.tsx";
+import { CardPlant } from "../../components/Plants/PlantCard.tsx";
+
 ChartJS.register(CategoryScale, LinearScale, Legend, Tooltip);
 
-// Helpers
 const greeting = () => {
     const h = new Date().getHours();
     if (h < 5) return "night";
@@ -37,14 +41,14 @@ const greeting = () => {
 type PlantStatus = CardPlant & { needsWater: boolean };
 
 export default function DashboardPage() {
-    
+
     const [jwt] = useAtom(JwtAtom);
     const [selectedDeviceId, setDeviceId] = useAtom(SelectedDeviceIdAtom);
     const [userSettings] = useAtom(UserSettingsAtom);
     const { convert, unit } = useDisplayTemperature();
 
-    const [devices, setDevices] = useState<UserDevice[]>([]);
-    const [loadingDev, setLD] = useState(true);
+    const [, setDevices] = useState<UserDevice[]>([]);
+    const [, setLD] = useState(true);
 
     const [weather, setWeather] = useState<{ temp: number; humidity: number } | null>(null);
     const [loadingWX, setLW] = useState(true);
@@ -54,14 +58,32 @@ export default function DashboardPage() {
 
     const [latest, setLatest] = useState<Record<string, SensorHistoryWithDeviceDto>>({});
     const [loadingLive, setLoadingLive] = useState(true);
-    
+
+    const [dashboardErrors, setDashboardErrors] = useState<string[]>([]);
+    const addDashboardError = (msg: string) => {
+        setDashboardErrors(prev => [...prev, msg]);
+    };
+
+    // Show one toast for dashboard errors
+    useEffect(() => {
+        if (dashboardErrors.length === 0) return;
+        const id = setTimeout(() => {
+            const readable = dashboardErrors
+                .map(e => e.charAt(0).toUpperCase() + e.slice(1))
+                .join(", ");
+            toast.error(`Failed to load: ${readable}`);
+            setDashboardErrors([]);
+        }, 800);
+        return () => clearTimeout(id);
+    }, [dashboardErrors]);
+
     useEffect(() => {
         if (!jwt) return;
         setLD(true);
         userDeviceClient
             .getAllUserDevices(jwt)
             .then(list => setDevices(Array.isArray(list) ? list : []))
-            .catch(() => toast.error("Failed to load devices"))
+            .catch(() => addDashboardError("devices"))
             .finally(() => setLD(false));
     }, [jwt]);
 
@@ -83,7 +105,7 @@ export default function DashboardPage() {
                 /* pick a default device on first run */
                 if (!selectedDeviceId && recs.length) setDeviceId(recs[0].deviceId!);
             } catch {
-                toast.error("Failed to load latest greenhouse data");
+                addDashboardError("greenhouse data");
             } finally {
                 if (!cancelled) setLoadingLive(false);
             }
@@ -120,7 +142,7 @@ export default function DashboardPage() {
                     humidity: json.hourly.relativehumidity_2m?.[0] ?? 0,
                 });
             } catch {
-                toast.error("Weather fetch failed");
+                addDashboardError("weather");
             } finally {
                 setLW(false);
             }
@@ -150,7 +172,7 @@ export default function DashboardPage() {
                     } as PlantStatus;
                 }));
             } catch {
-                toast.error("Plant fetch failed");
+                addDashboardError("plants");
             } finally {
                 setLP(false);
             }
@@ -195,7 +217,7 @@ export default function DashboardPage() {
                 <StatCard title="Need Watering" loading={loadingPlants}
                           value={needsWater ? "Yes" : "No"} cls={needsWater ? "text-error" : "text-success"} />
             </div>
-            
+
             {/* main row */}
             <main className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-fluid px-6 py-6">
 

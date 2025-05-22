@@ -64,7 +64,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                 setLoading(false);
             }
         };
-        run();
+        run().then();
     }, [open, plant, jwt]);
 
     useEffect(() => {

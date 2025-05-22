@@ -1,11 +1,22 @@
-import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {AddPlantCard, PlantCard, PlantModal, PlantToolbar, TitleTimeHeader} from "../../components";
-import {JwtAtom, PlantResponseDto, UserIdAtom, UserSettingsAtom} from "../../atoms";
-import {useAtom} from "jotai";
-import {plantClient} from "../../apiControllerClients.ts";
-import {CardPlant} from "../../components/Plants/PlantCard.tsx";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    AddPlantCard,
+    LoadingSpinner,
+    PlantCard,
+    PlantModal,
+    PlantToolbar,
+    TitleTimeHeader,
+} from "../../components";
+import {
+    JwtAtom,
+    PlantResponseDto,
+    UserIdAtom,
+    UserSettingsAtom,
+} from "../../atoms";
+import { useAtom } from "jotai";
+import { plantClient } from "../../apiControllerClients.ts";
+import { CardPlant } from "../../components/Plants/PlantCard.tsx";
 import ConfirmModal from "../../components/Modals/ConfirmModal";
-
 
 const toCard = (dto: PlantResponseDto): CardPlant => {
     const days =
@@ -14,11 +25,17 @@ const toCard = (dto: PlantResponseDto): CardPlant => {
                 0,
                 dto.waterEvery -
                 Math.floor(
-                    (Date.now() - new Date(dto.lastWatered).getTime()) / 86_400_000
+                    (Date.now() - new Date(dto.lastWatered).getTime()) /
+                    86_400_000
                 )
             )
             : 0;
-    return {id: dto.plantId!, name: dto.plantName!, nextWaterInDays: days, isDead: !!dto.isDead};
+    return {
+        id: dto.plantId!,
+        name: dto.plantName!,
+        nextWaterInDays: days,
+        isDead: !!dto.isDead,
+    };
 };
 
 const PlantsView: React.FC = () => {
@@ -27,6 +44,8 @@ const PlantsView: React.FC = () => {
     const [plants, setPlants] = useState<CardPlant[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
+    const [showSpinner, setShowSpinner] = useState(false);
+    const [hasFetched, setHasFetched] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] = useState<CardPlant | null>(null);
@@ -40,20 +59,31 @@ const PlantsView: React.FC = () => {
 
     // Fetch plants
     const fetchPlants = useCallback(async () => {
+        let timer: NodeJS.Timeout | null = setTimeout(() => {
+            setShowSpinner(true);
+        }, 300);
+
         try {
             setLoading(true);
-            const list = await plantClient.getAllPlants(userId, jwt); // <‑‑ raw JWT
+            const list = await plantClient.getAllPlants(userId, jwt);
+
+            clearTimeout(timer);
+            setShowSpinner(false);
+
             setPlants(list.map(toCard));
             setErr(null);
         } catch (e: any) {
+            clearTimeout(timer);
+            setShowSpinner(false);
             setErr(e.message ?? "Failed");
         } finally {
             setLoading(false);
+            setHasFetched(true);
         }
-    }, [jwt]);
+    }, [jwt, userId]);
 
     useEffect(() => {
-        fetchPlants();
+        fetchPlants().then();
     }, [fetchPlants]);
 
     // Water Plants
@@ -119,8 +149,8 @@ const PlantsView: React.FC = () => {
             .filter((p) => (t ? p.name.toLowerCase().includes(t) : true));
     }, [plants, search, showDead]);
 
-    if (loading) return <p className="p-6">Loading…</p>;
-    if (err) return <p className="p-6 text-error">{err}</p>;
+    const shouldShowSpinner = loading && showSpinner && !hasFetched;
+    const shouldShowNoPlants = hasFetched && !loading && !err && visible.length === 0;
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
@@ -130,27 +160,64 @@ const PlantsView: React.FC = () => {
 
             {/* content */}
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <PlantToolbar
-                    onSearch={setSearch}
-                    onWaterAll={waterAll}
-                    showDead={showDead}
-                    onToggleDead={() => setShowDead((d) => !d)}
-                />
+                {/* Error */}
+                {err && (
+                    <div className="p-6 text-error text-center space-y-3">
+                        <p>
+                            {err.includes("Failed to fetch")
+                                ? "No plants found or system is down. Please refresh."
+                                : err}
+                        </p>
+                        <button className="btn btn-primary" onClick={fetchPlants}>
+                            Refresh
+                        </button>
+                    </div>
+                )}
 
-                <div
-                    className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]">
-                    {visible.map(p => (
-                        <PlantCard
-                            key={p.id}
-                            plant={p}
-                            onWater={() => waterOne(p.id)}
-                            onClick={openDetails}
-                            onRemoved={fetchPlants}
-                            showDead={showDead}
-                        />
-                    ))}
-                    <AddPlantCard onClick={openNew}/>
-                </div>
+                {/* Toolbar - only if loaded and there are visible plants */}
+                {!loading && visible.length > 0 && (
+                    <PlantToolbar
+                        onSearch={setSearch}
+                        onWaterAll={waterAll}
+                        showDead={showDead}
+                        onToggleDead={() => setShowDead((d) => !d)}
+                    />
+                )}
+
+                {/* Spinner */}
+                {shouldShowSpinner && (
+                    <div className="flex justify-center items-center p-6">
+                        <LoadingSpinner />
+                    </div>
+                )}
+
+                {/* Grid */}
+                {hasFetched && (
+                    <div
+                        className="grid auto-rows-fr gap-fluid-lg grid-cols-[repeat(auto-fill,minmax(clamp(12rem,20vw,16rem),1fr))]"
+                        aria-live="polite"
+                        aria-busy={loading}
+                    >
+                        {shouldShowNoPlants && (
+                            <p className="col-span-full text-center p-6 text-muted">
+                                No plants found.
+                            </p>
+                        )}
+
+                        {visible.map((p) => (
+                            <PlantCard
+                                key={p.id}
+                                plant={p}
+                                onWater={() => waterOne(p.id)}
+                                onClick={openDetails}
+                                onRemoved={fetchPlants}
+                                showDead={showDead}
+                            />
+                        ))}
+
+                        {!err && <AddPlantCard onClick={openNew} />}
+                    </div>
+                )}
             </main>
 
             <PlantModal
