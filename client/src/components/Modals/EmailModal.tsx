@@ -70,7 +70,7 @@ const EmailModal: React.FC<Props> = ({ open, loading, onClose, onSubmit, externa
                 noValidate
             >
                 <h3 className="text-center text-xl font-semibold">Changing e-mail address</h3>
-                <p className="text-center text-gray-500 text-sm -mt-3">
+                <p className="text-center text-[--color-primary] text-sm -mt-3">
                     When you change to a new e-mail address, you need to confirm the address before the change is made.
                 </p>
 

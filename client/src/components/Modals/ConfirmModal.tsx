@@ -41,7 +41,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 {/* Heading */}
                 <h3 className="text-center text-xl font-semibold">{title}</h3>
                 {subtitle && (
-                    <p className="text-center text-gray-500 text-sm -mt-3">{subtitle}</p>
+                    <p className="text-center text-[--color-primary] text-sm -mt-3">{subtitle}</p>
                 )}
 
                 {/* Custom content */}

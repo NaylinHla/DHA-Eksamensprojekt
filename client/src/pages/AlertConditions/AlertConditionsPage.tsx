@@ -146,7 +146,7 @@ export default function AlertConditionsPage() {
                                     ))}
                                 </select>
                             ) : (
-                                <div className="text-sm text-gray-500 italic py-2 px-2">No devices found</div>
+                                <div className="text-sm text-[--color-primary] italic py-2 px-2">No devices found</div>
                             )}
                         </div>
                     </div>
@@ -164,7 +164,7 @@ export default function AlertConditionsPage() {
                             {selectedSensorType && (
                                 <button
                                     onClick={() => setSelectedSensorType(null)}
-                                    className="text-center px-4 py-2 rounded-md text-gray-500 hover:text-white hover:bg-neutral transition font-semibold min-w-[8rem] whitespace-nowrap w-auto md:w-full"
+                                    className="text-center px-4 py-2 rounded-md text-[--color-primary] hover:text-white hover:bg-neutral transition font-semibold min-w-[8rem] whitespace-nowrap w-auto md:w-full"
                                     title="Clear sensor filter"
                                 >
                                     Clear
@@ -177,7 +177,7 @@ export default function AlertConditionsPage() {
                                     className={`px-4 py-2 rounded-md whitespace-nowrap min-w-[8rem] text-center transition ${
                                         selectedSensorType === sensor
                                             ? "bg-primary text-white font-semibold"
-                                            : "hover:bg-neutral hover:text-white text-gray-500"
+                                            : "hover:bg-neutral hover:text-white text-[--color-primary]"
                                     }`}
                                 >
                                     {sensor}

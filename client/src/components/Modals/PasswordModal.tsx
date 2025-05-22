@@ -81,7 +81,7 @@ const PasswordModal: React.FC<Props> = ({open, loading, onClose, onSubmit, exter
                 className="modal-box max-w-md space-y-5"
             >
                 <h3 className="text-center text-xl font-semibold">Change Password</h3>
-                <p className="text-center text-gray-500 text-sm -mt-3">
+                <p className="text-center text-[--color-primary] text-sm -mt-3">
                     Password must be at least 6 characters, and contain both lowercase and uppercase characters,
                     and at least one special character.
                 </p>

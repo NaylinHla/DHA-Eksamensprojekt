@@ -46,7 +46,7 @@ const AlertOverview = () => {
                         {selectedYear && (
                             <button
                                 onClick={() => setSelectedYear(null)}
-                                className="w-full text-center py-2 px-3 rounded-md text-gray-500 hover:text-white hover:bg-neutral transition font-semibold"
+                                className="w-full text-center py-2 px-3 rounded-md text-[--color-primary] hover:text-white hover:bg-neutral transition font-semibold"
                                 title="Clear year filter"
                             >
                                 Clear
@@ -80,7 +80,7 @@ const AlertOverview = () => {
                         <div className="space-y-6">
                             {filteredAlerts.map((alert: Alert, index: number) => (
                                 <div key={index}>
-                                    <div className="text-fluid text-gray-500 mb-[clamp(0.25rem,0.5vw,0.5rem)]">
+                                    <div className="text-fluid text-[--color-primary] mb-[clamp(0.25rem,0.5vw,0.5rem)]">
                                         {formatDateTimeForUserTZ(alert.alertTime)}
                                     </div>
                                     <div

@@ -235,7 +235,7 @@ export default function DashboardPage() {
                                 <CircleStat label="Air Quality" unit="ppm" colorToken="warning" value={circleReadings.quality}/>
                             </CircleStatGrid>
                         ) : (
-                            <p className="text-fluid text-center text-gray-500">
+                            <p className="text-fluid text-center text-[--color-primary]">
                                 {Object.keys(latest).length ? "No data" : "No devices connected"}
                             </p>
                         )}
