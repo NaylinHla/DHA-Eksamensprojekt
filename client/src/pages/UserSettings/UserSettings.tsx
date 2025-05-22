@@ -114,8 +114,8 @@ const UserSettings: React.FC<Props> = () => {
                 oldEmail: oldMail,
                 newEmail: newMail,
             });
-            toast.success("E-mail updated – please log in with the new address.", { id: "emailChange-succes" });
             setOpenEmail(false);
+            logout();
         } catch (e: any) {
             const resp = typeof e.response === "string"
                 ? JSON.parse(e.response) || {}

@@ -99,11 +99,22 @@ export default function DashboardPage() {
                 const recs = res?.sensorHistoryWithDeviceRecords ?? [];
                 if (cancelled) return;
 
-                /* map deviceId -> latest record */
-                setLatest(Object.fromEntries(recs.filter(r => r.deviceId).map(r => [r.deviceId!, r])));
+                // Filter records with deviceId
+                const validRecords = recs.filter(r => r.deviceId && r.time)
 
-                /* pick a default device on first run */
-                if (!selectedDeviceId && recs.length) setDeviceId(recs[0].deviceId!);
+                validRecords.sort((a, b) => {
+                    const aTime = a.time ? new Date(a.time).getTime() : 0;
+                    const bTime = b.time ? new Date(b.time).getTime() : 0;
+                    return bTime - aTime;
+                });
+
+                // Map deviceId -> latest record
+                setLatest(Object.fromEntries(validRecords.map(r => [r.deviceId!, r])));
+
+                if (!selectedDeviceId && validRecords.length) {
+                    setDeviceId(validRecords[0].deviceId!);
+                }
+
             } catch {
                 addDashboardError("greenhouse data");
             } finally {
@@ -111,7 +122,7 @@ export default function DashboardPage() {
             }
         };
 
-        loadLatest();
+        loadLatest().then();
         const id = setInterval(loadLatest, 30_000);
         return () => { cancelled = true; clearInterval(id); };
     }, [jwt]);
@@ -224,6 +235,9 @@ export default function DashboardPage() {
             {/* circle card */}
                 <div className="card flex-1 bg-[var(--color-surface)] shadow flex flex-col gap-fluid h-[clamp(12rem,30vw,33rem)]">
                     <h2 className="text-fluid-header text-center ">Your Device:</h2>
+                    <p className="text-center text-lg font-semibold text-primary">
+                        {selectedDeviceId && latest[selectedDeviceId]?.deviceName || ""}
+                    </p>
                     <div className="card-body p-fluid">
                         {loadingLive ? (
                             <p className="text-center">Loading…</p>
