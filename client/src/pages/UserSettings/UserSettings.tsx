@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAtom, useSetAtom } from "jotai";
 import {JwtAtom, User, UserSettingsAtom} from "../../atoms";
-import { useNavigate } from "react-router";
 import EmailModal from "../../components/Modals/EmailModal";
 import PasswordModal, { PasswordDto } from "../../components/Modals/PasswordModal";
 import DeleteAccountModal from "../../components/Modals/DeleteAccountModal";
@@ -13,7 +12,7 @@ import { userClient, userSettingsClient } from "../../apiControllerClients";
 type Props = { onChange?: () => void };
 const LOCAL_KEY = "theme";
 
-const UserSettings: React.FC<Props> = ({ onChange }) => {
+const UserSettings: React.FC<Props> = () => {
     const [jwt, setJwt] = useAtom(JwtAtom);
     const [settings] = useAtom(UserSettingsAtom);
     const setUserSettings = useSetAtom(UserSettingsAtom);
@@ -22,10 +21,10 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
     const [openPassword, setOpenPassword] = useState(false);
     const [openEmail, setOpenEmail] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
-    
+    const [passwordErrors, setPasswordErrors] = useState<Partial<PasswordDto>>({});
+    const [emailErrors, setEmailErrors] = useState<{ old?: string; new?: string }>({});
     const [user, setUser] = useState<User | null>(null);
 
-    const navigate = useNavigate();
     const { logout } = useLogout();
 
     useEffect(() => {
@@ -42,7 +41,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 setUser(u);
             } catch (error) {
                 console.error(error);
-                toast.error("Couldn't load user info");
+                toast.error("Couldn't load user info", { id: "loadUserInfo-failed" });
             }
         })();
     }, [jwt]);
@@ -61,12 +60,12 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
             setSaving(true);
             if (!jwt) return;
             await userClient.deleteUser(jwt);
-            toast.success("Account deleted – goodbye!");
+            toast.success("Account deleted – goodbye!", { id: "accountDeleted-succes" });
             localStorage.removeItem("jwt");
             setJwt("");
             logout();
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
+            toast.error(e.message ?? "Failed", { id: "accountDeleted-failed" });
         } finally {
             setSaving(false);
         }
@@ -74,7 +73,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
 
     async function handlePasswordDto(dto: PasswordDto) {
         if (dto.newPassword !== dto.confirm) {
-            toast.error("Passwords don’t match");
+            setPasswordErrors({ confirm: "Passwords don’t match" });
             return;
         }
         try {
@@ -84,16 +83,30 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 oldPassword: dto.oldPassword,
                 newPassword: dto.newPassword,
             });
-            toast.success("Password updated");
+            toast.success("Password updated", { id: "passwordChange-succes" });
             setOpenPassword(false);
+            setPasswordErrors({});
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
+            const status = e.response?.status ?? e.status ?? (e.response && e.response.statusCode);
+            const errorMessage =
+                (e.response && (e.response.title || e.response.message)) || e.message || "Unknown error";
+
+            if (status === 401 || /invalid/i.test(errorMessage)) {
+                setPasswordErrors({ oldPassword: "Old password is incorrect" });
+            } else {
+                toast.error(errorMessage || "Failed to change password", { id: "passwordChange-failed" });
+            }
         } finally {
             setSaving(false);
         }
     }
 
     async function handleEmail(oldMail: string, newMail: string) {
+        if (oldMail !== user?.email) {
+            setEmailErrors({ old: "This is not your current email" });
+            return;
+        }
+
         try {
             setSaving(true);
             if (!jwt) return;
@@ -101,11 +114,23 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 oldEmail: oldMail,
                 newEmail: newMail,
             });
-            toast.success("E-mail updated – please log in with the new address.");
+            toast.success("E-mail updated – please log in with the new address.", { id: "emailChange-succes" });
             setOpenEmail(false);
         } catch (e: any) {
-            toast.error(e.message ?? "Failed");
-        } finally {
+            const resp = typeof e.response === "string"
+                ? JSON.parse(e.response) || {}
+                : e.response || {};
+
+            const status = resp.status ?? e.status;
+            const title  = (resp.title ?? "").replace(/[\r\n]+/g, " ");
+
+            if (status === 400 && /email already used/i.test(title)) {
+                setEmailErrors({ new: "This email is already in use by another user" });
+            } else {
+                toast.error(title || e.message || "Failed to update email");
+            }
+
+    } finally {
             setSaving(false);
         }
     }
@@ -162,7 +187,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.celsius}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("celsius", value);
+                                    patchSetting("celsius", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         celsius: value,
@@ -178,7 +203,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.darkTheme}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("darktheme", value);
+                                    patchSetting("darktheme", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         darkTheme: value,
@@ -194,7 +219,7 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                                 checked={settings.confirmDialog}
                                 onChange={(e) => {
                                     const value = e.target.checked;
-                                    patchSetting("confirmdialog", value);
+                                    patchSetting("confirmdialog", value).then();
                                     setUserSettings((prev) => ({
                                         ...prev!,
                                         confirmDialog: value,
@@ -210,8 +235,8 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                     {!user ? (
                         <p className="italic text-fluid">Loading profile…</p>
                     ) : (
-                        <div className="space-y-2 text-fluid">
-                            <h3 className="text-lg font-semibold">Account details</h3>
+                        <div className="space-y-2 ">
+                            <h3 className="text-lg md:text-xl lg:text-2xl font-semibold">Account details</h3>
 
                             <p>
                                 <span className="font-medium">Name:</span>{" "}
@@ -244,16 +269,24 @@ const UserSettings: React.FC<Props> = ({ onChange }) => {
                 <PasswordModal
                     open={openPassword}
                     loading={saving}
-                    onClose={() => setOpenPassword(false)}
+                    onClose={() => {
+                        setOpenPassword(false);
+                        setPasswordErrors({});
+                    }}
                     onSubmit={handlePasswordDto}
+                    externalErrors={passwordErrors}
                 />
             )}
 
             <EmailModal
                 open={openEmail}
                 loading={saving}
-                onClose={() => setOpenEmail(false)}
+                onClose={() => {
+                    setOpenEmail(false);
+                    setEmailErrors({});
+                }}
                 onSubmit={handleEmail}
+                externalErrors={emailErrors}
             />
 
             <DeleteAccountModal

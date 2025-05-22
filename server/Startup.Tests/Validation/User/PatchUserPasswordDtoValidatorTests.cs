@@ -40,7 +40,7 @@ public class PatchUserPasswordDtoValidatorTests
 
     private static PatchUserPasswordDto Valid() => new()
     {
-        OldPassword = "ValidPassword",
-        NewPassword = "NewValidPassword"
+        OldPassword = "ValidPassword1!",
+        NewPassword = "NewValidPassword1!"
     };
 }

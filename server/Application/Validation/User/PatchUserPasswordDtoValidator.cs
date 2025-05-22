@@ -9,10 +9,12 @@ public sealed class PatchUserPasswordDtoValidator : AbstractValidator<PatchUserP
     {
         RuleFor(x => x.OldPassword)
             .NotEmpty().WithMessage("Password cannot be empty")
-            .MinimumLength(4).WithMessage("Password must be at least 4 characters.");
+            .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$")
+            .WithMessage("Password must be at least 6 characters and include uppercase, lowercase, number, and special character.");
         
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Password cannot be empty")
-            .MinimumLength(4).WithMessage("Password must be at least 4 characters.");
+            .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$")
+            .WithMessage("Password must be at least 6 characters and include uppercase, lowercase, number, and special character.");
     }
 }

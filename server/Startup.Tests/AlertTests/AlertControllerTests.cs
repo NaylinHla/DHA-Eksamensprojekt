@@ -50,7 +50,7 @@ public class AlertControllerTests : WebApplicationFactory<Program>
         // get JWT
         var loginResp = await _client.PostAsJsonAsync(
             "/api/auth/login",
-            new { _testUser.Email, Password = "pass" }
+            new { _testUser.Email, Password = "Secret25!" }
         );
         loginResp.EnsureSuccessStatusCode();
         var authDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();

@@ -5,6 +5,7 @@ import {JwtAtom, PlantClient, PlantCreateDto, PlantEditDto, PlantResponseDto,} f
 import {useAtom} from "jotai";
 import {format} from "date-fns";
 import toast from "react-hot-toast";
+import useCloseOnEscapeOrBackdrop from "../Functional/UseCloseOnEscapeOrBackdrop";
 
 const plantClient = new PlantClient(
     import.meta.env.VITE_API_URL ?? "http://localhost:5000"
@@ -39,6 +40,7 @@ const emptyCreate: PlantCreateDto = {
 const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
     const [jwt] = useAtom(JwtAtom);
     const [isEditing, setEditing] = useState(false);
+    const [errors, setErrors] = useState<Partial<Record<keyof PlantEditDto, string>>>({});
 
     // Form State
     const [data, setData] = useState<PlantEditDto>(emptyCreate);
@@ -80,19 +82,37 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
         }
     }, [open, plant]);
 
-    // Close modal on outside click or esc
-    useEffect(() => {
-        if (!open) return;
-        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        const onClick = (e: MouseEvent) =>
-            e.target === backdrop.current && onClose();
-        window.addEventListener("keydown", onKey);
-        backdrop.current?.addEventListener("click", onClick);
-        return () => {
-            window.removeEventListener("keydown", onKey);
-            backdrop.current?.removeEventListener("click", onClick);
-        };
-    }, [open, onClose]);
+    const validate = (): boolean => {
+        const newErrors: Partial<Record<keyof PlantEditDto, string>> = {};
+
+        if (!data.plantName || data.plantName.trim() === "") {
+            newErrors.plantName = "Name is required";
+        } else if (data.plantName.length > 100) {
+            newErrors.plantName = "Name cannot be longer than 100 characters";
+        }
+
+        if (!data.plantType || data.plantType.trim() === "") {
+            newErrors.plantType = "Type is required";
+        } else if (data.plantType.length > 50) {
+            newErrors.plantType = "Type cannot be longer than 50 characters";
+        }
+
+        if (data.waterEvery === undefined || data.waterEvery === null || data.waterEvery < 1) {
+            newErrors.waterEvery = "Water every must be at least 1 day";
+        } else if (data.waterEvery > 365) {
+            newErrors.waterEvery = "Water every cannot be more than 365 days";
+        }
+
+        if (data.plantNotes && data.plantNotes.length > 1000) {
+            newErrors.plantNotes = "Notes cannot be longer than 1000 characters";
+        }
+
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
+    };
+
+    useCloseOnEscapeOrBackdrop(open, onClose, backdrop);
 
     // Helpers
     const upd = <K extends keyof PlantEditDto>(k: K, v: PlantEditDto[K]) =>
@@ -100,6 +120,10 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
 
     // Handlers
     const save = async () => {
+        if (!validate()) {
+            return; // don't save if validation fails
+        }
+
         try {
             setSaving(true);
 
@@ -136,6 +160,16 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
             setSaving(false);
         }
     };
+
+    const requiredHint = (msg?: string) => (
+        <p
+            className={`text-red-500 text-xs text-left transition-opacity duration-200 h-[0.75rem] ${
+                msg ? "opacity-100" : "opacity-0"
+            }`}
+        >
+            {msg || " "}
+        </p>
+    );
 
     const waterNow = async () => {
         if (!plant) return;
@@ -205,8 +239,11 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     placeholder="Plant Name"
                     value={data.plantName}
                     onChange={(e) => upd("plantName", e.target.value)}
-                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className={`text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)] ${
+                        errors.plantName ? "border-red-500" : ""
+                    }`}
                 />
+                {requiredHint(errors.plantName)}
             </label>
 
             <label className="text-fluid flex flex-col gap-1">
@@ -215,8 +252,11 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     placeholder="Plant Type"
                     value={data.plantType ?? ""}
                     onChange={(e) => upd("plantType", e.target.value)}
-                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className={`text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)] ${
+                        errors.plantType ? "border-red-500" : ""
+                    }`}
                 />
+                {requiredHint(errors.plantType)}
             </label>
 
             <label className="text-fluid flex flex-col gap-1">
@@ -226,8 +266,11 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     min={1}
                     value={data.waterEvery ?? ""}
                     onChange={(e) => upd("waterEvery", Number(e.target.value))}
-                    className="text-fluid text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className={`text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)] ${
+                        errors.waterEvery ? "border-red-500" : ""
+                    }`}
                 />
+                {requiredHint(errors.waterEvery)}
             </label>
 
             <label className="text-fluid flex flex-col gap-1">
@@ -237,8 +280,11 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     rows={3}
                     value={data.plantNotes ?? ""}
                     onChange={(e) => upd("plantNotes", e.target.value)}
-                    className="text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)]"
+                    className={`text-fluid rounded-xl px-4 py-1 shadow-sm bg-[var(--color-surface)] ${
+                        errors.plantNotes ? "border-red-500" : ""
+                    }`}
                 />
+                {requiredHint(errors.plantNotes)}
             </label>
         </Fragment>
     );

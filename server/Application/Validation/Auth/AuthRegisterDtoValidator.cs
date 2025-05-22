@@ -32,7 +32,8 @@ public sealed class AuthRegisterDtoValidator : AbstractValidator<AuthRegisterDto
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password cannot be empty")
-            .MinimumLength(4).WithMessage("Password cannot be shorter than 4 characters");
+            .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,}$")
+            .WithMessage("Password must be at least 6 characters and include uppercase, lowercase, number, and special character.");
         
         RuleFor(x => x.Country)
             .NotEmpty().WithMessage("Country cannot be empty")

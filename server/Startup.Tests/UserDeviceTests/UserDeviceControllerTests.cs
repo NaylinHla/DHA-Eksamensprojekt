@@ -29,7 +29,7 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
         _deviceId = device.DeviceId;
 
         var loginResp =
-            await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
+            await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         var loginDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.That(loginDto, Is.Not.Null);

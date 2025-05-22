@@ -17,9 +17,9 @@ public static class MockObjects
             UserId = userId,
             Role = role ?? Constants.UserRole,
             Email = $"testing{Guid.NewGuid()}@gmail.com",
-            Salt = "word", // password is "pass" and the hash is the combined pass + word hashed together
+            Salt = "eea62d44-c613-45b0-be6e-4dfa4f2f4973", // password is "Secret25!" and the hash is the combined pass + word hashed together
             Hash =
-                "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
+                "b8986bb85a370d0f4fa81f85354993a9d79f60e557836c3776d41edb345dc97cca359fecb48ddf04db906e535c0158dfbe4f867a997bbdefe9c26c6c28081611",
             FirstName = "Test",
             LastName = "User",
             Birthday = DateTime.UtcNow.AddYears(-30),
