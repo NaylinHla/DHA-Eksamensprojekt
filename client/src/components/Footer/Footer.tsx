@@ -56,8 +56,8 @@ export default function Footer() {
             <form onSubmit={handleSubscribe}>
                 <h6 className="footer-title">Newsletter</h6>
                 <fieldset className="w-80">
-                    <label>Enter your email address</label>
-                    <div className="join">
+                    <label className="flex ml-2">Enter your email address</label>
+                    <div className="flex join mt-2">
                         <input
                             type="email"
                             name="email"

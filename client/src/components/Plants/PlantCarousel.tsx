@@ -45,7 +45,7 @@ const PlantCarousel: React.FC<Props> = ({ plants, className = "" }) => {
     if (!livePlants.length) {
         return (
             <div className={`w-full card bg-[var(--color-surface)] shadow flex items-center justify-center ${className}`}>
-                <p className="text-gray-500">No Plants Registered!</p>
+                <p className="text-[--color-primary]">No Plants Registered!</p>
             </div>
         );
     }

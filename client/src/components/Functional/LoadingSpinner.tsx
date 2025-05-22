@@ -3,7 +3,7 @@ import React from "react";
 
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center h-32">
-        <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
+        <svg className="animate-spin h-8 w-8 mr-3 text-[--color-primary]" viewBox="0 0 24 24">
             <circle
                 cx="12"
                 cy="12"
@@ -19,7 +19,7 @@ const LoadingSpinner = () => (
                 className="opacity-75"
             />
         </svg>
-        <span className="text-gray-500">Loading…</span>
+        <span className="text-[--color-primary]">Loading…</span>
     </div>
 );
 

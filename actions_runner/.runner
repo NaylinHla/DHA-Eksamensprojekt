@@ -1,6 +1,6 @@
 ﻿{
-  "agentId": 22,
-  "agentName": "Self_Hosted_SonarQube",
+  "agentId": 23,
+  "agentName": "NAYLIN-PC",
   "poolId": 1,
   "poolName": "Default",
   "serverUrl": "https://pipelinesghubeus12.actions.githubusercontent.com/Ew4K2kKhjtnZriPmVs90KU1Y2kiKCDhnOUwr8mSgcXMFS7zSjC/",

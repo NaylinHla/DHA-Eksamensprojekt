@@ -36,6 +36,10 @@ ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartToo
 type Point = { time: string; display: string; value: number; };
 type TabKey = "temperature" | "humidity" | "airPressure" | "airQuality";
 
+export function getCssVar(name: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 export default function HistoryPage() {
     // dates
     const today = new Date();
@@ -279,8 +283,10 @@ export default function HistoryPage() {
     };
 
     // Re-Usable Chart
-    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => (
-        data.length ? (
+    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => {
+        const colorPrimary = getCssVar("--color-primary");
+
+        return data.length ? (
             <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden mb-6 px-4 pt-4">
                 <h3 className="text-lg font-semibold mb-3 text-fluid">{label}</h3>
                 <div className="w-full h-[clamp(8rem,20vw,40rem)]">
@@ -294,7 +300,7 @@ export default function HistoryPage() {
                                     tension: 0.3,
                                     borderWidth: 2,
                                     pointRadius: 0,
-                                    borderColor: cssVar("--color-primary"),
+                                    borderColor: colorPrimary,
                                 },
                             ],
                         }}
@@ -321,6 +327,7 @@ export default function HistoryPage() {
                                 x: {
                                     grid: { display: false },
                                     ticks: {
+                                        color: colorPrimary,
                                         callback: (val: any) => data[val]?.display ?? "",
                                         maxTicksLimit: 12,
                                         autoSkip: true,
@@ -332,8 +339,10 @@ export default function HistoryPage() {
                                         display: true,
                                         text: `${label} (${unitMap[tabKey]})`,
                                         padding: 4,
+                                        color: colorPrimary,
                                     },
                                     ticks: {
+                                        color: colorPrimary,
                                         callback: (v: any) => `${v} ${unitMap[tabKey]}`,
                                     },
                                 },
@@ -343,9 +352,10 @@ export default function HistoryPage() {
                 </div>
             </div>
         ) : (
-            <div className="text-gray-500 mb-6">No {label} data</div>
-        )
-    );
+            <div className="text-[--color-primary] mb-6">No {label} data</div>
+        );
+    };
+
 
     const fields: (keyof SensorHistoryWithDeviceDto)[] = ["temperature", "humidity", "airPressure", "airQuality"];
     const noData = !series.temperature.length && !series.humidity.length && !series.airPressure.length && !series.airQuality.length;
@@ -362,12 +372,12 @@ export default function HistoryPage() {
                     {loadingDevices || loadingData ? <LoadingSpinner /> : (() => {
                         const latest = latestSensorData[selectedDeviceId!];
                         if (!latest || fields.some(f => latest[f] == null || latest[f] === 0)) return <p
-                            className="text-center text-gray-500">No data available</p>;
+                            className="text-center text-[--color-primary]">No data available</p>;
                         return (
                             <>
                                 <div className="flex justify-between mb-2">
                                     <h2 className="font-bold text-fluid-header">Current Status</h2>
-                                    <span className="text-fluid text-muted-foreground text-gray-500">
+                                    <span className="text-fluid text-muted-foreground text-[--color-primary]">
                                     Last updated:&nbsp;{formatDateTimeForUserTZ(latest.time)}
                                     </span>
                                 </div>
@@ -473,7 +483,7 @@ export default function HistoryPage() {
                     {/* active chart */}
                     <div className="p-fluid">
                         {loadingData ? <LoadingSpinner /> : noData ? (
-                            <div className="p-8 text-center text-gray-500">
+                            <div className="p-8 text-center text-[--color-primary]">
                                 No data available for the selected date range.
                             </div>
                         ) : (
