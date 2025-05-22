@@ -1,12 +1,11 @@
-import React, {useEffect, useState} from 'react';
-import {formatDateTimeForUserTZ} from '../index';
+import React, { useEffect, useState } from 'react';
+import { formatDateTimeForUserTZ } from '../index';
 
-// Define props type
 interface TitleTimeHeaderProps {
     title: string;
 }
 
-const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({title}) => {
+const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({ title }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -15,14 +14,11 @@ const TitleTimeHeader: React.FC<TitleTimeHeaderProps> = ({title}) => {
     }, []);
 
     return (
-        <header
-            className="w-full shadow bg-[var(--color-surface)] flex items-center justify-between p-fluid"
-            style={{ padding: "clamp(0.75rem,1.5vw,1.5rem) clamp(1.5rem,3.5vw,4rem)" }}
-        >
+        <header className="w-full shadow bg-[var(--color-surface)] flex items-center justify-between px-6 py-3">
             <h1 className="font-bold text-fluid-header text-[--color-primary]">{title}</h1>
             <span className="text-fluid text-[--color-primary] whitespace-nowrap">
-        {formatDateTimeForUserTZ(currentTime)}
-      </span>
+                {formatDateTimeForUserTZ(currentTime)}
+            </span>
         </header>
     );
 };
