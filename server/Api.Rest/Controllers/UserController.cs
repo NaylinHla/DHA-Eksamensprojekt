@@ -30,8 +30,8 @@ public class UserController(IUserService userService, ISecurityService securityS
         [FromHeader] string authorization)
     {
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var deletedUser = await userService.DeleteUser(new DeleteUserDto { Email = claims.Email });
-        return Ok(deletedUser);
+        await userService.DeleteUser(new DeleteUserDto { Email = claims.Email });
+        return Ok();
     }
 
     [HttpPatch]

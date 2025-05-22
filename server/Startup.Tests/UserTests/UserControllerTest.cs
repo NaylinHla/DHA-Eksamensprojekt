@@ -8,6 +8,7 @@ using FluentValidation;
 using Infrastructure.Postgres.Scaffolding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
@@ -100,22 +101,31 @@ public class UserControllerTest
     }
 
     [Test]
-    public async Task DeleteUser_ShouldReturnOk()
+    public async Task DeleteUser_ShouldReturnOk_AndMarkUserAsDeleted()
     {
+        // Act
         var response = await _client.DeleteAsync($"api/User/{UserController.DeleteUserRoute}");
+
+        // Assert status code
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        
-        var deletedUser = await response.Content.ReadFromJsonAsync<User>();
-        Assert.That(deletedUser, Is.Not.Null);
+
+        // Check updated user in DB
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+    
+        var userInDb = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == "Deleted@User.com");
+
+        Assert.That(userInDb, Is.Not.Null, "Expected user to still exist but marked as deleted");
+
         Assert.Multiple(() =>
         {
-            Assert.That(deletedUser.Email, Is.EqualTo("Deleted@User.com"));
-            Assert.That(deletedUser.FirstName, Is.EqualTo("Deleted"));
-            Assert.That(deletedUser.LastName, Is.EqualTo("User"));
-            Assert.That(deletedUser.Country, Is.EqualTo("-"));
-            Assert.That(deletedUser.Birthday, Is.EqualTo(DateTime.MinValue));
+            Assert.That(userInDb.FirstName, Is.EqualTo("Deleted"));
+            Assert.That(userInDb.LastName, Is.EqualTo("User"));
+            Assert.That(userInDb.Country, Is.EqualTo("-"));
+            Assert.That(userInDb.Birthday, Is.EqualTo(DateTime.MinValue));
         });
-       }
+    }
 
     [Test]
     public async Task PatchUserEmail_ShouldReturnOk()

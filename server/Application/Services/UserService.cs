@@ -47,6 +47,7 @@ public class UserService(
         user.Email = updatedEmail;
         user.Country = "-";
         user.Birthday = DateTime.MinValue;
+        user.Hash = user.Hash;
         
         userRepository.UpdateUser(user);
         userRepository.Save();
