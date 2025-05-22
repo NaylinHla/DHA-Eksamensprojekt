@@ -69,11 +69,11 @@ const AlertOverview = () => {
                 {/* Main content */}
                 <main className="flex-1 overflow-y-auto p-fluid">
                     {loading || filteredAlerts.length === 0 ? (
-                        <div className="flex items-center justify-center mt-5">
+                        <div className="flex items-center justify-center mt-6">
                             {loading ? (
                                 <LoadingSpinner />
                             ) : (
-                                <div className="text-gray-400 text-fluid">No alerts found.</div>
+                                <div className="text-[--color-primary] ">No alerts found.</div>
                             )}
                         </div>
                     ) : (

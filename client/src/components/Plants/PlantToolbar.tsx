@@ -16,7 +16,7 @@ const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onTogg
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search box */}
-                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                     <SearchBar 
                         searchTerm={searchTerm} 
                         onSearch={term => {

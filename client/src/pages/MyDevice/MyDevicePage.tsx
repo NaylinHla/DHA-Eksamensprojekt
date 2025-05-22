@@ -138,7 +138,7 @@ export default function MyDevicePage() {
             <TitleTimeHeader title="My Device"/>
 
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <div className="flex flex-col p-6">
+                <div className="flex flex-col">
                     {/* Header row */}
                     <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                         <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm}/>
@@ -165,7 +165,7 @@ export default function MyDevicePage() {
                                                     setSelectedDevice({deviceId: id});
                                                     setEditModalOpen(true);
                                                 }}
-                                                className="text-gray-400 hover:text-blue-500 transition"
+                                                className="text-[--color-primary] hover:text-blue-500 transition"
                                                 title="Edit device"
                                             >
                                                 <Pencil size={18}/>
@@ -177,7 +177,7 @@ export default function MyDevicePage() {
                                                     e.stopPropagation();
                                                     handleRemoveDevice(device);
                                                 }}
-                                                className="text-gray-400 hover:text-red-500 transition text-lg leading-none"
+                                                className="text-[--color-primary] hover:text-red-500 transition text-lg leading-none"
                                                 title="Remove device"
                                             >
                                                 ✕
