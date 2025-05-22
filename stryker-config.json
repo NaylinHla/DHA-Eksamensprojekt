@@ -5,6 +5,16 @@
       "*Error",
       "*Warning"
     ],
+    "mutate": [
+      "!**/*Extensions.cs",
+      "!**/MyDbContext.cs",
+      "!**/Program.cs",
+      "!**/Documentation/**",
+      "!**/Proxy/**"
+    ],
+    "thresholds": {
+      "break": 80
+    },
     "additional-timeout": 15000
   }
 }
