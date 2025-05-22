@@ -1,0 +1,98 @@
+﻿name: Self Hosted Coverage Testing & SonarQube Analysis
+
+on:
+  workflow_dispatch:
+
+jobs:
+  coverage_testing:
+    name: Coverage Testing
+    runs-on: self-hosted
+
+    env:
+      APPOPTIONS__MQTT_BROKER_HOST: ${{ secrets.MQTT_BROKER_HOST }}
+      APPOPTIONS__MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_USERNAME: ${{ secrets.EMAIL_SENDER_USERNAME }}
+      APPOPTIONS__EMAIL_SENDER_PASSWORD: ${{ secrets.EMAIL_SENDER_PASSWORD }}
+      APPOPTIONS__JWT_EMAIL_SECRET: ${{ secrets.JWT_EMAIL_SECRET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check .NET SDK version
+        run: dotnet --version
+
+      - name: Install required tools
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Run Unit Tests with Coverage
+        run: dotnet test server/Startup.Tests --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Generate Code Coverage Report
+        run: |
+          reportgenerator `
+            -reports:TestResults/**/coverage.cobertura.xml `
+            -targetdir:server/coverage-report `
+            -reporttypes:SonarQube
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: server/coverage-report
+
+  sonarqube:
+    name: SonarQube Analysis
+    needs: coverage_testing
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check .NET SDK version
+        run: dotnet --version
+
+      - name: Install required tools
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          dotnet tool install -g dotnet-sonarscanner
+
+      - name: Download Coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: server/coverage-report
+
+      - name: Normalize paths in coverage report
+        run: |
+          Get-ChildItem -Recurse coverage-report -Filter "SonarQube.xml" | ForEach-Object {
+            (Get-Content $_.FullName) -replace '/home/runner/work/.*/server/', '' | Set-Content $_.FullName
+          }
+
+      - name: Start Static Code Analysis
+        run: |
+          dotnet sonarscanner begin `
+            /k:"${{ secrets.SONARQUBE_PROJECT_KEY }}" `
+            /d:sonar.host.url="${{ vars.SONARQUBE_HOST_URL }}" `
+            /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" `
+            /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml" `
+            /d:sonar.coverage.sources=Startup `
+            /d:sonar.coverage.exclusions="**/Program.cs,Api.Rest/RestStartupExtensions.cs,Api.Rest/Extensions/**,Api.Websocket/Extensions.cs,Api.Websocket/ExampleEventHandler.cs,Application/AppOptionsExtensions.cs,Application/Extensions.cs,Application/Interfaces/**,Application/Models/**,Core.Domain/Entities/**,Infrastructure.Mqtt/MqttExtensions.cs,Infrastructure.Postgres.Scaffolding/**,Infrastructure.Postgres/Extensions.cs,Startup/Proxy/**" `
+            /d:sonar.qualitygate.wait=true `
+            /d:sonar.qualitygate.timeout=300
+
+      - name: Build
+        run: dotnet build Startup
+
+      - name: Complete Static Code Analysis
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
