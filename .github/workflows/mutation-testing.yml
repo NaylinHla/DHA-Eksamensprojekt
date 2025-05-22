@@ -22,12 +22,8 @@ jobs:
         run: dotnet tool install --global dotnet-stryker
 
       - name: Run mutation tests
-        run: |
-          DOTNET_ROLL_FORWARD=LatestMajor \
-          dotnet stryker \
-            --reporter     html
+        run: dotnet stryker --reporter html
         continue-on-error: true
-
 
       - name: Upload report
         if: always()
