@@ -25,8 +25,7 @@ jobs:
         run: |
           DOTNET_ROLL_FORWARD=LatestMajor \
           dotnet stryker \
-            --reporter     html \
-            --concurrency  2
+            --reporter     html
         continue-on-error: true
 
 
