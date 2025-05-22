@@ -25,7 +25,10 @@ public class UserService(
     
     public async Task<User> DeleteUser(DeleteUserDto request)
     {
-        await deleteUserValidator.ValidateAndThrowAsync(request);
+        var deleteUserResult = await deleteUserValidator.ValidateAsync(request, CancellationToken.None);
+        if (!deleteUserResult.IsValid)
+            throw new ValidationException(deleteUserResult.Errors);
+        
         var user = userRepository.GetUserOrNull(request.Email)
             ?? throw new KeyNotFoundException(UserNotFoundMessage);
 
@@ -57,7 +60,10 @@ public class UserService(
 
     public async Task<User> PatchUserEmail(PatchUserEmailDto request)
     {
-        await patchUserEmailValidator.ValidateAndThrowAsync(request);
+        var patchUserResult = await patchUserEmailValidator.ValidateAsync(request, CancellationToken.None);
+        if (!patchUserResult.IsValid)
+            throw new ValidationException(patchUserResult.Errors);
+        
         var user = userRepository.GetUserOrNull(request.OldEmail)
             ?? throw new KeyNotFoundException(UserNotFoundMessage);
 
@@ -71,7 +77,10 @@ public class UserService(
 
     public async Task<User> PatchUserPassword(string email, PatchUserPasswordDto request)
     {
-        await patchUserPasswordValidator.ValidateAndThrowAsync(request);
+        var patchPasswordResult = await patchUserPasswordValidator.ValidateAsync(request, CancellationToken.None);
+        if (!patchPasswordResult.IsValid)
+            throw new ValidationException(patchPasswordResult.Errors);
+        
         var user = userRepository.GetUserOrNull(email)
             ?? throw new KeyNotFoundException(UserNotFoundMessage);
 

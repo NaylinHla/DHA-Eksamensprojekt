@@ -14,6 +14,9 @@ public class PlantService(
     IValidator<PlantCreateDto> plantCreateValidator,
     IValidator<PlantEditDto> plantEditValidator) : IPlantService
 {
+
+    private const string PlantNotFound = "No plant with that id was found.";
+    
     public async Task<Plant?> GetPlantByIdAsync(Guid plantId, JwtClaims claims)
     {
         MonitorService.Log.Debug("Entered Get Plant By Id Async method in PlantService");
@@ -36,7 +39,10 @@ public class PlantService(
     {
         MonitorService.Log.Debug("Entered Create Plant Async method in PlantService");
         
-        await plantCreateValidator.ValidateAndThrowAsync(dto);
+        var createResult = await plantCreateValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!createResult.IsValid)
+            throw new ValidationException(createResult.Errors);
+        
         
         var plant = new Plant
         {
@@ -56,13 +62,12 @@ public class PlantService(
     {
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         
-        var plantToDelete = plantRepo.GetPlantByIdAsync(plantId)
-                            ?? throw new KeyNotFoundException();
+        var plantToDelete = plantRepo.GetPlantByIdAsync(plantId);
         
         if (plantToDelete.Result is { IsDead: false })
         {
             MonitorService.Log.Error("User tried to delete plant that is not dead");
-            throw new ValidationException("Plant is not dead. Delete plant first by marking it as dead.");
+            throw new ValidationException("Plant is not dead. Mark plant as dead first before trying to delete it.");
         }
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
@@ -76,16 +81,20 @@ public class PlantService(
     {
         MonitorService.Log.Debug("Entered Edit Plant Async method in PlantService");
         
-        await plantEditValidator.ValidateAndThrowAsync(dto);
+        var plant = await plantRepo.GetPlantByIdAsync(plantId) 
+                    ?? throw new KeyNotFoundException(PlantNotFound);
         
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
-        var plant = await plantRepo.GetPlantByIdAsync(plantId) 
-                    ?? throw new KeyNotFoundException();
         if (plantOwnerId != Guid.Parse(claims.Id))
         {
             MonitorService.Log.Error("User tried to edit plant that does not belong to them");
             throw new AuthenticationException();
         }
+        
+        var editResult = await plantEditValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!editResult.IsValid)
+            throw new ValidationException(editResult.Errors);
+        
         plant.PlantName = dto.PlantName ?? plant.PlantName;
         plant.PlantType = dto.PlantType ?? plant.PlantType;
         plant.PlantNotes = dto.PlantNotes ?? plant.PlantNotes;
@@ -100,7 +109,7 @@ public class PlantService(
     {
         MonitorService.Log.Debug("Entered Mark Plant As Dead Async method in PlantService");
         var plant = await plantRepo.GetPlantByIdAsync(plantId) 
-                    ?? throw new KeyNotFoundException();
+                    ?? throw new KeyNotFoundException(PlantNotFound);
         
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.MarkPlantAsDeadAsync(plant.PlantId);
@@ -113,7 +122,7 @@ public class PlantService(
     {
         MonitorService.Log.Debug("Entered Water Plant Async method in PlantService");
         var plant = await plantRepo.GetPlantByIdAsync(plantId) 
-                    ?? throw new KeyNotFoundException();
+                    ?? throw new KeyNotFoundException(PlantNotFound);
 
         var plantOwnerId = await plantRepo.GetPlantOwnerUserId(plantId);
         if (plantOwnerId == Guid.Parse(claims.Id)) return await plantRepo.WaterPlantAsync(plant.PlantId);

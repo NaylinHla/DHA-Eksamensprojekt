@@ -48,7 +48,9 @@ public class SecurityService(
 
     public async Task<AuthResponseDto> Register(AuthRegisterDto dto)
     {
-        await registerValidator.ValidateAndThrowAsync(dto);
+        var registerResult = await registerValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!registerResult.IsValid)
+            throw new ValidationException(registerResult.Errors);
 
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
