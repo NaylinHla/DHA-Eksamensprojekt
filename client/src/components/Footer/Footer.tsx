@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import {EmailClient} from "../../generated-client.ts"; // Adjust path
 import {Link} from "react-router";
-
-const emailClient = new EmailClient("http://localhost:5000"); // Adjust base URL
+import {emailClient} from "../../apiControllerClients.ts"; // Adjust path
 
 export default function Footer() {
     const [email, setEmail] = useState("");

@@ -1,16 +1,11 @@
 import React, {useState} from "react";
 import {Droplet, X} from "lucide-react";
 import PlantIcon from "../../assets/Favicon/Plant.svg?react";
-import {JwtAtom, PlantClient} from "../../atoms";
+import {JwtAtom} from "../../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
 import {ConfirmModal} from "../index.ts";
-
-
-const plantClient = new PlantClient(
-    import.meta.env.VITE_API_URL ?? "http://localhost:5000"
-);
-
+import {plantClient} from "../../apiControllerClients.ts";
 
 export interface CardPlant {
     id: string;
