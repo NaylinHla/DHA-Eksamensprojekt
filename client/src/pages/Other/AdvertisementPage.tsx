@@ -25,9 +25,9 @@ const AdvertisementPage = () => {
                         <p className="mb-4">
                             This is your chance to upgrade to Premium for a reduced price! Gain access to exclusive content, advanced features, and personalized services.
                         </p>
-                        <button className="bg-[--color-accent] text-white py-2 px-6 rounded-lg text-lg hover:bg-[--color-accent-dark] transition-all">
+                        <a href={"https://www.youtube.com/watch?v=y6120QOlsfU"} className="bg-[--color-accent] py-2 px-6 rounded-lg text-lg hover:bg-[--color-accent-dark] transition-all">
                             Upgrade Now
-                        </button>
+                        </a>
                     </div>
 
                     {/* Contact CTA */}
