@@ -21,11 +21,7 @@ public static class RestStartupExtensions
     {
         app.UseExceptionHandler();
         app.UseRouting();
-        app.UseCors(opts => opts
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-        );
+        app.UseCors("DHAPolicy");
         app.UseAuthorization();
         app.MapControllers();
         return app;

@@ -46,7 +46,19 @@ public class Program
         services.AddTransient<IEmailSender, EmailSenderService>();
         services.AddSingleton<JwtEmailTokenService>();
         services.AddTransient<SmtpClientFactory>(_ => () => new SmtpClientWrapper("smtp.mailersend.net", 2525));
-
+        
+        // CORS
+        services.AddCors(options =>
+        {
+            options.AddPolicy("DHAPolicy", builder =>
+            {
+                builder
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+        
         // Websocket & REST APIs
         services.AddWebsocketInfrastructure();
         services.RegisterWebsocketApiServices();
