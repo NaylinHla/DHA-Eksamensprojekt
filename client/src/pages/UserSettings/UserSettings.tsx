@@ -30,7 +30,7 @@ const UserSettings: React.FC<Props> = () => {
     useEffect(() => {
         const theme = settings?.darkTheme ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem(LOCAL_KEY, theme);
+        localStorage.setItem("theme", theme);
     }, [settings?.darkTheme]);
 
     useEffect(() => {
