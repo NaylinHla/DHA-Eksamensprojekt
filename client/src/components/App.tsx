@@ -7,6 +7,7 @@ import 'jotai-devtools/styles.css';
 import { RandomUidAtom } from './import';
 import { UserProvider } from '../LoggedInUserData/UserContext.tsx';
 import UserSettingsInitializer from "../LoggedInUserData/UserSettingsInitializer.tsx";
+import { UserSettingsAtom } from "../atoms";
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const prod = import.meta.env.PROD;
@@ -14,6 +15,7 @@ const prod = import.meta.env.PROD;
 export default function App() {
     const [serverUrl, setServerUrl] = useState<string>();
     const [randomUid, setRandomUid] = useAtom(RandomUidAtom);
+    const [settings] = useAtom(UserSettingsAtom);
 
     useEffect(() => {
         if (!randomUid) {
@@ -31,6 +33,12 @@ export default function App() {
         setServerUrl(finalUrl);
     }, [prod, baseUrl, randomUid]);
 
+    useEffect(() => {
+        const theme = settings?.darkTheme ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [settings?.darkTheme]);
+
     return (
         <UserProvider>
             <UserSettingsInitializer />
@@ -46,5 +54,4 @@ export default function App() {
             ></div>
         </UserProvider>
     );
-
 }
