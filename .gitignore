@@ -487,3 +487,4 @@ server/Startup/appsettings.json
 /server/Startup.Tests/coverage-report
 /actions_runner/_work
 /actions_runner/_diag
+public/index.html

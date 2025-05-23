@@ -1,6 +1,7 @@
 import React, {useEffect, useLayoutEffect, useRef, useState} from "react";
 import logo from "../../assets/Favicon/favicon.svg";
-import {AuthClient, AuthLoginDto, AuthRegisterDto} from "../../generated-client.ts";
+import {AuthLoginDto, AuthRegisterDto} from "../../generated-client.ts";
+import {authClient} from "../../apiControllerClients.ts";
 import {PasswordField} from "../../components/utils/PasswordField/PasswordField.tsx";
 import {JwtAtom, useAtom, UserIdAtom} from "../../components/import";
 import toast from "react-hot-toast";
@@ -27,8 +28,6 @@ interface ValidationErrors {
 
     [key: string]: string | undefined;
 }
-
-const authClient = new AuthClient("http://localhost:5000");
 
 const AuthScreen: React.FC<AuthScreenProps> = ({onLogin}) => {
     const [mode, setMode] = useState<"idle" | "login" | "register">("idle");

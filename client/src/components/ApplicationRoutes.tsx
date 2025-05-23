@@ -19,7 +19,7 @@ import {
     TermsRoute,
     WeatherRoute,
 } from "../routeConstants.ts";
-import {AlertConditionsPage, AuthScreen, ContactUsPage, PlantsView, UserSettings, WeatherView,} from "../pages";
+import {AlertConditionsPage, AuthScreen, ContactUsPage, PlantsView, UserSettingsPage, WeatherView,} from "../pages";
 import React, {useEffect, useState} from "react";
 import {Footer, NavBar} from "./index";
 import {
@@ -90,7 +90,7 @@ export default function ApplicationRoutes() {
                     <Route element={<RequireAuth/>}>
                         <Route path={DashboardRoute} element={<DashboardPage/>}/>
                         <Route path={HistoryRoute} element={<HistoryPage/>}/>
-                        <Route path={ProfileRoute} element={<UserSettings/>}/>
+                        <Route path={ProfileRoute} element={<UserSettingsPage/>}/>
                         <Route path={AlertsRoute} element={<AlertPage/>}/>
                         <Route path={MyDeviceOverviewInRoute} element={<MyDevicePage/>}/>
                         <Route path={MyAlertConditionRoute} element={<AlertConditionsPage/>}/>

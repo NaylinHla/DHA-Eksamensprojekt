@@ -1,9 +1,15 @@
-import React, {Fragment, useEffect, useRef, useState} from "react";
-import {Check, Droplet, Pencil, X,} from "lucide-react";
-import type {CardPlant} from "./PlantCard";
-import {JwtAtom, PlantClient, PlantCreateDto, PlantEditDto, PlantResponseDto,} from "../../atoms";
-import {useAtom} from "jotai";
-import {format} from "date-fns";
+import React, { Fragment, useEffect, useRef, useState } from "react";
+import { Check, Droplet, Pencil, X } from "lucide-react";
+import type { CardPlant } from "./PlantCard";
+import {
+    JwtAtom,
+    PlantClient,
+    PlantCreateDto,
+    PlantEditDto,
+    PlantResponseDto,
+} from "../../atoms";
+import { useAtom } from "jotai";
+import { format } from "date-fns";
 import toast from "react-hot-toast";
 import useCloseOnEscapeOrBackdrop from "../Functional/UseCloseOnEscapeOrBackdrop";
 
@@ -22,10 +28,8 @@ const toEditDto = (p: PlantResponseDto): PlantEditDto => ({
     plantName: p.plantName ?? "",
     plantType: p.plantType ?? "",
     plantNotes: p.plantNotes ?? "",
-    planted: p.planted,
     lastWatered: p.lastWatered,
     waterEvery: p.waterEvery,
-    isDead: p.isDead,
 });
 
 const emptyCreate: PlantCreateDto = {
@@ -37,12 +41,11 @@ const emptyCreate: PlantCreateDto = {
     isDead: false,
 };
 
-const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
+const PlantModal: React.FC<Props> = ({ open, plant, onClose, onSaved }) => {
     const [jwt] = useAtom(JwtAtom);
     const [isEditing, setEditing] = useState(false);
     const [errors, setErrors] = useState<Partial<Record<keyof PlantEditDto, string>>>({});
 
-    // Form State
     const [data, setData] = useState<PlantEditDto>(emptyCreate);
     const [full, setFull] = useState<PlantResponseDto | null>(null);
     const [saving, setSaving] = useState(false);
@@ -50,7 +53,6 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
 
     const backdrop = useRef<HTMLDivElement>(null);
 
-    // fetch selected plant into card
     useEffect(() => {
         if (!open || !plant) return;
 
@@ -73,7 +75,6 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
         }
     }, [open, plant]);
 
-    // Reset state when off modal
     useEffect(() => {
         if (!open) {
             setEditing(plant === null);
@@ -108,29 +109,22 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
         }
 
         setErrors(newErrors);
-
         return Object.keys(newErrors).length === 0;
     };
 
     useCloseOnEscapeOrBackdrop(open, onClose, backdrop);
 
-    // Helpers
     const upd = <K extends keyof PlantEditDto>(k: K, v: PlantEditDto[K]) =>
-        setData((d) => ({...d, [k]: v}));
+        setData((d) => ({ ...d, [k]: v }));
 
-    // Handlers
     const save = async () => {
-        if (!validate()) {
-            return; // don't save if validation fails
-        }
+        if (!validate()) return;
 
         try {
             setSaving(true);
 
-            /* ────────────────── EDIT EXISTING ────────────────── */
             if (plant) {
                 await plantClient.editPlant(plant.id, data, jwt);
-
                 onSaved();
 
                 const latest = await plantClient.getPlant(plant.id, jwt);
@@ -139,13 +133,14 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
 
                 setEditing(false);
                 toast.success("Plant updated");
-            }
-
-            // Create New
-            else {
-                const newDto = {
-                    ...data,
-                    planted: data.planted ?? new Date()
+            } else {
+                const newDto: PlantCreateDto = {
+                    plantName: data.plantName ?? "",
+                    plantType: data.plantType ?? "",
+                    plantNotes: data.plantNotes ?? "",
+                    planted: new Date(),
+                    waterEvery: data.waterEvery ?? 7,
+                    isDead: false,
                 };
 
                 await plantClient.createPlant(newDto, jwt);
@@ -178,7 +173,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
             await plantClient.waterPlant(plant.id, jwt);
             onSaved();
             setFull((p) =>
-                p ? {...p, lastWatered: new Date()} : p
+                p ? { ...p, lastWatered: new Date() } : p
             );
         } finally {
             setSaving(false);
@@ -190,7 +185,10 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
         setEditing(false);
     };
 
-    const Pill: React.FC<{ children: React.ReactNode; className?: string }> = ({children, className = "",}) => (
+    const Pill: React.FC<{ children: React.ReactNode; className?: string }> = ({
+                                                                                   children,
+                                                                                   className = "",
+                                                                               }) => (
         <div className={`rounded-xl px-4 py-2 shadow-sm bg-[var(--color-surface)] ${className}`}>
             {children}
         </div>
@@ -207,19 +205,21 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                 {full.plantType && <Pill className="text-fluid">Plant Type: {full.plantType}</Pill>}
 
                 <Pill className="flex justify-between items-center text-fluid">
-                  <span>
-                    Last watered:{" "}
-                      {full.lastWatered
-                          ? format(new Date(full.lastWatered), "dd/MM/yyyy")
-                          : "never"}
-                  </span>
+                    <span>
+                        Last watered:{" "}
+                        {full.lastWatered
+                            ? format(new Date(full.lastWatered), "dd/MM/yyyy")
+                            : "never"}
+                    </span>
                     <button onClick={waterNow} title="Water now">
-                        <Droplet size={18} className="text-blue-500"/>
+                        <Droplet size={18} className="text-blue-500" />
                     </button>
                 </Pill>
 
                 {full.planted && (
-                    <Pill className="text-fluid">Planted: {format(new Date(full.planted), "dd/MM/yyyy")}</Pill>
+                    <Pill className="text-fluid">
+                        Planted: {format(new Date(full.planted), "dd/MM/yyyy")}
+                    </Pill>
                 )}
 
                 {full.waterEvery && (
@@ -300,10 +300,9 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                     className="absolute right-4 top-4 text-muted-foreground"
                     onClick={onClose}
                 >
-                    <X size={20}/>
+                    <X size={20} />
                 </button>
 
-                {/* Title */}
                 <h2 className="font-semibold text-fluid">
                     {plant
                         ? isEditing
@@ -312,12 +311,10 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                         : "Add plant"}
                 </h2>
 
-                {/* Details / Edit */}
                 <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh] pr-1">
                     {isEditing ? renderEdit() : renderDetails()}
                 </div>
 
-                {/* Footer */}
                 <div className="flex justify-between pt-4">
                     {isEditing ? (
                         <>
@@ -336,7 +333,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                                 onClick={save}
                                 disabled={saving}
                             >
-                                <Check size={14}/>
+                                <Check size={14} />
                                 {saving ? "Saving…" : "Save"}
                             </button>
                         </>
@@ -345,7 +342,7 @@ const PlantModal: React.FC<Props> = ({open, plant, onClose, onSaved}) => {
                             className="btn btn-primary ml-auto flex items-center gap-1"
                             onClick={() => setEditing(true)}
                         >
-                            <Pencil size={14}/>
+                            <Pencil size={14} />
                             Edit
                         </button>
                     )}

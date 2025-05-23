@@ -74,7 +74,7 @@ public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
         foreach (var email in emailListRepository.GetAllEmails())
         {
             var token = jwtService.GenerateUnsubscribeToken(email);
-            var unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
+            var unsubscribeUrl = $"https://api.meetyourplants.site/api/email/unsubscribe?token={token}";
 
             var htmlBody = $@"
                 <p>{message}</p>
