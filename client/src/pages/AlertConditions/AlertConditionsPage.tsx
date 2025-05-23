@@ -134,7 +134,7 @@ export default function AlertConditionsPage() {
                         }`}>
                             {devices.length > 0 ? (
                                 <select
-                                    className="border px-3 py-2 rounded w-full sm:w-auto md:max-w-[200px] truncate max-w-full bg-[--color-background]"
+                                    className="border px-3 py-2 rounded w-full sm:w-auto md:max-w-[200px] truncate max-w-full bg-[var(--color-surface)]"
                                     value={selectedDeviceId}
                                     onChange={e => setSelectedDeviceId(e.target.value)}
                                 >
