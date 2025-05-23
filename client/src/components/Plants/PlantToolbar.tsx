@@ -1,6 +1,7 @@
 import React, {useState} from "react";
-import {SearchBar} from "../index.ts";
-
+import { SearchBar, ConfirmModal } from "../index.ts";
+import {UserSettingsAtom} from "../../atoms";
+import {useAtom} from "jotai";
 
 interface Props {
     onSearch: (term: string) => void;
@@ -11,6 +12,25 @@ interface Props {
 
 const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onToggleDead }) => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [userSettings] = useAtom(UserSettingsAtom);
+
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleWaterAllClick = () => {
+        if (userSettings?.confirmDialog) {
+            setConfirmOpen(true);
+        } else {
+            onWaterAll();
+        }
+    };
+
+    const handleConfirm = () => {
+        setLoading(true);
+        setConfirmOpen(false);
+        onWaterAll();
+        setLoading(false);
+    };
 
     return (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
@@ -38,11 +58,21 @@ const PlantsToolbar: React.FC<Props> = ({ onSearch, onWaterAll, showDead, onTogg
             </div>
 
             <button
-                onClick={onWaterAll}
+                onClick={handleWaterAllClick}
                 className="btn border-neutral bg-transparent btn-lg hover:text-white hover:bg-neutral self-start lg:self-auto"
             >
                 Water all plants
             </button>
+
+            <ConfirmModal
+                isOpen={confirmOpen}
+                title="Water All Plants"
+                subtitle="This action will water all your plants. Are you sure?"
+                confirmVariant="primary"
+                loading={loading}
+                onCancel={() => setConfirmOpen(false)}
+                onConfirm={handleConfirm}
+            />
         </div>
     );
 };
