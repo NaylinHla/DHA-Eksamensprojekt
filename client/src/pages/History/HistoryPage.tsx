@@ -1,4 +1,5 @@
-import React, {useEffect, useMemo, useRef, useState} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { format } from 'date-fns';
 import {
     CategoryScale,
     Chart as ChartJS,
@@ -9,14 +10,14 @@ import {
     PointElement,
     Tooltip as ChartTooltip,
 } from "chart.js";
-import {Line} from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import toast from "react-hot-toast";
-import {useAtom} from "jotai";
+import { useAtom } from "jotai";
+import { useDisplayTemperature } from "../../hooks";
 import {
     formatDateTimeForUserTZ,
-    GetRecentSensorDataForAllUserDeviceDto,
     GreenhouseSensorDataAtom,
-    JwtAtom,
+    JwtAtom, LoadingSpinner,
     SelectedDeviceIdAtom,
     SensorHistoryDto,
     SensorHistoryWithDeviceDto,
@@ -25,14 +26,19 @@ import {
     UserDevice,
     useThrottle,
     useTopicManager,
-    useWebSocketMessage
+    useWebSocketMessage,
 } from "../import";
-import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClients.ts";
+import { greenhouseDeviceClient, userDeviceClient } from "../../apiControllerClients.ts";
+import { cssVar } from "../../components/utils/Theme/theme.ts";
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, ChartTooltip, ChartLegend, Filler);
 
-type Point = { time: string; value: number; [key: string]: number | string };
+type Point = { time: string; display: string; value: number; };
+type TabKey = "temperature" | "humidity" | "airPressure" | "airQuality";
 
+export function getCssVar(name: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
 export default function HistoryPage() {
     // dates
@@ -52,27 +58,48 @@ export default function HistoryPage() {
     const [loadingData, setLoadingData] = useState(false);
     const [rangeFrom, setRangeFrom] = useState(isoMonthAgo);
     const [rangeTo, setRangeTo] = useState(isoToday);
+    const [tab, setTab] = useState<TabKey>("temperature");
+    const { convert, unit} = useDisplayTemperature();
 
     const chartRefs = {
-        temperature: useRef<any>(null),
-        humidity: useRef<any>(null),
-        airPressure: useRef<any>(null),
-        airQuality: useRef<any>(null),
+        temperature: useRef<ChartJS | null>(null),
+        humidity: useRef<ChartJS | null>(null),
+        airPressure: useRef<ChartJS | null>(null),
+        airQuality: useRef<ChartJS | null>(null),
     };
 
-    const {subscribe, unsubscribe} = useTopicManager();
+    // WebSocket bindings
+    const { subscribe, unsubscribe } = useTopicManager();
     const prevTopic = useRef<string | null>(null);
 
     const rangeFromRef = useRef(rangeFrom);
     const rangeToRef = useRef(rangeTo);
+    useEffect(() => { rangeFromRef.current = rangeFrom; rangeToRef.current = rangeTo; }, [rangeFrom, rangeTo]);
 
     useEffect(() => {
         rangeFromRef.current = rangeFrom;
         rangeToRef.current = rangeTo;
     }, [rangeFrom, rangeTo]);
 
+    // Tab Helper
+    const pretty: Record<TabKey, string> = {
+        temperature: "Temperature",
+        humidity: "Humidity",
+        airPressure: "Air Pressure",
+        airQuality: "Air Quality",
+    };
+
+    /* const unit: Record<TabKey, string> = {
+        temperature: "°C",
+        humidity: "%",
+        airPressure: "hPa",
+        airQuality: "ppm",
+    }; */
+
+
+    //  Chart Helpers
     function appendPointToChart(
-        chartRef: React.RefObject<ChartJS>,
+        chartRef: React.RefObject<ChartJS | null>,
         point: { time: string; value: number },
         maxPoints = 500
     ) {
@@ -80,105 +107,82 @@ export default function HistoryPage() {
         if (!chart) return;
 
         // Ensure arrays exist
-        if (!Array.isArray(chart.data.labels)) {
-            chart.data.labels = [];
-        }
-        if (!Array.isArray(chart.data.datasets[0].data)) {
-            chart.data.datasets[0].data = [];
-        }
+        if (!Array.isArray(chart.data.labels)) chart.data.labels = [];
+        if (!Array.isArray(chart.data.datasets[0].data)) chart.data.datasets[0].data = [];
 
         // 1) Append new
         chart.data.labels.push(point.time);
-        chart.data.datasets[0].data.push(point.value);
+        (chart.data.datasets[0].data as number[]).push(point.value);
 
         // 2) Pop oldest if over limit
         if (chart.data.labels.length > maxPoints) {
             chart.data.labels.shift();
-            chart.data.datasets[0].data.shift();
+            (chart.data.datasets[0].data as number[]).shift();
         }
 
-        // 3) Redraw instantly
-        chart.update('none');
+        chart.update("none");
     }
 
     const throttledAppend = useThrottle((logs: SensorHistoryDto[]) => {
-        if (logs.length === 0) return;
+        if (!logs.length) return;
 
-        setGreenhouseData((prev) => {
-            return prev.map((d) =>
+        setGreenhouseData(prev =>
+            prev.map(d =>
                 d.deviceId === selectedDeviceId
-                    ? {
-                        ...d,
-                        sensorHistoryRecords: [...(d.sensorHistoryRecords || []), ...logs]
-                    }
+                    ? { ...d, sensorHistoryRecords: [...(d.sensorHistoryRecords || []), ...logs] }
                     : d
-            );
-        });
+            )
+        );
 
+        /* Push to charts (only if chart exists yet) */
         logs.forEach(r => {
-            const t = formatDateTimeForUserTZ(r.time);
-            if (!t) return;
-
-            appendPointToChart(chartRefs.temperature, {time: t, value: Number(r.temperature)});
-            appendPointToChart(chartRefs.humidity, {time: t, value: Number(r.humidity)});
-            appendPointToChart(chartRefs.airPressure, {time: t, value: Number(r.airPressure)});
-            appendPointToChart(chartRefs.airQuality, {time: t, value: Number(r.airQuality)});
+            const iso = r.time instanceof Date ? r.time.toISOString() : String(r.time);
+            if (!iso) return;
+            appendPointToChart(chartRefs.temperature, { time: iso, value: Number(r.temperature) });
+            appendPointToChart(chartRefs.humidity, { time: iso, value: Number(r.humidity) });
+            appendPointToChart(chartRefs.airPressure, { time: iso, value: Number(r.airPressure) });
+            appendPointToChart(chartRefs.airQuality, { time: iso, value: Number(r.airQuality) });
         });
     }, 1000);
 
+    /* Websocket Data */
     useWebSocketMessage(StringConstants.ServerBroadcastsLiveDataToDashboard, (dto: any) => {
         const logs: SensorHistoryDto[] = dto.logs?.[0]?.sensorHistoryRecords || [];
         const deviceId = dto.logs?.[0]?.deviceId;
-
         if (!logs.length || !deviceId) return;
 
         // Update the latestSensorData for this device
         const latestLog = logs[logs.length - 1];
         setLatestSensorData(prev => ({
             ...prev,
-            [deviceId]: {
-                deviceId,
-                temperature: latestLog.temperature,
-                humidity: latestLog.humidity,
-                airPressure: latestLog.airPressure,
-                airQuality: latestLog.airQuality,
-                time: latestLog.time,
-            },
+            [deviceId]: { ...latestLog, deviceId },
         }));
 
         // Only update chart if logs are in date range
         const from = new Date(rangeFromRef.current);
         const to = new Date(rangeToRef.current);
         to.setHours(23, 59, 59, 999);
-
-        const inRange = logs.filter(log => {
-            const time = new Date(log.time!);
-            return time >= from && time <= to;
+        const inRange = logs.filter(l => {
+            const t = new Date(l.time!);
+            return t >= from && t <= to;
         });
-
-        if (!inRange.length) return;
-
         const existing = new Set(
-            greenhouseData.flatMap((d) =>
-                d.sensorHistoryRecords?.map((r) => new Date(r.time!).getTime()) || []
-            )
+            greenhouseData.flatMap(d => d.sensorHistoryRecords?.map(r => new Date(r.time!).getTime()) || [])
         );
-
-        const unique = inRange.filter((l) => !existing.has(new Date(l.time!).getTime()));
+        const unique = inRange.filter(l => !existing.has(new Date(l.time!).getTime()));
         if (unique.length) throttledAppend(unique);
     });
 
     // subscribe to topic changes
     useEffect(() => {
         if (!selectedDeviceId) return;
-        const topic = `GreenhouseSensorData/${selectedDeviceId}`;
-        // Unsubscribe from the previous device if it's different from the new one
+        const newTopic = `GreenhouseSensorData/${selectedDeviceId}`;
         if (prevTopic.current && prevTopic.current !== selectedDeviceId) {
-            unsubscribe(`GreenhouseSensorData/${prevTopic.current}`).then();
+            unsubscribe(`GreenhouseSensorData/${prevTopic.current}`).catch(() => {});
         }
-        subscribe(topic).then();
+        subscribe(newTopic).catch(() => {});
         prevTopic.current = selectedDeviceId;
-        return () => void unsubscribe(topic);
+        return () => void unsubscribe(newTopic).catch(() => {});
     }, [selectedDeviceId]);
 
     // Fetch devices
@@ -187,14 +191,12 @@ export default function HistoryPage() {
         setLoadingDevices(true);
         userDeviceClient
             .getAllUserDevices(jwt)
-            .then((res: any) => {
-                const list = Array.isArray(res) ? res : [];
-                setDevices(list);
-                if (!selectedDeviceId && list.length) {
-                    setSelectedDeviceId(list[0].deviceId!);
-                }
+            .then(list => {
+                const devices = Array.isArray(list) ? list : [];
+                setDevices(devices);
+                if (!selectedDeviceId && devices.length) setSelectedDeviceId(devices[0].deviceId!);
             })
-            .catch(() => toast.error("Failed to load devices", {id: "load-devices-error"}))
+            .catch(() => toast.error("Failed to load devices"))
             .finally(() => setLoadingDevices(false));
     }, [jwt]);
 
@@ -202,69 +204,43 @@ export default function HistoryPage() {
     useEffect(() => {
         if (!jwt || !selectedDeviceId) return;
         setLoadingData(true);
-
-        const timer = setTimeout(() => {
-            const [fromYear, fromMonth, fromDay] = rangeFrom.split("-").map(Number);
-            const [toYear, toMonth, toDay] = rangeTo.split("-").map(Number);
-
-            // Local time at 00:00
-            const localStart = new Date(fromYear, fromMonth - 1, fromDay, 0, 0, 0, 0);
-            const localEnd = new Date(toYear, toMonth - 1, toDay, 23, 59, 59, 999);
-
-            // Convert local time to UTC by using .toISOString() and building Date from that
-            const utcStart = new Date(localStart.toISOString()); // This is already UTC
-            const utcEnd = new Date(localEnd.toISOString());
-
+        const debounced = setTimeout(() => {
+            const start = new Date(rangeFrom + "T00:00:00");
+            const end = new Date(rangeTo + "T23:59:59.999");
             greenhouseDeviceClient
-                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, utcStart, utcEnd, jwt)
-                .then((data) => {
-                    setGreenhouseData(data);
-                })
-                .catch(() => toast.error("Failed to load sensor data", {id: "load-sensor-error"}))
+                .getAllSensorHistoryByDeviceAndTimePeriodIdDto(selectedDeviceId, start, end, jwt)
+                .then(setGreenhouseData)
+                .catch(() => toast.error("Failed to load sensor data"))
                 .finally(() => setLoadingData(false));
-        }, 300); // 300ms debounce
-        return () => clearTimeout(timer);
+        }, 300);
+        return () => clearTimeout(debounced);
     }, [jwt, selectedDeviceId, rangeFrom, rangeTo]);
 
     // load recent data
     useEffect(() => {
         if (!jwt) return;
-
         greenhouseDeviceClient
             .getRecentSensorDataForAllUserDevice(jwt)
-            .then((res: GetRecentSensorDataForAllUserDeviceDto | null) => {
-                if (!res || !res.sensorHistoryWithDeviceRecords || res.sensorHistoryWithDeviceRecords.length === 0) {
-                    setLatestSensorData({});
-                    return; //If server responded with 204 No Content, res might be null or empty object
-                }
-                const records = res.sensorHistoryWithDeviceRecords;
-                const snapshot = records.reduce((acc, curr) => {
-                    if (curr.deviceId) acc[curr.deviceId] = curr;
-                    return acc;
-                }, {} as Record<string, SensorHistoryWithDeviceDto>);
-
+            .then(res => {
+                const recs = res?.sensorHistoryWithDeviceRecords ?? [];
+                const snapshot = Object.fromEntries(recs.map(r => [r.deviceId, r]));
                 setLatestSensorData(snapshot);
             })
-            .catch(() => toast.error("Failed to load recent sensor data", {id: "load-sensor-error"}));
-    }, [jwt, selectedDeviceId]);
+            .catch(() => toast.error("Failed to load recent sensor data"));
+    }, [jwt]);
 
     function downSampleRecords<T>(arr: T[], maxPoints = 500): T[] {
-        const n = arr.length;
-        if (n <= maxPoints) return arr;
-        const step = Math.floor(n / maxPoints);
-        const res: T[] = [];
-        for (let i = 0; i < n; i += step) res.push(arr[i]);
-        return res;
+        if (arr.length <= maxPoints) return arr;
+        const step = Math.floor(arr.length / maxPoints);
+        return arr.filter((_, idx) => idx % step === 0);
     }
 
-    // sync, down sampled series with timing logs
+    //  Build series
     const series = useMemo(() => {
         const recs = greenhouseData.find(d => d.deviceId === selectedDeviceId)?.sensorHistoryRecords || [];
-        if (!recs.length) return {temperature: [], humidity: [], airPressure: [], airQuality: []};
-
-        // 1) Deduplicate consecutive identical records
         const unique: SensorHistoryDto[] = [];
         let prev: Partial<SensorHistoryDto> = {};
+
         for (const r of recs) {
             if (
                 r.time === prev.time &&
@@ -277,227 +253,250 @@ export default function HistoryPage() {
             prev = r;
         }
 
-        // 2) Down sample those unique records
-        const sampledRecs = downSampleRecords(unique, 500);
+        // 2) Down-sample
+        const sampled = downSampleRecords(unique, 500);
 
-        // 3) Build each metric series
-        const temperatureSeries: Point[] = [];
-        const humiditySeries: Point[] = [];
-        const airPressureSeries: Point[] = [];
-        const airQualitySeries: Point[] = [];
-
-        sampledRecs.forEach(r => {
-            const t = formatDateTimeForUserTZ(r.time);
-            if (!t) return;
-            temperatureSeries.push({time: t, value: Number(r.temperature) || 0});
-            humiditySeries.push({time: t, value: Number(r.humidity) || 0});
-            airPressureSeries.push({time: t, value: Number(r.airPressure) || 0});
-            airQualitySeries.push({time: t, value: Number(r.airQuality) || 0});
-        });
+        const build = (key: keyof SensorHistoryDto): Point[] =>
+            sampled.map(r => {
+                const raw = Number(r[key]) || 0;
+                const value = key === "temperature" ? convert(raw) ?? 0 : raw;
+                return {
+                    time: r.time instanceof Date ? r.time.toISOString() : String(r.time),
+                    display: format(new Date(r.time!), "d MMM"),
+                    value,
+                };
+            });
 
         return {
-            temperature: temperatureSeries,
-            humidity: humiditySeries,
-            airPressure: airPressureSeries,
-            airQuality: airQualitySeries,
+            temperature: build("temperature"),
+            humidity: build("humidity"),
+            airPressure: build("airPressure"),
+            airQuality: build("airQuality"),
         };
     }, [greenhouseData, selectedDeviceId, rangeFrom, rangeTo]);
 
-    const Spinner = (
-        <div className="flex justify-center items-center h-32">
-            <svg className="animate-spin h-8 w-8 mr-3 text-gray-500" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"
-                        fill="none"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-            </svg>
-            <span className="text-gray-500">Loading…</span>
-        </div>
-    );
-
-    // Function to get the CSS variable value
-    const getCSSVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name);
-    const primaryColor = getCSSVar('--color-primary');
-    const primaryHoverColor = getCSSVar('--color-primaryhover');
-
-    const Chart = ({data, label, chartRef}: { data: Point[]; label: string; chartRef: any }) =>
-        data.length ? (
-            <div className="mb-10 px-2">
-                <h2 className="text-xl font-semibold mb-2">{label}</h2>
-                <Line
-                    ref={chartRef}
-                    data={{
-                        labels: data.map((point) => point.time),
-                        datasets: [
-                            {
-                                label,
-                                data: data.map((point) => point.value),
-                                fill: true,
-                                backgroundColor: primaryColor,
-                                borderColor: primaryHoverColor,
-                                tension: 0.4,
-                                pointRadius: 0,
-                            },
-                        ],
-                    }}
-                    options={{
-                        responsive: true,
-                        animation: false,
-                        plugins: {
-                            legend: {display: true},
-                            tooltip: {mode: "index", intersect: false},
-                        },
-                        interaction: {
-                            mode: "nearest" as const,
-                            axis: "x" as const,
-                            intersect: false,
-                        },
-                        scales: {
-                            x: {
-                                title: {display: true, text: "Time"},
-                                ticks: {maxTicksLimit: 10, autoSkip: true},
-                            },
-                            y: {title: {display: true, text: label}},
-                        },
-                    }}
-                />
-            </div>
-        ) : <div className="text-gray-500">No {label} data</div>;
-
-    //Make sure the range is set logical
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, isFromDate: boolean) => {
-        const newDate = e.target.value;
-
-        if (isFromDate) {
-            if (new Date(newDate) > new Date(rangeTo)) {
-                toast.error("From date cannot be after To date", {id: "date-range-error"});
-                return;
-            }
-            setRangeFrom(newDate);
-        } else {
-            if (new Date(newDate) < new Date(rangeFrom)) {
-                toast.error("To date cannot be before From date", {id: "date-range-error"});
-                return;
-            }
-            setRangeTo(newDate);
-        }
-    };
-
-    //No data for selected date range
-    const isEmpty =
-        series.temperature.length === 0 &&
-        series.humidity.length === 0 &&
-        series.airPressure.length === 0 &&
-        series.airQuality.length === 0;
-
-    //Show unit in the current data box
-    const unitMap: Record<string, string> = {
-        temperature: "°C",
+    const unitMap: Record<TabKey, string> = {
+        temperature: unit,
         humidity: "%",
         airPressure: "hPa",
         airQuality: "ppm",
-    }
+    };
+
+    // Re-Usable Chart
+    const ChartCard: React.FC<{ tabKey: TabKey; data: Point[]; label: string; chartRef: React.RefObject<ChartJS | null>; }> = ({ tabKey, data, label, chartRef }) => {
+        const colorPrimary = getCssVar("--color-primary");
+
+        return data.length ? (
+            <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden mb-6 px-4 pt-4">
+                <h3 className="text-lg font-semibold mb-3 text-fluid">{label}</h3>
+                <div className="w-full h-[clamp(8rem,20vw,40rem)]">
+                    <Line
+                        ref={chartRef as any}
+                        data={{
+                            labels: data.map(p => p.time),
+                            datasets: [
+                                {
+                                    data: data.map(p => p.value),
+                                    tension: 0.3,
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    borderColor: colorPrimary,
+                                },
+                            ],
+                        }}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            elements: { point: { radius: 0 } },
+                            devicePixelRatio: 1.5,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: items => {
+                                            if (!items.length) return "";
+                                            const i = items[0].dataIndex as number;
+                                            const point = data[i];
+                                            return point ? format(new Date(point.time), "PPP HH:mm:ss") : "";
+                                        },
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    ticks: {
+                                        color: colorPrimary,
+                                        callback: (val: any) => data[val]?.display ?? "",
+                                        maxTicksLimit: 12,
+                                        autoSkip: true,
+                                    },
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    title: {
+                                        display: true,
+                                        text: `${label} (${unitMap[tabKey]})`,
+                                        padding: 4,
+                                        color: colorPrimary,
+                                    },
+                                    ticks: {
+                                        color: colorPrimary,
+                                        callback: (v: any) => `${v} ${unitMap[tabKey]}`,
+                                    },
+                                },
+                            },
+                        }}
+                    />
+                </div>
+            </div>
+        ) : (
+            <div className="text-[--color-primary] mb-6">No {label} data</div>
+        );
+    };
+
 
     const fields: (keyof SensorHistoryWithDeviceDto)[] = ["temperature", "humidity", "airPressure", "airQuality"];
+    const noData = !series.temperature.length && !series.humidity.length && !series.airPressure.length && !series.airQuality.length;
 
     return (
-        <div>
-            {/* Filters */}
-            <div>
-                <TitleTimeHeader title="Overview"/>
-            </div>
+        <div className="min-h-[calc(100vh-64px)] flex flex-col font-display">
+            {/* Header */}
+            <TitleTimeHeader title="History"/>
 
-            <div className="flex flex-wrap items-start gap-4 lg:items-center lg:justify-between p-4 w-full">
-                <div className="flex gap-2">
-                    <label>From:
-                        <input
-                            type="date"
-                            value={rangeFrom}
-                            onChange={(e) => handleDateChange(e, true)}
-                            className="border ml-1 p-1 rounded"
-                        />
-                    </label>
-                    <label>To:
-                        <input
-                            type="date"
-                            value={rangeTo}
-                            onChange={(e) => handleDateChange(e, false)}
-                            className="border ml-1 p-1 rounded"
-                        />
-                    </label>
-                </div>
-                {/* Current Status Box */}
-                <div
-                    className="border rounded p-4 shadow min-w-[260px] flex flex-col justify-between flex-grow sm:max-w-[355px] h-[114px]">
-                    {loadingDevices || loadingData ? (
-                        Spinner
-                    ) : (() => {
+            {/* Filters & controls */}
+            <div className="flex flex-wrap items-start gap-fluid lg:items-center lg:justify-between p-fluid w-full">
+                {/* Current status */}
+                <div className="bg-[var(--color-surface)] shadow rounded-2xl p-fluid w-full sm:flex-1 flex flex-col justify-between">
+                    {loadingDevices || loadingData ? <LoadingSpinner /> : (() => {
                         const latest = latestSensorData[selectedDeviceId!];
-
-                        if (!latest || fields.some((field) => latest[field] === 0.00 || latest[field] == null)) {
-                            return (
-                                <div className="flex justify-center items-center h-full">
-                                    <p className="text-center">No data available</p>
-                                </div>
-                            );
-                        }
-
+                        if (!latest || fields.some(f => latest[f] == null || latest[f] === 0)) return <p
+                            className="text-center text-[--color-primary]">No data available</p>;
                         return (
                             <>
                                 <div className="flex justify-between mb-2">
-                                    <h2 className="font-bold">Current Status</h2>
-                                    <span
-                                        className="text-xs text-gray-500">{formatDateTimeForUserTZ(latest.time)}</span>
+                                    <h2 className="font-bold text-fluid-header">Current Status</h2>
+                                    <span className="text-fluid text-muted-foreground text-[--color-primary]">
+                                    Last updated:&nbsp;{formatDateTimeForUserTZ(latest.time)}
+                                    </span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    {(["temperature", "humidity", "airPressure", "airQuality"] as const).map((field) => (
-                                        <div key={field} className="flex justify-between">
-                                            <span className="capitalize font-medium">{field}:</span>
-                                            <span>{(latest as any)[field]?.toFixed(2)} {unitMap[field]}</span>
-                                        </div>
-                                    ))}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-fluid text-fluid">
+                                    {fields.map(f => {
+                                        const key = f as TabKey;
+                                        let value = (latest as any)[f];
+
+                                        if (key === "temperature" && typeof value === "number") {
+                                            value = convert(value);
+                                        }
+
+                                        return (
+                                            <div key={f} className="flex">
+                                                <span className="capitalize font-medium">{f}:</span>
+                                                <span className="ml-1">
+                                                    {typeof value === "number" ? value.toFixed(2) : "–"}{unitMap[key]}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </>
                         );
                     })()}
                 </div>
-
-                {/* Device selector */}
-                <div
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:w-auto w-full min-w-[200px]">
-
-                    <label className="font-medium">Select Device:</label>
-                    <select
-                        className="border rounded p-2 min-w-[120px] max-w-[200px] truncate"
-                        value={selectedDeviceId || ""}
-                        onChange={(e) => setSelectedDeviceId(e.target.value)}
-                        disabled={loadingDevices}
-                    >
-                        {devices.length === 0 ? (
-                            <option>No devices</option>
-                        ) : (
-                            devices.map(d => (
-                                <option key={d.deviceId} value={d.deviceId} title={d.deviceName ?? 'Unnamed Device'}>
-                                    {(d.deviceName?.length ?? 0) > 15 ? `${d.deviceName?.slice(0, 15)}...` : d.deviceName ?? 'Unnamed Device'}
-                                </option>
-                            ))
-                        )}
-                    </select>
-                </div>
-
             </div>
 
-            {loadingData ? Spinner : isEmpty ? (
-                <div className="p-8 text-center text-gray-500">
-                    No data available for the selected date range.
-                </div>
-            ) : (
-                <>
-                    <Chart data={series.temperature} label="Temperature" chartRef={chartRefs.temperature}/>
-                    <Chart data={series.humidity} label="Humidity" chartRef={chartRefs.humidity}/>
-                    <Chart data={series.airPressure} label="Air Pressure" chartRef={chartRefs.airPressure}/>
-                    <Chart data={series.airQuality} label="Air Quality" chartRef={chartRefs.airQuality}/>
-                </>
-            )}
+            {/* Charts */}
+            <main className="flex-1 overflow-y-auto p-fluid">
+                <div className="bg-[var(--color-surface)] shadow rounded-2xl">
+                    <div className="px-4 pt-4 flex flex-wrap items-center gap-4 sm:gap-6">
+
+                        {/* Device selector */}
+                        <div className="flex items-center gap-2">
+                            <label className="font-medium text-fluid">Device:</label>
+                            <select
+                                className="select bg-[var(--color-surface)] text-fluid"
+                                value={selectedDeviceId || ""}
+                                onChange={e => setSelectedDeviceId(e.target.value)}
+                                disabled={loadingDevices}
+                            >
+                                {devices.length === 0
+                                    ? <option>No devices</option>
+                                    : devices.map(d => (
+                                        <option key={d.deviceId} value={d.deviceId}>
+                                            {d.deviceName?.length! > 25
+                                                ? d.deviceName!.slice(0, 25) + "…"
+                                                : d.deviceName || "Unnamed"}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
+
+                        {/* Date pickers */}
+                        <div className="flex items-center gap-2 text-sm ml-auto">
+                            <label className="font-medium text-fluid">From:</label>
+                            <input
+                                type="date"
+                                value={rangeFrom}
+                                onChange={e => {
+                                    const v = e.target.value;
+                                    if (new Date(v) > new Date(rangeTo)) {
+                                        toast.error("From date cannot be after To date");
+                                        return;
+                                    }
+                                    setRangeFrom(v);
+                                }}
+                                className="input input-xs bg-[var(--color-surface)] ml-1 text-fluid"
+                            />
+
+                            <label className="font-medium text-fluid">To:</label>
+                            <input
+                                type="date"
+                                value={rangeTo}
+                                onChange={e => {
+                                    const v = e.target.value;
+                                    if (new Date(v) < new Date(rangeFrom)) {
+                                        toast.error("To date cannot be before From date");
+                                        return;
+                                    }
+                                    setRangeTo(v);
+                                }}
+                                className="input input-xs bg-[var(--color-surface)] ml-1 text-fluid"
+                            />
+                        </div>
+                    </div>
+
+                    {/* tab bar */}
+                    <div className="tabs tabs-bordered rounded-t-2xl">
+                        {(Object.keys(pretty) as TabKey[]).map(key => (
+                            <a
+                                key={key}
+                                className={`tab flex-1 tab-bordered${tab === key ? " tab-active" : ""} text-fluid`}
+                                onClick={() => setTab(key)}
+                            >
+                                {pretty[key]}
+                            </a>
+                        ))}
+                    </div>
+                    <hr className="border-primary"/>
+
+                    {/* active chart */}
+                    <div className="p-fluid">
+                        {loadingData ? <LoadingSpinner /> : noData ? (
+                            <div className="p-8 text-center text-[--color-primary]">
+                                No data available for the selected date range.
+                            </div>
+                        ) : (
+                            <ChartCard
+                                tabKey={tab}
+                                data={series[tab]}
+                                label={pretty[tab]}
+                                chartRef={chartRefs[tab]}
+                            />
+                            )}
+                        </div>
+                    </div>
+            </main>
         </div>
     );
 }

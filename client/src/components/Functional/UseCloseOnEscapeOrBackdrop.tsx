@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 
 export function UseCloseOnEscapeOrBackdrop(open: boolean, onClose: () => void, backdropRef: React.RefObject<HTMLElement>) {
     useEffect(() => {

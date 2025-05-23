@@ -7,7 +7,6 @@ namespace Api.Rest.Controllers;
 
 [ApiController]
 public class SubscriptionController(
-    ISecurityService securityService,
     IConnectionManager connectionManager,
     IWebsocketSubscriptionService websocketSubscriptionService) : ControllerBase
 {
@@ -21,7 +20,6 @@ public class SubscriptionController(
     [Route(SubscriptionRoute)]
     public async Task<ActionResult> Subscribe([FromHeader] string authorization, [FromBody] ChangeSubscriptionDto dto)
     {
-        securityService.VerifyJwtOrThrow(authorization);
         await websocketSubscriptionService.SubscribeToTopic(dto.ClientId, dto.TopicIds);
         return Ok();
     }
@@ -30,7 +28,6 @@ public class SubscriptionController(
     [Route(UnsubscribeRoute)]
     public async Task<ActionResult> Unsubscribe([FromHeader] string authorization, [FromBody] ChangeSubscriptionDto dto)
     {
-        securityService.VerifyJwtOrThrow(authorization);
         await websocketSubscriptionService.UnsubscribeFromTopic(dto.ClientId, dto.TopicIds);
         return Ok();
     }

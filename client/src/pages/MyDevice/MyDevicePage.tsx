@@ -7,12 +7,11 @@ import {greenhouseDeviceClient, userDeviceClient} from "../../apiControllerClien
 import {
     ConfirmModal,
     formatDateTimeForUserTZ,
-    IntervalSelector,
+    IntervalSelector, LoadingSpinner,
     SearchBar,
     TitleTimeHeader,
     UserDeviceModal
 } from "../import";
-
 
 // Helper function to format device values (temperature, humidity, etc.)
 const formatDeviceValue = (
@@ -43,18 +42,22 @@ export default function MyDevicePage() {
     const [deviceToRemove, setDeviceToRemove] = useState<UserDevice | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState<{ deviceId: string } | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!jwt) return;
+
+        let showSpinnerTimeout: NodeJS.Timeout | null = null;
+
+        // Start timer to show spinner after 200ms
+        showSpinnerTimeout = setTimeout(() => {
+            setLoading(true);
+        }, 200);
+
         greenhouseDeviceClient
             .getRecentSensorDataForAllUserDevice(jwt)
             .then((resp) => {
-                if (!resp) {
-                    setDeviceData([]);
-                    return;
-                }
-
-                const sensorData = resp.sensorHistoryWithDeviceRecords || [];
+                const sensorData = resp?.sensorHistoryWithDeviceRecords || [];
                 setDeviceData(sensorData);
 
                 const initial: Record<string, LocalPref> = {};
@@ -65,7 +68,21 @@ export default function MyDevicePage() {
                 });
                 setPreferences(initial);
             })
-            .catch(() => toast.error("Failed to fetch devices"));
+            .catch(() => toast.error("Failed to fetch devices", {id: `Fetch-error`,}))
+            .finally(() => {
+                // Cancel spinner timer if request finished before 200ms
+                if (showSpinnerTimeout) {
+                    clearTimeout(showSpinnerTimeout);
+                    showSpinnerTimeout = null;
+                }
+                setLoading(false);
+                setHasFetched(true);
+            });
+        return () => {
+            if (showSpinnerTimeout) {
+                clearTimeout(showSpinnerTimeout);
+            }
+        };
     }, [jwt]);
 
     const filtered = useMemo(() => {
@@ -89,8 +106,8 @@ export default function MyDevicePage() {
             userDeviceClient
                 .deleteUserDevice(id, jwt)
                 .then(() => {
-                    toast.success(`Device "${deviceName}" removed successfully!`);
-                    setDeviceData((prev) => prev.filter((d) => d.deviceId !== id)); // Remove from UI
+                    toast.success(`Device "${deviceName}" removed successfully!`, {id: `Removed-succes`,})
+                    setDeviceData((prev) => prev.filter((d) => d.deviceId !== id));
                     setPreferences((prev) => {
                         const newPref = {...prev};
                         if (id) delete newPref[id];
@@ -98,7 +115,7 @@ export default function MyDevicePage() {
                     });
                 })
                 .catch((e) => {
-                    toast.error(`Failed to remove device: ${e.message}`);
+                    toast.error(`Failed to remove device: ${e.message}`, {id: `Removed-error`,})
                 })
                 .finally(() => {
                     setIsModalOpen(false);
@@ -107,6 +124,8 @@ export default function MyDevicePage() {
         }
     };
 
+    const [hasFetched, setHasFetched] = useState(false);
+    const initializing = !hasFetched && loading;
 
     const cancelRemoveDevice = () => {
         setIsModalOpen(false);
@@ -119,174 +138,179 @@ export default function MyDevicePage() {
             <TitleTimeHeader title="My Device"/>
 
             <main className="flex-1 overflow-y-auto px-6 py-4">
-                <div className="flex flex-col p-6">
+                <div className="flex flex-col">
                     {/* Header row */}
                     <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                         <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm}/>
                     </div>
 
-                    {/* Grid of device cards */}
-                    <div
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                        {filtered.map((device) => {
-                            const id = device.deviceId!;
-                            const pref = preferences[id]!;
-                            const expanded = descExpanded[id] || false;
+                    {initializing ? (
+                        <div className="my-10"><LoadingSpinner /></div>
+                    ) : (
+                        <div
+                            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-fluid">
+                            {filtered.map((device) => {
+                                const id = device.deviceId!;
+                                const pref = preferences[id]!;
+                                const expanded = descExpanded[id] || false;
 
-                            return (
-                                <div key={id}
-                                     className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow cursor-pointer hover:shadow-lg">
+                                return (
+                                    <div key={id}
+                                         className="relative flex flex-col justify-between rounded-xl bg-[var(--color-surface)] shadow-md p-4 w-full h-auto transition-shadow cursor-pointer hover:shadow-lg">
 
-                                    <div className="absolute top-2 right-2 flex items-center gap-2">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedDevice({deviceId: id});
-                                                setEditModalOpen(true);
-                                            }}
-                                            className="text-gray-400 hover:text-blue-500 transition"
-                                            title="Edit device"
-                                        >
-                                            <Pencil size={18}/>
-                                        </button>
-
-                                        {/* ✕ Remove button */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveDevice(device);
-                                            }}
-                                            className="text-gray-400 hover:text-red-500 transition text-lg leading-none"
-                                            title="Remove device"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-
-                                    <p className="font-semibold text-lg truncate mr-7 mb-1">
-                                        {device.deviceName ?? id}
-                                    </p>
-
-                                    {/* Description Section */}
-                                    <div className="flex flex-col flex-grow">
-                                        {device.deviceDesc ? (
-                                            <div
-                                                style={{
-                                                    display: "-webkit-box",
-                                                    WebkitBoxOrient: "vertical",
-                                                    WebkitLineClamp: expanded ? undefined : 3,
-                                                    overflow: "hidden",
-                                                    transition: "max-height 0.3s ease",
-                                                    maxHeight: expanded ? "none" : "4.5em",
+                                        <div className="absolute top-2 right-2 flex items-center gap-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedDevice({deviceId: id});
+                                                    setEditModalOpen(true);
                                                 }}
-                                                className="text-sm text-muted-foreground mb-1"
+                                                className="text-[--color-primary] hover:text-blue-500 transition"
+                                                title="Edit device"
                                             >
-                                                {device.deviceDesc}
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col justify-between h-full">
-                                                <p className="text-sm text-muted-foreground mb-1">No description</p>
-                                            </div>
+                                                <Pencil size={18}/>
+                                            </button>
+
+                                            {/* ✕ Remove button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoveDevice(device);
+                                                }}
+                                                className="text-[--color-primary] hover:text-red-500 transition text-lg leading-none"
+                                                title="Remove device"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        <p className="font-semibold text-lg truncate mr-7 mb-1">
+                                            {device.deviceName ?? id}
+                                        </p>
+
+                                        {/* Description Section */}
+                                        <div className="flex flex-col flex-grow">
+                                            {device.deviceDesc ? (
+                                                <div
+                                                    style={{
+                                                        display: "-webkit-box",
+                                                        WebkitBoxOrient: "vertical",
+                                                        WebkitLineClamp: expanded ? undefined : 3,
+                                                        overflow: "hidden",
+                                                        transition: "max-height 0.3s ease",
+                                                        maxHeight: expanded ? "none" : "4.5em",
+                                                    }}
+                                                    className="text-sm text-muted-foreground mb-1"
+                                                >
+                                                    {device.deviceDesc}
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col justify-between h-full">
+                                                    <p className="text-sm text-muted-foreground mb-1">No description</p>
+                                                </div>
+                                            )}
+
+                                            {/* Show more button */}
+                                            {device.deviceDesc && device.deviceDesc.length > 100 && (
+                                                <button
+                                                    className="text-xs text-primary mb-2 self-start"
+                                                    onClick={() =>
+                                                        setDescExpanded((prev) => ({
+                                                            ...prev,
+                                                            [id]: !prev[id]
+                                                        }))
+                                                    }
+                                                    style={{
+                                                        marginTop: "0.5rem", // Ensure there's space between the description and the button
+                                                    }}
+                                                >
+                                                    {expanded ? "Show less" : "Show more"}
+                                                </button>
+                                            )}
+                                        </div>
+
+
+                                        {/* For devices without a "Show more" button, ensure their height matches. */}
+                                        {!device.deviceDesc || device.deviceDesc.length <= 100 ? (
+                                            <div style={{height: "4.5em"}}></div> // Fixed height for non-expanded descriptions
+                                        ) : null}
+
+
+                                        {device.deviceCreateDateTime && (
+                                            <p className="text-xs text-muted-foreground mb-2">
+                                                Created: {formatDateTimeForUserTZ(device.deviceCreateDateTime)}
+                                            </p>
                                         )}
 
-                                        {/* Show more button */}
-                                        {device.deviceDesc && device.deviceDesc.length > 100 && (
-                                            <button
-                                                className="text-xs text-primary mb-2 self-start"
-                                                onClick={() =>
-                                                    setDescExpanded((prev) => ({
-                                                        ...prev,
-                                                        [id]: !prev[id]
+                                        <div className="flex justify-center mb-2">
+                                            <img
+                                                className="w-24"
+                                                src="https://joy-it.net/files/files/Produkte/SBC-NodeMCU-ESP32/SBC-NodeMCU-ESP32-01.png"
+                                                alt="Device"
+                                            />
+                                        </div>
+
+                                        <div className="text-sm space-y-1 mb-3">
+                                            <p><strong>Temp:</strong> {formatDeviceValue(device.temperature, "°C")}</p>
+                                            <p><strong>Humidity:</strong> {formatDeviceValue(device.humidity, "%")}</p>
+                                            <p><strong>Air
+                                                Pressure:</strong> {formatDeviceValue(device.airPressure, "hPa")}
+                                            </p>
+                                            <p><strong>Air
+                                                Quality:</strong> {formatDeviceValue(device.airQuality, "ppm")}
+                                            </p>
+                                            <p><strong>When:</strong>{" "}
+                                                {device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
+                                                    ? new Date(device.time).toLocaleString()
+                                                    : "N/A"}
+                                            </p>
+                                        </div>
+
+                                        {/* Interval Selector */}
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <IntervalSelector
+                                                totalSeconds={pref.interval}
+                                                onChange={(newSecs) =>
+                                                    setPreferences((p) => ({
+                                                        ...p,
+                                                        [id]: {deviceId: id, interval: newSecs},
                                                     }))
                                                 }
-                                                style={{
-                                                    marginTop: "0.5rem", // Ensure there's space between the description and the button
-                                                }}
-                                            >
-                                                {expanded ? "Show less" : "Show more"}
-                                            </button>
-                                        )}
+                                            />
+                                        </div>
+
+                                        {/* Change Preferences Button */}
+                                        <button
+                                            className="px-8 py-3 text-sm sm:text-base font-semibold btn btn-neutral bg-transparent btn-sm mt-auto"
+                                            onClick={() => {
+                                                const dto: AdminChangesPreferencesDto = {
+                                                    deviceId: id,
+                                                    interval: String(pref.interval),
+                                                };
+                                                userDeviceClient
+                                                    .adminChangesPreferences(dto, jwt)
+                                                    .then(() => toast.success("Preferences sent", {id: `Preferences-succes`,}))
+                                                    .catch((e) => toast.error("Error: " + e.message, {id: `Preferences-error`,}));
+                                            }}
+                                        >
+                                            Change preferences
+                                        </button>
                                     </div>
+                                );
+                            })}
 
-
-                                    {/* For devices without a "Show more" button, ensure their height matches. */}
-                                    {!device.deviceDesc || device.deviceDesc.length <= 100 ? (
-                                        <div style={{height: "4.5em"}}></div> // Fixed height for non-expanded descriptions
-                                    ) : null}
-
-
-                                    {device.deviceCreateDateTime && (
-                                        <p className="text-xs text-muted-foreground mb-2">
-                                            Created: {formatDateTimeForUserTZ(device.deviceCreateDateTime)}
-                                        </p>
-                                    )}
-
-                                    <div className="flex justify-center mb-2">
-                                        <img
-                                            className="w-24"
-                                            src="https://joy-it.net/files/files/Produkte/SBC-NodeMCU-ESP32/SBC-NodeMCU-ESP32-01.png"
-                                            alt="Device"
-                                        />
-                                    </div>
-
-                                    <div className="text-sm space-y-1 mb-3">
-                                        <p><strong>Temp:</strong> {formatDeviceValue(device.temperature, "°C")}</p>
-                                        <p><strong>Humidity:</strong> {formatDeviceValue(device.humidity, "%")}</p>
-                                        <p><strong>Air Pressure:</strong> {formatDeviceValue(device.airPressure, "hPa")}
-                                        </p>
-                                        <p><strong>Air Quality:</strong> {formatDeviceValue(device.airQuality, "ppm")}
-                                        </p>
-                                        <p><strong>When:</strong>{" "}
-                                            {device.time && (device.time as unknown as string) !== "0001-01-01T00:00:00Z"
-                                                ? new Date(device.time).toLocaleString()
-                                                : "N/A"}
-                                        </p>
-                                    </div>
-
-                                    {/* Interval Selector */}
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <IntervalSelector
-                                            totalSeconds={pref.interval}
-                                            onChange={(newSecs) =>
-                                                setPreferences((p) => ({
-                                                    ...p,
-                                                    [id]: {deviceId: id, interval: newSecs},
-                                                }))
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* Change Preferences Button */}
-                                    <button
-                                        className="px-8 py-3 text-sm sm:text-base font-semibold btn btn-neutral bg-transparent btn-sm mt-auto"
-                                        onClick={() => {
-                                            const dto: AdminChangesPreferencesDto = {
-                                                deviceId: id,
-                                                interval: String(pref.interval),
-                                            };
-                                            userDeviceClient
-                                                .adminChangesPreferences(dto, jwt)
-                                                .then(() => toast.success("Preferences sent"))
-                                                .catch((e) => toast.error("Error: " + e.message));
-                                        }}
-                                    >
-                                        Change preferences
-                                    </button>
-                                </div>
-                            );
-                        })}
-
-                        {/* Add device card */}
-                        <button
-                            onClick={() => {
-                                setSelectedDevice(null); // null = create new
-                                setEditModalOpen(true);
-                            }}
-                            className="flex items-center justify-center border-2 border-dashed border-muted rounded-xl h-[500px] bg-[var(--color-surface)] hover:border-muted/60 transition"
-                        >
-                            <Plus className="w-10 h-10 text-muted-foreground"/>
-                        </button>
-                    </div>
+                            {/* Add device card */}
+                            <button
+                                onClick={() => {
+                                    setSelectedDevice(null); // null = create new
+                                    setEditModalOpen(true);
+                                }}
+                                className="flex items-center justify-center border-2 border-dashed border-muted rounded-xl h-[500px] bg-[var(--color-surface)] hover:border-muted/60 transition"
+                            >
+                                <Plus className="w-10 h-10 text-muted-foreground"/>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
 
@@ -304,6 +328,7 @@ export default function MyDevicePage() {
                 device={selectedDevice}
                 onClose={() => setEditModalOpen(false)}
                 onSaved={() => {
+                    setLoading(true);
                     greenhouseDeviceClient
                         .getRecentSensorDataForAllUserDevice(jwt)
                         .then((resp) => {
@@ -319,7 +344,8 @@ export default function MyDevicePage() {
                             setPreferences(initialPref);
 
                         })
-                        .catch(() => toast.error("Failed to refresh device list"));
+                        .catch(() => toast.error("Failed to refresh device list", {id: `Refresh-error`,}))
+                        .finally(() => setLoading(false));
                     setEditModalOpen(false);
                 }}
             />

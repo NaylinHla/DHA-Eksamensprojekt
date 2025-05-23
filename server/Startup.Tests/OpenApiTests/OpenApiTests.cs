@@ -9,6 +9,9 @@ namespace Startup.Tests.OpenApiTests;
 [TestFixture]
 public class OpenApiTests
 {
+    private HttpClient _httpClient;
+    private IServiceProvider _scopedServiceProvider;
+    
     [SetUp]
     public void Setup()
     {
@@ -25,18 +28,14 @@ public class OpenApiTests
     [TearDown]
     public void TearDown()
     {
-        _httpClient?.Dispose();
+        _httpClient.Dispose();
     }
-
-    private HttpClient _httpClient;
-    private IServiceProvider _scopedServiceProvider;
 
     [Test]
     public async Task CanGetJsonResponseFromOpenApi()
     {
         var response = await _httpClient.GetAsync("/openapi/v1.json");
         var document = await OpenApiDocument.FromJsonAsync(await response.Content.ReadAsStringAsync());
-        if (document.Paths.Count == 0)
-            throw new Exception("Expected paths to be present in the open api document");
+        Assert.That(document.Paths, Is.Not.Empty);
     }
 }

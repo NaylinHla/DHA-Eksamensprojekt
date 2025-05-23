@@ -8,6 +8,7 @@ using Application.Models;
 using Application.Services;
 using Infrastructure.MQTT;
 using Infrastructure.Postgres;
+using Infrastructure.Scheduling;
 using Infrastructure.Websocket;
 using Microsoft.Extensions.Options;
 using NSwag.Generation;
@@ -30,33 +31,42 @@ public class Program
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        // Load AppOptions
         services.Configure<AppOptions>(configuration.GetSection("AppOptions"));
 
+        // FeatureHub setup
+        FeatureHubService.AddFeatureHub(services);
+        
+        // Application core services
         services.RegisterApplicationServices();
+        services.AddScheduledInfrastructure();
         services.AddDataSourceAndRepositories();
 
+        // Email-related services
         services.AddTransient<IEmailSender, EmailSenderService>();
         services.AddSingleton<JwtEmailTokenService>();
+        services.AddTransient<SmtpClientFactory>(_ => () => new SmtpClientWrapper("smtp.mailersend.net", 2525));
 
-
+        // Websocket & REST APIs
         services.AddWebsocketInfrastructure();
         services.RegisterWebsocketApiServices();
         services.RegisterRestApiServices();
 
+        // AppOptions override
         var appOptions = configuration.GetSection("AppOptions").Get<AppOptions>();
 
-        services.Configure<AppOptions>(options => { options.EnableEmailSending = false; });
-
+        // MQTT setup or fallback
         if (!string.IsNullOrEmpty(appOptions?.MQTT_BROKER_HOST))
         {
             services.RegisterMqttInfrastructure();
         }
         else
         {
-            Console.WriteLine("Skipping MQTT service registration: Making sure there is an available mock publisher");
+            Console.WriteLine("Skipping MQTT service registration: Using mock publisher");
             services.AddSingleton<IMqttPublisher, MockMqttPublisher>();
         }
 
+        // OpenAPI & TypeScript generation
         services.AddOpenApiDocument(conf =>
         {
             conf.DocumentProcessors.Add(new AddAllDerivedTypesProcessor());
@@ -66,13 +76,12 @@ public class Program
         services.AddSingleton<IProxyConfig, ProxyConfig>();
     }
 
-
     private static async Task ConfigureMiddleware(WebApplication app)
     {
         var logger = app.Services.GetRequiredService<ILogger<IOptionsMonitor<AppOptions>>>();
         var appOptions = app.Services.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
         var serializedAppOptions = JsonSerializer.Serialize(appOptions);
-        logger.LogInformation("Serialized AppOptions: {serializedAppOptions}", serializedAppOptions);
+        logger.LogInformation("Serialized AppOptions: {SerializedAppOptions}", serializedAppOptions);
 
         using (var scope = app.Services.CreateScope())
         {
@@ -91,7 +100,6 @@ public class Program
             await app.ConfigureMqtt();
         else
             Console.WriteLine("Skipping MQTT service configuration");
-
 
         await app.ConfigureWebsocketApi(appOptions.WS_PORT);
 

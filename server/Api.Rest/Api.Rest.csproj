@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="FeatureHub.SDK" Version="2.5.1" />
         <PackageReference Include="NSwag.AspNetCore" Version="14.2.0"/>
 
     </ItemGroup>

@@ -7,4 +7,6 @@ public class JwtClaims
 
     public required string Id { get; set; }
     public required string Exp { get; set; }
+    
+    public required string Country { get; set; }
 }

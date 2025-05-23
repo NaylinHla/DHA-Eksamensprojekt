@@ -5,7 +5,8 @@ namespace Application.Interfaces;
 
 public interface IUserService
 {
-    public User DeleteUser(DeleteUserDto request);
-    public User PatchUserEmail(PatchUserEmailDto request);
-    public User PatchUserPassword(string email, PatchUserPasswordDto request);
+    Task <User> GetUserByEmailAsync(string email);
+    Task <User> DeleteUser(DeleteUserDto request);
+    Task <User> PatchUserEmail(PatchUserEmailDto request);
+    Task <User> PatchUserPassword(string email, PatchUserPasswordDto request);
 }

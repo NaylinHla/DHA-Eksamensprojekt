@@ -1,13 +1,17 @@
 using System.Net;
 using System.Net.Http.Json;
+using Api.Rest.Controllers;
 using Application.Interfaces;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Application.Services;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
 
@@ -16,32 +20,57 @@ namespace Startup.Tests.EmailTests;
 [TestFixture]
 public class EmailControllerTest
 {
-    [SetUp]
-    public async Task Setup()
+    private WebApplicationFactory<Program> _factory;
+    private HttpClient _client;
+    private IServiceScopeFactory _scopeFactory;
+    
+    
+    private User _testUser;
+    private Mock<IEmailSender> _emailSenderMock;
+    
+    [OneTimeSetUp]
+    public void SetupOneTime()
     {
-        _testUser = MockObjects.GetUser();
+        _emailSenderMock = new Mock<IEmailSender>();
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Testing");
+                
                 builder.ConfigureServices(services =>
                 {
-                    services.DefaultTestConfig();
-
-                    var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailSender));
-                    if (descriptor != null)
-                        services.Remove(descriptor);
-
-                    services.AddSingleton<IEmailSender, FakeEmailSender>();
-
-                    services.Configure<AppOptions>(opts => opts.EnableEmailSending = false);
+                    services.DefaultTestConfig(useTestContainer: false, useInMemory: true);
+                    
+                    services.PostConfigure<AppOptions>(opts => opts.Seed = false);
+                    
+                    services.RemoveAll<IEmailSender>();
+                    services.AddSingleton(_emailSenderMock.Object);
                 });
             });
 
         _client = _factory.CreateClient();
+        _scopeFactory = _factory.Services.GetRequiredService<IServiceScopeFactory>();
+    }
 
-        using var scope = _factory.Services.CreateScope();
+    [OneTimeTearDown]
+    public void TearDownOneTime()
+    {
+        _client.Dispose();
+        _factory.Dispose();
+    }
+    
+    [SetUp]
+    public async Task Setup()
+    {
+        
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        await db.Database.EnsureDeletedAsync();
+        await db.Database.EnsureCreatedAsync();
+        
+        _testUser = MockObjects.GetUser();
         db.EmailList.Add(new EmailList { Email = _testUser.Email });
         await db.SaveChangesAsync();
     }
@@ -49,54 +78,107 @@ public class EmailControllerTest
     [TearDown]
     public void TearDown()
     {
-        _client.Dispose();
-        _factory.Dispose();
+        _emailSenderMock.Reset();
     }
 
-    private WebApplicationFactory<Program> _factory = null!;
-    private HttpClient _client = null!;
-    private User _testUser = null!;
-
+    
     [Test]
-    public async Task SubscribeToEmailList_ShouldReturnOk()
+    public async Task SendEmail_ShouldInvokeEmailSenderAndReturnSuccessMessage()
     {
-        var dto = new AddEmailDto { Email = "subscribe_test@example.com" };
-        var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        // Arrange
+        var request = new EmailRequest
+        {
+            Subject = "Test Subject",
+            Message = "Hello world!"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync($"api/email/{EmailController.SendEmailRoute}", request);
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(content, Is.EqualTo("Email sent successfully."));
+        });
+        _emailSenderMock.Verify(
+            es => es.SendEmailAsync("Test Subject", "Hello world!"),
+            Times.Once
+        );
     }
+    
+    [Test]
+    public async Task SubscribeToEmailList_ShouldInvokeAddEmailAsync()
+    {
+        // Arrange
+        var dto = new AddEmailDto { Email = "new@example.com" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync($"api/email/{EmailController.SubscribeToEmailListRoute}", dto);
+
+        // Assert
+        _emailSenderMock.Verify(
+            es => es.AddEmailAsync(It.Is<AddEmailDto>(d => d.Email == "new@example.com")),
+            Times.Once
+        );
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(body, Is.EqualTo("Subscription confirmed and email sent."));
+        });
+    }
+
 
     [Test]
     public async Task UnsubscribeFromEmailList_ShouldReturnOk()
     {
         var dto = new RemoveEmailDto { Email = _testUser.Email };
-        var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
+        var response = await _client.PostAsJsonAsync($"api/email/{EmailController.UnsubscribeFromEmailListRoute}", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("Unsubscription confirmed and email sent."));
     }
 
     [Test]
-    public async Task UnsubscribeFromEmailListViaToken_ShouldReturnOk()
+    public async Task UnsubscribeFromEmailLink_ShouldReturnOkAndCorrectMessage_WhenTokenValid()
     {
-        using var scope = _factory.Services.CreateScope();
+        // Arrange
+        using var scope = _scopeFactory.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtEmailTokenService>();
-        var token = jwtService.GenerateUnsubscribeToken(_testUser.Email);
+        var token = jwtService.GenerateUnsubscribeToken("user@example.com");
 
-        var response = await _client.GetAsync($"/api/email/unsubscribe?token={token}");
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        // Act
+        var response = await _client.GetAsync($"api/email/{EmailController.UnsubscribeFromEmailLinkRoute}?token={token}");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Multiple(() =>
+        {
+            // Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(body, Is.EqualTo("You have been unsubscribed."));
+        });
     }
+
 
     [Test]
     public async Task UnsubscribeFromEmailListViaToken_ShouldReturnBadRequest_WhenTokenInvalid()
     {
-        var invalidToken = "this.is.invalid";
-        var response = await _client.GetAsync($"/api/email/unsubscribe?token={invalidToken}");
+        const string invalidToken = "this.is.invalid";
+        var response = await _client.GetAsync($"/api/email/{EmailController.UnsubscribeFromEmailLinkRoute}?token={invalidToken}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("Invalid or expired token."));
     }
 
     [Test]
     public async Task SubscribeToEmailList_ShouldNotDuplicateEmail()
     {
         var dto = new AddEmailDto { Email = _testUser.Email };
-        var response = await _client.PostAsJsonAsync("api/email/subscribe", dto);
+        var response = await _client.PostAsJsonAsync($"api/email/{EmailController.SubscribeToEmailListRoute}", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
@@ -104,25 +186,7 @@ public class EmailControllerTest
     public async Task UnsubscribeFromEmailList_ShouldReturnOk_WhenEmailDoesNotExist()
     {
         var dto = new RemoveEmailDto { Email = "nonexistent@example.com" };
-        var response = await _client.PostAsJsonAsync("api/email/unsubscribe", dto);
+        var response = await _client.PostAsJsonAsync($"api/email/{EmailController.UnsubscribeFromEmailListRoute}", dto);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-    }
-
-    private class FakeEmailSender : IEmailSender
-    {
-        public Task AddEmailAsync(AddEmailDto dto)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task RemoveEmailAsync(RemoveEmailDto dto)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task SendEmailAsync(string subject, string message)
-        {
-            return Task.CompletedTask;
-        }
     }
 }

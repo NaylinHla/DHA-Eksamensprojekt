@@ -4,15 +4,7 @@ on: [ workflow_dispatch ]
 jobs:
   mutation_testing:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        project:
-          - server/Api.Rest/Api.Rest.csproj
-          - server/Api.Websocket/Api.Websocket.csproj
-          - server/Application/Application.csproj
-          - server/Infrastructure.MQTT/Infrastructure.MQTT.csproj
-          - server/Infrastructure.Postgres/Infrastructure.Postgres.csproj
-          - server/Infrastructure.Websocket/Infrastructure.Websocket.csproj
+    
     env:
       APPOPTIONS__DbConnectionString: ${{ secrets.DBCONNECTIONSTRING }}
       APPOPTIONS__JwtSecret:        ${{ secrets.JWT_TOKEN }}
@@ -32,22 +24,10 @@ jobs:
       - name: Install Stryker .NET
         run: dotnet tool install --global dotnet-stryker
 
-      - name: Compute safe project-dir name
-        id: vars
-        run: |
-          proj="${{ matrix.project }}"
-          dir="$(basename "$(dirname "$proj")")"
-          safe_dir="${dir//\//_}"
-          echo "SAFE_DIR=$safe_dir" >> $GITHUB_ENV
-
       - name: Run mutation tests
         run: |
-          echo "Starting Stryker on ${{ matrix.project }}…"
           DOTNET_ROLL_FORWARD=LatestMajor \
           dotnet stryker \
-            --project      "${{ matrix.project }}" \
-            --test-project "server/Startup.Tests/Startup.Tests.csproj" \
-            --break-at     80 \
             --reporter     html \
             --concurrency  2
         continue-on-error: true
@@ -57,5 +37,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutation-report-${{ env.SAFE_DIR }}
+          name: mutation-report
           path: StrykerOutput/**/reports/mutation-report.html

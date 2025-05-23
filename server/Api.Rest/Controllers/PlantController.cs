@@ -28,7 +28,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
         MonitorService.Log.Debug("Entered GetPlant method in PlantController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var plant = await plantService.GetPlantByIdAsync(plantId, claims);
-        return plant is null ? NotFound() : Ok(ToDto(plant));
+        return Ok(ToDto(plant));
     }
 
     [HttpGet]
@@ -118,7 +118,7 @@ public class PlantController(IPlantService plantService, ISecurityService securi
     }
 
 
-    private static PlantResponseDto ToDto(Plant p)
+    private static PlantResponseDto ToDto(Plant? p)
     {
         return new PlantResponseDto
         {

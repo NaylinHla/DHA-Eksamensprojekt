@@ -1,6 +1,7 @@
 using Application.Interfaces;
 using Application.Models.Dtos.RestDtos;
 using Core.Domain.Entities;
+using Infrastructure.Logging;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -18,6 +19,7 @@ public class AlertController(IAlertService alertService, ISecurityService securi
         [FromHeader] string authorization,
         [FromQuery] int? year = null)
     {
+        MonitorService.Log.Debug("Entered Get Alert method in AlertController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var alerts = await alertService.GetAlertsAsync(Guid.Parse(claims.Id), year);
         return Ok(alerts);
@@ -26,16 +28,12 @@ public class AlertController(IAlertService alertService, ISecurityService securi
     [HttpPost]
     [Route(CreateAlertRoute)]
     public async Task<ActionResult<AlertResponseDto>> CreateAlert(
-        [FromBody] AlertCreate dto,
+        [FromBody] AlertCreateDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered Create Alert method in AlertController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
-        var alert = await alertService.CreateAlertAsync(
-            Guid.Parse(claims.Id),
-            dto.AlertName,
-            dto.AlertDesc,
-            dto.AlertPlant
-        );
+        var alert = await alertService.CreateAlertAsync(Guid.Parse(claims.Id), dto);
 
         var response = new AlertResponseDto
         {
@@ -43,7 +41,8 @@ public class AlertController(IAlertService alertService, ISecurityService securi
             AlertName = alert.AlertName,
             AlertDesc = alert.AlertDesc,
             AlertTime = alert.AlertTime,
-            AlertPlant = alert.AlertPlant
+            AlertDeviceConditionId = alert.AlertDeviceConditionId,
+            AlertPlantConditionId = alert.AlertPlantConditionId
         };
         return Ok(response);
     }

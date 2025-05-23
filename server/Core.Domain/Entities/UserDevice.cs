@@ -10,5 +10,7 @@ public class UserDevice
     public required string WaitTime { get; set; }
 
     public User? User { get; set; }
+
     public ICollection<SensorHistory> SensorHistories { get; set; } = new List<SensorHistory>();
+    public ICollection<ConditionAlertUserDevice> ConditionAlertUserDevices { get; set; } = new List<ConditionAlertUserDevice>();
 }

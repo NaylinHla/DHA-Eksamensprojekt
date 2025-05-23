@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Startup.Tests.TestUtils;
-using UserDevice = Core.Domain.Entities.UserDevice;
 
 namespace Startup.Tests.UserDeviceTests;
 
@@ -23,20 +22,18 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
     {
         _client = CreateClient();
 
-        _testUser = MockObjects.GetUser();
+        // Seed the user and db with stuff
+        _testUser = await MockObjects.SeedDbAsync(Services);
+
         var device = _testUser.UserDevices.First();
         _deviceId = device.DeviceId;
 
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-        db.Users.Add(_testUser);
-        await db.SaveChangesAsync();
-
         var loginResp =
-            await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "pass" });
+            await _client.PostAsJsonAsync("/api/auth/login", new { _testUser.Email, Password = "Secret25!" });
         loginResp.EnsureSuccessStatusCode();
         var loginDto = await loginResp.Content.ReadFromJsonAsync<AuthResponseDto>();
-        _jwt = loginDto!.Jwt;
+        Assert.That(loginDto, Is.Not.Null);
+        _jwt = loginDto.Jwt;
         _client.DefaultRequestHeaders.Add("Authorization", _jwt);
     }
 
@@ -47,13 +44,13 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
     }
 
     private HttpClient _client;
-    private User _testUser = null!;
-    private string _jwt = null!;
+    private User _testUser;
+    private string _jwt;
     private Guid _deviceId;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(s => s.DefaultTestConfig());
+        builder.ConfigureServices(services => { services.DefaultTestConfig(makeMqttClient: false); });
     }
 
     // -------------------- GET: Get User Device --------------------
@@ -74,11 +71,8 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         var dto = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
-        Assert.Multiple(() =>
-        {
-            Assert.That(dto, Is.Not.Null);
-            Assert.That(dto!.DeviceId, Is.EqualTo(_deviceId));
-        });
+        Assert.That(dto, Is.Not.Null);
+        Assert.That(dto.DeviceId, Is.EqualTo(_deviceId));
     }
 
     // -------------------- GET: Get All User Devices --------------------
@@ -120,7 +114,7 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
     // -------------------- POST: Create User Device --------------------
 
     [Test]
-    public async Task CreateUserDevice_ShouldSucceed()
+    public async Task CreateUserDevice_ShouldPersistAllFields()
     {
         var dto = new UserDeviceCreateDto
         {
@@ -135,17 +129,63 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         var created = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
+        Assert.That(created, Is.Not.Null);
+
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        var dbDevice = await db.UserDevices.FindAsync(created.DeviceId);
+
+        Assert.That(dbDevice, Is.Not.Null);
         Assert.Multiple(() =>
         {
-            Assert.That(created, Is.Not.Null);
-            Assert.That(created!.DeviceName, Is.EqualTo(dto.DeviceName));
+            Assert.That(dbDevice.DeviceName, Is.EqualTo(dto.DeviceName));
+            Assert.That(dbDevice.DeviceDescription, Is.EqualTo(dto.DeviceDescription));
+            Assert.That(dbDevice.WaitTime, Is.EqualTo(dto.WaitTime));
+            Assert.That(dbDevice.CreatedAt, Is.EqualTo(dto.Created).Within(TimeSpan.FromSeconds(1)));
+            Assert.That(dbDevice.UserId.ToString(), Is.EqualTo(_testUser.UserId.ToString()));
         });
     }
+
+    [Test]
+    public async Task CreateUserDevice_MissingRequiredFields_ShouldReturnBadRequest()
+    {
+        var badDto = new { DeviceDescription = "Missing name and wait time" };
+
+        var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}",
+            badDto);
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    [Test]
+    public async Task CreateUserDevice_ShouldDefaultWaitTime_WhenMissing()
+    {
+        var dto = new UserDeviceCreateDto
+        {
+            DeviceName = "No Wait Device",
+            DeviceDescription = "Test fallback wait time",
+            Created = DateTime.UtcNow
+            // WaitTime is intentionally omitted
+        };
+
+        var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}", dto);
+        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var created = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
+        Assert.That(created, Is.Not.Null);
+
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        var dbDevice = await db.UserDevices.FindAsync(created.DeviceId);
+        Assert.That(dbDevice, Is.Not.Null);
+
+        Assert.That(dbDevice.WaitTime, Is.EqualTo("60")); // default fallback
+    }
+
 
     // -------------------- PATCH: Edit User Device --------------------
 
     [Test]
-    public async Task EditUserDevice_ShouldUpdate()
+    public async Task EditUserDevice_ShouldUpdateAllFields()
     {
         var updateDto = new UserDeviceEditDto
         {
@@ -159,7 +199,15 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         var updated = await resp.Content.ReadFromJsonAsync<UserDeviceResponseDto>();
-        Assert.That(updated!.DeviceName, Is.EqualTo(updateDto.DeviceName));
+
+        Assert.That(updated, Is.Not.Null, "Response DTO was null");
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.DeviceName, Is.EqualTo(updateDto.DeviceName), "DeviceName was not updated");
+            Assert.That(updated.DeviceDescription, Is.EqualTo(updateDto.DeviceDescription),
+                "DeviceDescription was not updated");
+            Assert.That(updated.WaitTime, Is.EqualTo(updateDto.WaitTime), "WaitTime was not updated");
+        });
     }
 
     [Test]
@@ -190,9 +238,25 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
             $"/api/UserDevice/{UserDeviceController.DeleteUserDeviceRoute}?userDeviceId={deviceId}"
         );
 
-        // Assert: Verify that the device was successfully deleted (HTTP 200 OK)
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Verify the device is no longer in the database
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            var deletedDevice = db.UserDevices.FirstOrDefault(d => d.DeviceId == deviceId);
+
+            Assert.That(deletedDevice, Is.Null, "Device should have been deleted from the database.");
+        }
+
+        var getResponse = await _client.GetAsync(
+            $"api/UserDevice/{UserDeviceController.GetUserDeviceRoute}?userDeviceId={deviceId}"
+        );
+
+        // Assert: Device should not be found, expecting NotFound response
+        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
+
 
     [Test]
     public async Task DeleteUserDevice_InvalidId_ShouldReturnNotFound()
@@ -217,24 +281,15 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
-    // -------------------- POST: Create User Device Missing Required Fields --------------------
-
-    [Test]
-    public async Task CreateUserDevice_MissingRequiredFields_ShouldReturnBadRequest()
-    {
-        var badDto = new { DeviceDescription = "Missing name and wait time" };
-
-        var resp = await _client.PostAsJsonAsync($"api/UserDevice/{UserDeviceController.CreateUserDeviceRoute}",
-            badDto);
-        Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-    }
-
     // -------------------- POST: Admin Changes Preferences --------------------
 
+    // Currently calls actual Mqtt Client - Not Mocked
+    /*
     [Test]
-    public async Task AdminChangesPreferences_ShouldReturnOk()
+    public async Task AdminChangesPreferences_ShouldPersistWaitTimeChange_WhenValid()
     {
-        string deviceId;
+        // Arrange
+        Guid deviceId;
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
@@ -249,19 +304,32 @@ public class UserDeviceControllerTests : WebApplicationFactory<Program>
             };
             db.UserDevices.Add(device);
             await db.SaveChangesAsync();
-            deviceId = device.DeviceId.ToString();
+            deviceId = device.DeviceId;
         }
 
         var dto = new AdminChangesPreferencesDto
         {
-            DeviceId = deviceId,
+            DeviceId = deviceId.ToString(),
             Interval = "60"
         };
 
+        // Act: Send POST request to update preferences
         var resp = await _client.PostAsJsonAsync(
             $"api/UserDevice/{UserDeviceController.AdminChangesPreferencesRoute}", dto);
+
+        // Assert: HTTP response is OK
         Assert.That(resp.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+            var updated = await db.UserDevices.FindAsync(deviceId);
+            Assert.That(updated, Is.Not.Null, "Device should still exist in DB");
+            Assert.That(updated!.WaitTime, Is.EqualTo("60"),
+                "DB should have the updated wait time");
+        }
     }
+    */
 
     [Test]
     public async Task AdminChangesPreferences_ShouldReturnBadRequest_WhenNoJwtProvided()

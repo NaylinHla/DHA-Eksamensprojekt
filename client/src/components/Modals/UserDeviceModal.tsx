@@ -7,6 +7,17 @@ import {userDeviceClient} from "../../apiControllerClients";
 import {IntervalSelector} from "../index";
 import useCloseOnEscapeOrBackdrop from "../Functional/UseCloseOnEscapeOrBackdrop";
 
+const intervalMultipliers = {
+    Second: 1,
+    Minute: 60,
+    Hour: 3600,
+    Days: 86400,
+    Week: 604800,
+} as const;
+
+type Unit = keyof typeof intervalMultipliers;
+
+
 interface Props {
     open: boolean;
     device: { deviceId: string } | null;
@@ -36,7 +47,9 @@ const UserDeviceModal: React.FC<Props> = ({open, device, onClose, onSaved}) => {
         desc: "",
         wait: "",
     });
+    const [waitUnit, setWaitUnit] = useState<Unit>("Second");
     const backdrop = useRef<HTMLDivElement>(null);
+    const MAX_WAIT_SECONDS = 999999;
 
     // Reset & load on open/device change
     useEffect(() => {
@@ -63,24 +76,30 @@ const UserDeviceModal: React.FC<Props> = ({open, device, onClose, onSaved}) => {
     // Close on ESC or backdrop click
     useCloseOnEscapeOrBackdrop(open, onClose, backdrop);
 
-    const upd = <K extends keyof UserDeviceEditDto>(
-        k: K,
-        v: UserDeviceEditDto[K]
-    ) => setData((d) => ({...d, [k]: v}));
+    const upd = <K extends keyof UserDeviceEditDto>(k: K, v: UserDeviceEditDto[K]) =>
+        setData((d) => ({ ...d, [k]: v }));
 
     const validate = (): boolean => {
         const errs: { name?: string; desc?: string; wait?: string } = {};
 
-        if (!data.deviceName || (data.deviceName.trim().length < 2 || data.deviceName.trim().length > 50)) {
-            errs.name = data.deviceName ? "Name must be between 2 and 50 characters." : "Device name is required";
+        if (!data.deviceName || data.deviceName.trim().length < 2 || data.deviceName.trim().length > 30) {
+            errs.name = data.deviceName
+                ? "Name must be between 2 and 30 characters."
+                : "Device name is required";
         }
 
         if (data.deviceDescription && data.deviceDescription.length > 500) {
             errs.desc = "Description must be under 500 characters.";
         }
 
-        if (parseInt(data.waitTime ?? "0", 10) < 10) {
-            errs.wait = "Wait time must be at least 10 seconds.";
+        const waitValue = parseInt(data.waitTime ?? "0", 10);
+        const maxAllowed = Math.floor(MAX_WAIT_SECONDS / intervalMultipliers[waitUnit]);
+        const minAllowed = 10;
+
+        if (waitValue < minAllowed) {
+            errs.wait = `Minimum ${minAllowed} ${waitUnit}${minAllowed !== 10 ? "s" : ""} allowed.`;
+        } else if (waitValue > maxAllowed) {
+            errs.wait = `Maximum ${maxAllowed} ${waitUnit}${maxAllowed !== 1 ? "s" : ""} allowed.`;
         }
 
         setErrors({
@@ -175,6 +194,7 @@ const UserDeviceModal: React.FC<Props> = ({open, device, onClose, onSaved}) => {
                         <IntervalSelector
                             totalSeconds={parseInt(data.waitTime ?? "0", 10)}
                             onChange={(secs) => upd("waitTime", String(secs))}
+                            onUnitChange={(unit) => setWaitUnit(unit)}
                         />
                         <span className="text-red-500 text-sm h-5 ml-2 block">{errors.wait || "\u00A0"}</span>
                     </label>

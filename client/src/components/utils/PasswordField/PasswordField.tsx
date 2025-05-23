@@ -14,7 +14,7 @@ export const PasswordField = forwardRef<
                 ref={ref}
                 type={visible ? "text" : "password"}
                 placeholder="Password"
-                className={`input input-bordered input-sm w-full text-black pr-10 ${className}`}
+                className={`input input-bordered input-sm w-full bg-white text-black pr-10 ${className}`}
             />
 
             {/* eye button */}

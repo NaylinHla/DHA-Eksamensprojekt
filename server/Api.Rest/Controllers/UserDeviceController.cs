@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Dtos.RestDtos.UserDevice.Request;
 using Application.Models.Dtos.RestDtos.UserDevice.Response;
+using Infrastructure.Logging;
 using Microsoft.AspNetCore.Mvc;
 using UserDevice = Core.Domain.Entities.UserDevice;
 
@@ -25,9 +26,10 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         Guid userDeviceId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered GetUserDevice method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var userDevice = await userDeviceService.GetUserDeviceAsync(userDeviceId, claims);
-        return userDevice is null ? NotFound() : Ok(ToDto(userDevice));
+        return Ok(ToDto(userDevice));
     }
 
     [HttpGet]
@@ -35,6 +37,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
     public async Task<ActionResult<UserDeviceResponseDto>> GetAllUserDevices(
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered GetAllUserDevices method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var userDevice = await userDeviceService.GetAllUserDeviceAsync(claims);
         return Ok(userDevice.Select(ToDto));
@@ -46,6 +49,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         [FromBody] UserDeviceCreateDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered CreateUserDevice method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var userDevice = await userDeviceService.CreateUserDeviceAsync(dto, claims);
         return Ok(ToDto(userDevice));
@@ -58,6 +62,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         [FromBody] UserDeviceEditDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered EditUserDevice method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         var updated = await userDeviceService.UpdateUserDeviceAsync(userDeviceId, dto, claims);
         return Ok(ToDto(updated));
@@ -69,6 +74,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
         Guid userDeviceId,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered DeleteUserDevice method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         await userDeviceService.DeleteUserDeviceAsync(userDeviceId, claims);
         return Ok();
@@ -79,6 +85,7 @@ public class UserDeviceController(IUserDeviceService userDeviceService, ISecurit
     public async Task<ActionResult> AdminChangesPreferences([FromBody] AdminChangesPreferencesDto dto,
         [FromHeader] string authorization)
     {
+        MonitorService.Log.Debug("Entered AdminChangesPreferences method in UserDeviceController");
         var claims = securityService.VerifyJwtOrThrow(authorization);
         await userDeviceService.UpdateDeviceFeed(dto, claims);
         return Ok();

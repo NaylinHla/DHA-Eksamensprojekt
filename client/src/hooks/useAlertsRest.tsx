@@ -1,15 +1,17 @@
 import {useEffect, useState} from "react";
-import {JwtAtom} from "../atoms/atoms.ts";
+import {JwtAtom, StringConstants} from "../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
 import {alertClient} from "../apiControllerClients";
+import {useWebSocketMessage} from "./index";
 
 export interface Alert {
     alertId: string;
     alertName: string;
     alertDesc: string;
     alertTime: string;
-    alertPlant?: string;
+    alertPlantId?: string;
+    alertUserDeviceId?: string;
 }
 
 export default function useAlertsRest() {
@@ -32,7 +34,8 @@ export default function useAlertsRest() {
                     alertName: a.alertName ?? "",
                     alertDesc: a.alertDesc ?? "",
                     alertTime: a.alertTime?.toString() ?? "",
-                    alertPlant: a.alertPlant
+                    alertPlantId: a.alertPlantConditionId ?? "",
+                    alertUserDeviceId: a.alertDeviceConditionId ?? "",
                 }));
                 setAlerts(mapped);
             })
@@ -43,5 +46,23 @@ export default function useAlertsRest() {
             .finally(() => setLoading(false));
     }, [jwt]);
 
-    return {alerts, loading};
+    useWebSocketMessage(StringConstants.ServerBroadcastsLiveAlertToAlertView, (dto: any) => {
+
+        const alertMessages: Alert[] = dto.alerts || [];
+        if (!alertMessages.length) return;
+
+        setAlerts(prevAlerts => {
+            // Optional: merge new alerts, avoiding duplicates by alertId
+            const existingIds = new Set(prevAlerts.map(a => a.alertId));
+            const newAlerts = alertMessages.filter(a => !existingIds.has(a.alertId));
+            if (!newAlerts.length) return prevAlerts;
+
+            return [...newAlerts, ...prevAlerts];
+        });
+
+    });
+
+
+
+    return { alerts, loading };
 }

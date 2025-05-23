@@ -41,16 +41,13 @@ CREATE TABLE meetyourplants."User" (
 );
 
 
-CREATE TABLE meetyourplants."Alert" (
-    "AlertId" uuid NOT NULL,
-    "AlertUserId" uuid NOT NULL,
-    "AlertName" text NOT NULL,
-    "AlertDesc" text NOT NULL,
-    "AlertTime" timestamp with time zone NOT NULL,
-    "AlertPlant" uuid,
-    CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertId"),
-    CONSTRAINT "FK_Alert_Plant_AlertPlant" FOREIGN KEY ("AlertPlant") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE SET NULL,
-    CONSTRAINT "FK_Alert_User_AlertUserId" FOREIGN KEY ("AlertUserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+CREATE TABLE meetyourplants."ConditionAlertPlant" (
+    "ConditionAlertPlantId" uuid NOT NULL,
+    "PlantId" uuid NOT NULL,
+    "WaterNotify" boolean NOT NULL,
+    "IsDeleted" boolean NOT NULL,
+    CONSTRAINT "PK_ConditionAlertPlant" PRIMARY KEY ("ConditionAlertPlantId"),
+    CONSTRAINT "FK_ConditionAlertPlant_Plant_PlantId" FOREIGN KEY ("PlantId") REFERENCES meetyourplants."Plant" ("PlantId") ON DELETE CASCADE
 );
 
 
@@ -95,6 +92,17 @@ CREATE TABLE meetyourplants."Weather" (
 );
 
 
+CREATE TABLE meetyourplants."ConditionAlertUserDevice" (
+    "ConditionAlertUserDeviceId" uuid NOT NULL,
+    "UserDeviceId" uuid NOT NULL,
+    "SensorType" text NOT NULL,
+    "Condition" text NOT NULL,
+    "IsDeleted" boolean NOT NULL,
+    CONSTRAINT "PK_ConditionAlertUserDevice" PRIMARY KEY ("ConditionAlertUserDeviceId"),
+    CONSTRAINT "FK_ConditionAlertUserDevice_UserDevice_UserDeviceId" FOREIGN KEY ("UserDeviceId") REFERENCES meetyourplants."UserDevice" ("DeviceId") ON DELETE CASCADE
+);
+
+
 CREATE TABLE meetyourplants."SensorHistory" (
     "SensorHistoryId" uuid NOT NULL,
     "DeviceId" uuid NOT NULL,
@@ -108,10 +116,34 @@ CREATE TABLE meetyourplants."SensorHistory" (
 );
 
 
-CREATE INDEX "IX_Alert_AlertPlant" ON meetyourplants."Alert" ("AlertPlant");
+CREATE TABLE meetyourplants."Alert" (
+    "AlertId" uuid NOT NULL,
+    "AlertUserId" uuid NOT NULL,
+    "AlertName" text NOT NULL,
+    "AlertDesc" text NOT NULL,
+    "AlertTime" timestamp with time zone NOT NULL,
+    "AlertPlantConditionId" uuid,
+    "AlertDeviceConditionId" uuid,
+    CONSTRAINT "PK_Alert" PRIMARY KEY ("AlertId"),
+    CONSTRAINT "FK_Alert_ConditionAlertPlant_AlertPlantConditionId" FOREIGN KEY ("AlertPlantConditionId") REFERENCES meetyourplants."ConditionAlertPlant" ("ConditionAlertPlantId") ON DELETE SET NULL,
+    CONSTRAINT "FK_Alert_ConditionAlertUserDevice_AlertDeviceConditionId" FOREIGN KEY ("AlertDeviceConditionId") REFERENCES meetyourplants."ConditionAlertUserDevice" ("ConditionAlertUserDeviceId") ON DELETE SET NULL,
+    CONSTRAINT "FK_Alert_User_AlertUserId" FOREIGN KEY ("AlertUserId") REFERENCES meetyourplants."User" ("UserId") ON DELETE CASCADE
+);
+
+
+CREATE INDEX "IX_Alert_AlertDeviceConditionId" ON meetyourplants."Alert" ("AlertDeviceConditionId");
+
+
+CREATE INDEX "IX_Alert_AlertPlantConditionId" ON meetyourplants."Alert" ("AlertPlantConditionId");
 
 
 CREATE INDEX "IX_Alert_AlertUserId" ON meetyourplants."Alert" ("AlertUserId");
+
+
+CREATE INDEX "IX_ConditionAlertPlant_PlantId" ON meetyourplants."ConditionAlertPlant" ("PlantId");
+
+
+CREATE INDEX "IX_ConditionAlertUserDevice_UserDeviceId" ON meetyourplants."ConditionAlertUserDevice" ("UserDeviceId");
 
 
 CREATE INDEX "IX_SensorHistory_DeviceId" ON meetyourplants."SensorHistory" ("DeviceId");

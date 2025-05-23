@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,6 +7,7 @@ using Application.Models;
 using Application.Models.Dtos.RestDtos;
 using Application.Models.Enums;
 using Core.Domain.Entities;
+using FluentValidation;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -16,55 +16,81 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRepository repository) : ISecurityService
+public class SecurityService(
+    IOptionsMonitor<AppOptions> optionsMonitor,
+    IUserRepository repository,
+    IUserSettingsRepository userSettingsRepository,
+    IValidator<AuthLoginDto> loginValidator,
+    IValidator<AuthRegisterDto> registerValidator) : ISecurityService
 {
-    public AuthResponseDto Login(AuthLoginDto dto)
+    
+    public async Task<AuthResponseDto> Login(AuthLoginDto dto)
     {
-        var player = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Username not found");
-        VerifyPasswordOrThrow(dto.Password + player.Salt, player.Hash);
+        await loginValidator.ValidateAndThrowAsync(dto);
+        var user = repository.GetUserOrNull(dto.Email) 
+                     ?? throw new ValidationException("Username not found");
+        VerifyPasswordOrThrow(dto.Password + user.Salt, user.Hash);
+     
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = player.UserId.ToString(),
-                Role = player.Role,
+                Id = user.UserId.ToString(),
+                Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000)
                     .ToUnixTimeSeconds()
                     .ToString(),
-                Email = dto.Email
+                Email = dto.Email,
+                Country = user.Country
             })
         };
     }
 
-    public AuthResponseDto Register(AuthRegisterDto dto)
+    public async Task<AuthResponseDto> Register(AuthRegisterDto dto)
     {
-        var player = repository.GetUserOrNull(dto.Email);
-        if (player is not null) throw new ValidationException("User already exists");
+        var registerResult = await registerValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!registerResult.IsValid)
+            throw new ValidationException(registerResult.Errors);
+
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
-        var insertedPlayer = repository.AddUser(new User
+        var userId = Guid.NewGuid();
+
+        var user = repository.AddUser(new User
         {
-            UserId = Guid.NewGuid(),
+            UserId = userId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            Birthday = DateTime.SpecifyKind(dto.Birthday, DateTimeKind.Utc), // Force Birthday to UTC
+            Birthday = DateTime.SpecifyKind(dto.Birthday, DateTimeKind.Utc),
             Country = dto.Country,
             Role = Constants.UserRole,
             Salt = salt,
             Hash = hash
         });
+        
+        userSettingsRepository.Add(new UserSettings
+        {
+            UserId = userId,
+            Celsius = true,
+            DarkTheme = false,
+            ConfirmDialog = false,
+            SecretMode = false
+        });
+
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
             {
-                Id = insertedPlayer.UserId.ToString(),
-                Role = insertedPlayer.Role,
+                Id = user.UserId.ToString(),
+                Role = user.Role,
                 Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
-                Email = insertedPlayer.Email
+                Email = user.Email,
+                Country = user.Country
             })
         };
     }
+
 
     /// <summary>
     ///     Gives hex representation of SHA512 hash

@@ -15,13 +15,15 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6"/>
+        <PackageReference Include="FeatureHub.SDK" Version="2.5.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4"/>
         <PackageReference Include="PgCtxSetup" Version="1.5.0"/>
         <PackageReference Include="Moq" Version="4.20.72"/>
 
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="FluentValidation" Version="12.0.0" />
         <PackageReference Include="nunit" Version="4.3.2"/>
         <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0"/>

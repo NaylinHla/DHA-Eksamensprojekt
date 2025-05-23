@@ -1,5 +1,5 @@
 import React from 'react';
-import {Search, SlidersHorizontal} from 'lucide-react';
+import {Search} from 'lucide-react';
 
 interface SearchBarProps {
     searchTerm: string;
@@ -8,17 +8,15 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({searchTerm, onSearch}) => {
     return (
-        <div
-            className="relative w-full max-w-xs flex items-center bg-[var(--color-surface)] rounded-2xl px-3 py-2 border">
-            <Search className="w-4 h-4 text-muted-foreground mr-2"/>
+        <div className="relative bg-[var(--color-surface)] rounded-2xl w-full sm:w-[clamp(12rem,28vw,20rem)]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 placeholder h-[clamp(0.75rem,1vw,1.25rem)] w-[clamp(0.75rem,1vw,1.50rem)] text-muted-foreground"/>
             <input
                 type="text"
-                placeholder="Search devices…"
+                placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => onSearch(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm"
+                className="pl-9 w-full text-[clamp(0.85rem,0.5vw,1.25rem)] py-[clamp(0.35rem,0.8vw,1rem)]"
             />
-            <SlidersHorizontal className="w-4 h-4 text-muted-foreground ml-2"/>
         </div>
     );
 };

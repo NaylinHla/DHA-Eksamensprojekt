@@ -5,35 +5,73 @@ using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Dtos.RestDtos.EmailList.Request;
 using Core.Domain.Entities;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class EmailSenderService(
-    IOptionsMonitor<AppOptions> optionsMonitor,
-    IEmailListRepository emailListRepository,
-    JwtEmailTokenService jwtService)
-    : IEmailSender
+public interface ISmtpClient : IAsyncDisposable
 {
-    private bool ShouldSendEmails => optionsMonitor.CurrentValue.EnableEmailSending;
+    bool EnableSsl { get; set; }
+    bool UseDefaultCredentials { get; set; }
+    ICredentialsByHost Credentials { get; set; }
+    Task SendMailAsync(MailMessage message);
+}
+
+public sealed class SmtpClientWrapper : ISmtpClient
+{
+    private readonly SmtpClient _inner;
+
+    public SmtpClientWrapper(string host, int port) => _inner = new(host, port);
+
+    public bool EnableSsl
+    {
+        get => _inner.EnableSsl;
+        set => _inner.EnableSsl = value;
+    }
+
+    public bool UseDefaultCredentials
+    {
+        get => _inner.UseDefaultCredentials;
+        set => _inner.UseDefaultCredentials = value;
+    }
+
+    public ICredentialsByHost Credentials
+    {
+        get => _inner.Credentials;
+        set => _inner.Credentials = value;
+    }
+
+    public Task SendMailAsync(MailMessage message) => _inner.SendMailAsync(message);
+
+    public ValueTask DisposeAsync()
+    {
+        _inner.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+
+public delegate ISmtpClient SmtpClientFactory();
+
+
+public class EmailSenderService(IOptionsMonitor<AppOptions> optionsMonitor,
+    IEmailListRepository emailListRepository,
+    JwtEmailTokenService jwtService,
+    SmtpClientFactory clientFactory,
+    IValidator<AddEmailDto> addEmailValidator,
+    IValidator<RemoveEmailDto> removeEmailValidator) : IEmailSender
+{
 
     public async Task SendEmailAsync(string subject, string message)
     {
-        if (!ShouldSendEmails) return;
+        await using var client = clientFactory();
+        client.EnableSsl = true;
+        client.UseDefaultCredentials = false;
+        client.Credentials = new NetworkCredential(
+            optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+            optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD);
 
-        var client = new SmtpClient("smtp.mailersend.net", 2525)
-        {
-            EnableSsl = true,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(
-                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
-            )
-        };
-
-        var emailList = emailListRepository.GetAllEmails();
-
-        foreach (var email in emailList)
+        foreach (var email in emailListRepository.GetAllEmails())
         {
             var token = jwtService.GenerateUnsubscribeToken(email);
             var unsubscribeUrl = $"https://meetyourplants.site/api/email/unsubscribe?token={token}";
@@ -60,6 +98,10 @@ public class EmailSenderService(
 
     public async Task AddEmailAsync(AddEmailDto dto)
     {
+        var emailResult = await addEmailValidator.ValidateAsync(dto, CancellationToken.None);
+        if (!emailResult.IsValid)
+            throw new ValidationException(emailResult.Errors);
+        
         if (!emailListRepository.EmailExists(dto.Email))
         {
             emailListRepository.Add(new EmailList { Email = dto.Email });
@@ -71,6 +113,8 @@ public class EmailSenderService(
 
     public async Task RemoveEmailAsync(RemoveEmailDto dto)
     {
+        await removeEmailValidator.ValidateAsync(dto);
+        
         if (!emailListRepository.EmailExists(dto.Email))
             return;
 
@@ -82,17 +126,13 @@ public class EmailSenderService(
 
     private async Task SendConfirmationEmailAsync(string toEmail)
     {
-        if (!ShouldSendEmails) return;
 
-        var client = new SmtpClient("smtp.mailersend.net", 2525)
-        {
-            EnableSsl = true,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(
-                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
-            )
-        };
+        await using var client = clientFactory();
+        client.EnableSsl = true;
+        client.UseDefaultCredentials = false;
+        client.Credentials = new NetworkCredential(
+            optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+            optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD);
 
         var mailMessage = new MailMessage(
             "noreply@meetyourplants.site",
@@ -107,17 +147,12 @@ public class EmailSenderService(
 
     private async Task SendGoodbyeEmailAsync(string toEmail)
     {
-        if (!ShouldSendEmails) return;
-
-        var client = new SmtpClient("smtp.mailersend.net", 2525)
-        {
-            EnableSsl = true,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(
-                optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
-                optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD
-            )
-        };
+        await using var client = clientFactory();
+        client.EnableSsl = true;
+        client.UseDefaultCredentials = false;
+        client.Credentials = new NetworkCredential(
+            optionsMonitor.CurrentValue.EMAIL_SENDER_USERNAME,
+            optionsMonitor.CurrentValue.EMAIL_SENDER_PASSWORD);
 
         var mailMessage = new MailMessage(
             "noreply@meetyourplants.site",

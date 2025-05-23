@@ -1,4 +1,5 @@
 import ConfirmModal from "./ConfirmModal";
+import React from "react";
 
 type Props = {
     open: boolean;

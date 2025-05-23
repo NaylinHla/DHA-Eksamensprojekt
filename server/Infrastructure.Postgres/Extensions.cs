@@ -11,11 +11,20 @@ public static class Extensions
 {
     public static IServiceCollection AddDataSourceAndRepositories(this IServiceCollection services)
     {
-        services.AddDbContext<MyDbContext>((service, options) =>
+        
+        
+        services.AddDbContext<MyDbContext>((serviceProvider, options) =>
         {
-            var provider = services.BuildServiceProvider();
-            options.UseNpgsql(
-                provider.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue.DbConnectionString);
+            var appOpts = serviceProvider.GetRequiredService<IOptionsMonitor<AppOptions>>().CurrentValue;
+
+            if (appOpts.IsTesting)
+            {
+                options.UseInMemoryDatabase("TestDb");
+            }
+            else
+            {
+                options.UseNpgsql(appOpts.DbConnectionString);
+            }
             options.EnableSensitiveDataLogging();
         });
 
@@ -25,6 +34,8 @@ public static class Extensions
         services.AddScoped<IEmailListRepository, EmailListRepository>();
         services.AddScoped<IPlantRepository, PlantRepository>();
         services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
+        services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
+        services.AddScoped<IAlertConditionRepository, AlertConditionRepository>();
         services.AddScoped<Seeder>();
 
         return services;
