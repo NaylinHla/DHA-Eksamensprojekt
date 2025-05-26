@@ -9,26 +9,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-          
-      - name: Build & launch api
-        run: |
-          cd server/Startup
-          dotnet build
-          dotnet run --urls http://0.0.0.0:5000 &
-          
-          for i in {1..20}; do
-            if curl -sSf http://localhost:5000/; then
-              echo "API is up!"
-              break
-            else
-              sleep 1
-            fi
-          done
       
       - name: Install k6
         run: |
@@ -53,26 +33,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Build & launch api
-        run: |
-          cd server/Startup
-          dotnet build
-          dotnet run --urls http://0.0.0.0:5000 &
-
-          for i in {1..20}; do
-            if curl -sSf http://localhost:5000/; then
-              echo "API is up!"
-              break
-            else
-              sleep 1
-            fi
-          done
         
       - name: Install k6 via Chocolatey
         run: choco install k6 -y

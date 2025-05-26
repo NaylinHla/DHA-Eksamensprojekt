@@ -2,7 +2,7 @@
 import { b64decode } from 'k6/encoding';
 import { check, sleep, fail } from 'k6';
 
-const BASE = 'http://localhost:5000';
+const BASE = 'https://api.meetyourplants.site';
 if (!__ENV.LOGIN_EMAIL || !__ENV.LOGIN_PASSWORD) {
     console.error('→ please set LOGIN_EMAIL and LOGIN_PASSWORD');
     fail('missing env‑vars');
