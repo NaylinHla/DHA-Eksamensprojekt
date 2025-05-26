@@ -227,6 +227,9 @@ const AlertConditionModal: React.FC<Props> = ({
     }
 
     async function handleSave() {
+        if (!validate()) return;
+        setSaving(true);
+
         try {
             if (view === "devices") {
                 if (threshold === null) {
