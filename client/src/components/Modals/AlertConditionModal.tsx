@@ -157,7 +157,8 @@ const AlertConditionModal: React.FC<Props> = ({
             const allPlants = await plantClient.getAllPlants(userId, jwt);
 
             const existingIds = new Set(existingConditions.map(c => c.plantId));
-            setPlants(allPlants.filter(p => !existingIds.has(p.plantId)));
+            const filteredPlants = allPlants.filter(p => !existingIds.has(p.plantId) && !p.isDead);
+            setPlants(filteredPlants);
         } catch {
             toast.error("Failed to load plant data");
         }
@@ -226,16 +227,11 @@ const AlertConditionModal: React.FC<Props> = ({
     }
 
     async function handleSave() {
-        if (!validate()) return;
-
-        setSaving(true);
-
-        if (threshold === null) {
-            return;
-        }
-
         try {
             if (view === "devices") {
+                if (threshold === null) {
+                    return;
+                }
                 if (isEdit && editingCondition) {
                     const dto: ConditionAlertUserDeviceEditDto = {
                         userDeviceId: deviceId,

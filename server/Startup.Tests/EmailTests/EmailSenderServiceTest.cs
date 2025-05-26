@@ -344,7 +344,7 @@ public class EmailSenderServiceTest
                 Assert.That(m.Body, Is.Not.Null.Or.Empty);
                 Assert.That(m.Body, Does.Contain("Hello plant lovers!"));
                 Assert.That(m.Body, Does.Contain("unsubscribe"));
-                Assert.That(m.Body, Does.Contain("https://meetyourplants.site/api/email/unsubscribe?token="));
+                Assert.That(m.Body, Does.Contain("https://api.meetyourplants.site/api/email/unsubscribe?token="));
             });
             Assert.Multiple(() =>
             {
