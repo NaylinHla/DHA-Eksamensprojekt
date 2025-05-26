@@ -11,7 +11,7 @@ public sealed class AdminChangesPreferencesDtoValidator : AbstractValidator<Admi
             .NotEmpty().WithMessage("DeviceId cannot be empty");
         
         RuleFor(x => x.Interval)
-            .Matches("^[0-9]{1,5}$")
+            .Matches("^[0-9]{1,6}$")
             .When(x => x.Interval is not null);
     }
 }

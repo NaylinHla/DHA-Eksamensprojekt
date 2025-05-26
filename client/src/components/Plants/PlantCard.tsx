@@ -5,7 +5,7 @@ import {JwtAtom} from "../../atoms";
 import {useAtom} from "jotai";
 import toast from "react-hot-toast";
 import {ConfirmModal} from "../index.ts";
-import {plantClient} from "../../apiControllerClients.ts";
+import {alertConditionClient, plantClient} from "../../apiControllerClients.ts";
 
 export interface CardPlant {
     id: string;
@@ -37,6 +37,8 @@ const PlantCard: React.FC<PlantCardProps> = ({plant, onWater, onClick, onRemoved
     const confirmDelete = async () => {
         try {
             await plantClient.markPlantAsDead(plant.id, jwt);
+            const alert = await alertConditionClient.getConditionAlertPlant(plant.id, jwt);
+            await alertConditionClient.deleteConditionAlertPlant(alert.conditionAlertPlantId, jwt);
             toast.success("Plant removed 🌿");
             onRemoved?.();
         } catch (err: any) {

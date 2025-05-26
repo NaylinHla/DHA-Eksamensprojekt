@@ -290,7 +290,7 @@ export default function MyDevicePage() {
                                                 userDeviceClient
                                                     .adminChangesPreferences(dto, jwt)
                                                     .then(() => toast.success("Preferences sent", {id: `Preferences-succes`,}))
-                                                    .catch((e) => toast.error("Error: " + e.message, {id: `Preferences-error`,}));
+                                                    .catch((e) => toast.error("Max 999999 seconds in total ", {id: `Preferences-error`,}));
                                             }}
                                         >
                                             Change preferences
