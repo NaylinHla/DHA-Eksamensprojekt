@@ -1,4 +1,4 @@
-﻿name: Mutation Testing
+﻿name: Self Hosted Mutation Testing
 on: [ workflow_dispatch ]
 
 jobs:

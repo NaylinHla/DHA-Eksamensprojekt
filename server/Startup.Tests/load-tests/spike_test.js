@@ -2,7 +2,7 @@
 import { b64decode } from 'k6/encoding';
 import { check, sleep, fail } from 'k6';
 
-const BASE = 'http://localhost:5000';
+const BASE = 'https://api.meetyourplants.site';
 if (!__ENV.LOGIN_EMAIL || !__ENV.LOGIN_PASSWORD) {
     console.error('→ please set LOGIN_EMAIL and LOGIN_PASSWORD');
     fail('missing env‑vars');
@@ -49,11 +49,11 @@ export const options = {
             executor: 'ramping-arrival-rate',
             startRate: 1,
             timeUnit: '1s',
-            preAllocatedVUs: 20,
-            maxVUs: 100,
+            preAllocatedVUs: 10,
+            maxVUs: 20,
             stages: [
-                { target: 10, duration: '5s' },
-                { target: 20, duration: '10s' },
+                { target: 5, duration: '5s' },
+                { target: 10, duration: '10s' },
                 { target: 0,   duration: '5s' },
             ],
             exec: 'testGetAlerts',
@@ -62,11 +62,11 @@ export const options = {
             executor: 'ramping-arrival-rate',
             startRate: 1,
             timeUnit: '1s',
-            preAllocatedVUs: 20,
-            maxVUs: 100,
+            preAllocatedVUs: 10,
+            maxVUs: 20,
             stages: [
-                { target: 10,  duration: '5s'   },
-                { target: 20, duration: '10s'  },
+                { target: 5,  duration: '5s'   },
+                { target: 10, duration: '10s'  },
                 { target: 0,   duration: '5s'   },
             ],
             exec: 'testGetAllPlants',
@@ -75,11 +75,11 @@ export const options = {
             executor: 'ramping-arrival-rate',
             startRate: 1,
             timeUnit: '1s',
-            preAllocatedVUs: 20,
-            maxVUs: 100,
+            preAllocatedVUs: 10,
+            maxVUs: 20,
             stages: [
-                { target: 10,  duration: '5s'  },
-                { target: 20, duration: '10s' },
+                { target: 5,  duration: '5s'  },
+                { target: 10, duration: '10s' },
                 { target: 0,   duration: '5s'  },
             ],
             exec: 'testGetRecentSensorData',

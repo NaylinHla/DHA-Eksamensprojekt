@@ -11,7 +11,7 @@ const intervalMultipliers = {
     Second: 1,
     Minute: 60,
     Hour: 3600,
-    Days: 86400,
+    Day: 86400,
     Week: 604800,
 } as const;
 

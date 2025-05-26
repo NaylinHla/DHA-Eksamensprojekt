@@ -4,7 +4,7 @@ on:
   workflow_dispatch: 
 
 jobs:
-  k6-run:
+  K6-run:
     name: Run k6 on Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +26,7 @@ jobs:
           -e LOGIN_EMAIL=${{ secrets.LOGIN_EMAIL }} \
           -e LOGIN_PASSWORD=${{ secrets.LOGIN_PASSWORD }} \
           server/Startup.Tests/load-tests/spike_test.js
+
   Windows-powershell-run:
     name: Run PowerShell helper on Windows
     runs-on: windows-latest
@@ -39,6 +40,6 @@ jobs:
       - name: Run run_spike_test.ps1
         shell: pwsh
         run: |
-          .\server\Startup.Tests\load-tests\run_spike_test.ps1 `
+          .\run_spike_test.ps1 `
             -Email "${{ secrets.LOGIN_EMAIL }}" `
             -Password "${{ secrets.LOGIN_PASSWORD }}"
