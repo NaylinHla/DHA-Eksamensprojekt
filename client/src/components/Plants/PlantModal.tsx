@@ -12,10 +12,7 @@ import { useAtom } from "jotai";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import useCloseOnEscapeOrBackdrop from "../Functional/UseCloseOnEscapeOrBackdrop";
-
-const plantClient = new PlantClient(
-    import.meta.env.VITE_API_URL ?? "http://localhost:5000"
-);
+import {plantClient} from "../../apiControllerClients";
 
 interface Props {
     open: boolean;
